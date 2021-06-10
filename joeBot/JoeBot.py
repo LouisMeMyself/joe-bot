@@ -27,8 +27,7 @@ class JoeBot:
             for channel in self.channels.reaction_channel.values():
                 try:
                     msg = await channel.fetch_message(msg_id)
-                    Constants.emoji = discord.utils.get(self.bot.emojis, name=Constants.NAME_OF_EMOJI)
-                    await msg.add_reaction(Constants.emoji)
+                    await msg.add_reaction(Constants.CHECK)
                 except NotFound:
                     continue
         print('joeBot have logged in as {0.user}'.format(self.bot))
