@@ -34,13 +34,15 @@ class JoeBot:
 
     async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
-        print(ctx.message.content)
         if ctx.message.guild.id in self.channels.profile_picture and ctx.message.channel.id == self.channels.profile_picture[ctx.message.guild.id].id:
             answer = self.joePic_.do_profile_picture(ctx.message.content)
             if len(answer) == 2:
                 await ctx.reply(answer[0], file=answer[1])
             else:
-                await ctx.reply(answer)
+                e = discord.Embed(title="Error on command !",
+                                  description=Constants.ERROR_ON_JOEPIC,
+                                  color=0xF24E4D)
+                await ctx.reply(embed=e)
         return
 
     async def on_command_error(self, ctx, error):
@@ -105,9 +107,9 @@ class JoeBot:
             if role not in member.roles:
                 try:
                     await member.add_roles(role)
+                    print(member.name)
                 except:
                     print(member.name, member.id)
-                print(member.name)
         await ctx.reply("Role {} has been added to everyone in the server".format(role))
         return
 
@@ -117,9 +119,9 @@ class JoeBot:
             if role in member.roles:
                 try:
                     await member.remove_roles(role)
+                    print(member.name)
                 except:
                     print(member.name, member.id)
-                print(member.name)
         await ctx.reply("Role {} has been removed to everyone in the server".format(role))
         return
 

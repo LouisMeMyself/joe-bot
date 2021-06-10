@@ -70,7 +70,6 @@ class JoePic:
                     colors = colors
                 else:
                     raise ValueError
-                print(colors, len(colors) == 2, "+", beard)
                 self.joeSVG[self.joe_clothes + 1: self.joe_clothes + 7] = self.str2hex(colors[0])
                 if len(colors) == 2:
                     self.joeSVG[self.joe_skin + 1: self.joe_skin + 7] = self.str2hex(colors[1])

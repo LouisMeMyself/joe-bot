@@ -15,13 +15,11 @@ ROLE_FOR_CMD = "Bot Master"
 ROLE_TO_VIEW = "Joe"
 ERROR_ON_JOEPIC = """How to use joeBot for profile pictures:
 
-1. Choose a HEX color or a RGB color in these formats: '#00FFFF', '00FFFF', '0 255 255' or '0,255,255'.
-https://htmlcolorcodes.com/color-picker/
+1. Choose a HEX color or a RGB color in this format: `#00FFFF`. [(color picker)](https://htmlcolorcodes.com/color-picker/)
 
 2. Enter this command `!joepic [color]` for the color of the jacket and `!joepic [color] [color]` for the color of the jacket and the skin  with your selected color(s).
+   Add `beard [color]` at the end of the command to also change the color of the beard!
 
-3. Save image + add as your Discord profile photo !
-
-If you want to suggest a feature or anything for joebot, use `!suggest [your suggestion here]`!"""
+3. Save image + add as your Discord profile photo !"""
 
 
