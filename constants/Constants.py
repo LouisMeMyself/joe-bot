@@ -1,14 +1,14 @@
 PROFILE_PICTURE_COMMAND = "!joepic"
-JOEPIC_CHANNEL_NAME = "profile-pictures"
+JOEPIC_CHANNEL_NAME = "👨🏻-profile-pictures"
 JOESUGGEST_CHANNEL_NAME = "💡-ideas-and-feedback"
 JOEREACT_CHANNEL_NAME = "📚-guidelines-and-resources"
+ADMIN_CHANNEL_NAME = "🤖-bot-commands"
 
 GUIDELINES_MSG_ID = (852636768788021288, 843668142764589076)
 emoji = None
 CHECK = "✅"
 CROSS = "❌"
 
-ADMIN_CHANNEL_NAME = "🤖-bot-commands"
 
 ROLE_FOR_CMD = "Bot Master"
 ROLE_TO_VIEW = "Joe"

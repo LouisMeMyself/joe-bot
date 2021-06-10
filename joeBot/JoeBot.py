@@ -34,6 +34,7 @@ class JoeBot:
 
     async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
+        print(ctx.message.content)
         if ctx.message.guild.id in self.channels.profile_picture and ctx.message.channel.id == self.channels.profile_picture[ctx.message.guild.id].id:
             answer = self.joePic_.do_profile_picture(ctx.message.content)
             if len(answer) == 2:
