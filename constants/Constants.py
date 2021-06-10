@@ -5,7 +5,7 @@ JOEREACT_CHANNEL_NAME = "📚-guidelines-and-resources"
 
 GUIDELINES_MSG_ID = (852636768788021288, 843668142764589076)
 emoji = None
-NAME_OF_EMOJI = 'joe'
+NAME_OF_EMOJI = 'white_check_mark'
 CHECK = "✅"
 CROSS = "❌"
 
