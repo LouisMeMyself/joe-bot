@@ -1,0 +1,13 @@
+# Python Files
+*__pycache__*
+
+# Virtual Environment
+venv
+
+# PyCharm Files
+.idea
+
+# Personal Files
+.key
+*.json
+*.png
