@@ -42,16 +42,6 @@ class JoeBot:
                 await ctx.reply(answer)
         return
 
-    async def joepicv2(self, ctx):
-        """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
-        if ctx.message.guild.id in self.channels.profile_picture and ctx.message.channel.id == self.channels.profile_picture[ctx.message.guild.id].id:
-            answer = self.joePic_.do_profile_picture(ctx.message.content)
-            if len(answer) == 2:
-                await ctx.reply(answer[0], file=answer[1])
-            else:
-                await ctx.reply(answer)
-        return
-
     async def on_command_error(self, ctx, error):
         if ctx.message.channel.id == self.channels.profile_picture[ctx.message.guild.id].id and isinstance(error, commands.CommandNotFound):
             await ctx.reply(Constants.ERROR_ON_JOEPIC)
@@ -83,7 +73,7 @@ class JoeBot:
         if not (payload.guild_id in self.channels.reaction_channel and
                 self.channels.reaction_channel[payload.guild_id].id == payload.channel_id):
             return
-        if payload.message_id in Constants.GUIDELINES_MSG_ID and payload.emoji == Constants.emoji:
+        if payload.message_id in Constants.GUIDELINES_MSG_ID and payload.emoji.name == Constants.CHECK:
             member_ = payload.member
             role = discord.utils.get(member_.guild.roles, name=Constants.ROLE_TO_VIEW)
             await member_.add_roles(role)

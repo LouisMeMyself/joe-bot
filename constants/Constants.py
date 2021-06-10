@@ -11,7 +11,7 @@ CROSS = "❌"
 ADMIN_CHANNEL_NAME = "🤖-bot-commands"
 
 ROLE_FOR_CMD = "Bot Master"
-ROLE_TO_VIEW = "Farmer"
+ROLE_TO_VIEW = "Joe"
 ERROR_ON_JOEPIC = """How to use joeBot for profile pictures:
 
 1. Choose a HEX color or a RGB color in these formats: '#00FFFF', '00FFFF', '0 255 255' or '0,255,255'.
