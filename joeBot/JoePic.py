@@ -12,6 +12,7 @@ class JoePic:
             self.joeSVG = f.read().decode("utf-8")
         self.joe_skin = str(self.joeSVG).find("#BD967F;}")
         self.joe_clothes = str(self.joeSVG).find("#DB5B54;}")
+        self.joe_beard = str(self.joeSVG).find("#FDFDFD;}")
         self.joeSVG = list(self.joeSVG)
 
 
@@ -38,7 +39,19 @@ class JoePic:
         raise ValueError
 
     def do_profile_picture(self, content):
+        beard = None
         try:
+            if Constants.BEARD in content:
+                splt = content.split(Constants.BEARD)
+                content = splt[0].rstrip()
+                beard = splt[1].lstrip()
+                beard = beard.split(" ")
+                if len(beard) == 3: #R G B
+                    beard = ",".join(beard[:3])
+                elif len(beard) == 1: #Hexa
+                    beard = beard[0]
+                else :
+                    raise ValueError
             if Constants.PROFILE_PICTURE_COMMAND in content:
                 colors = str(content.replace(Constants.PROFILE_PICTURE_COMMAND, "")[1:])
                 colors = colors.split(" ")
@@ -57,11 +70,16 @@ class JoePic:
                     colors = colors
                 else:
                     raise ValueError
+                print(colors, len(colors) == 2, "+", beard)
                 self.joeSVG[self.joe_clothes + 1: self.joe_clothes + 7] = self.str2hex(colors[0])
                 if len(colors) == 2:
                     self.joeSVG[self.joe_skin + 1: self.joe_skin + 7] = self.str2hex(colors[1])
                 else:
                     self.joeSVG[self.joe_skin + 1: self.joe_skin + 7] = "BD967F"
+                if beard is not None:
+                    self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = self.str2hex(beard)
+                else :
+                    self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = "FDFDFD"
             svg2png("".join(self.joeSVG), write_to="utils/joe-logo.png")
             return "Here is your personalized profile picture!", discord.File("utils/joe-logo.png")
         except ValueError:
