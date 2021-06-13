@@ -2,7 +2,7 @@ import typing
 
 import discord
 from discord.ext import commands
-from constants import Constants
+from joeBot import Constants
 from joeBot.JoeBot import JoeBot
 
 intents = discord.Intents.all()

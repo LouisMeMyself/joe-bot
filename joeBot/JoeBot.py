@@ -4,92 +4,78 @@ import typing
 from datetime import datetime
 
 import discord
-from discord import NotFound
 from discord.ext import commands
 
-from constants import Constants, Channels
-from joeBot import JoePic
+from joeBot import JoePic, Constants
 
 
 class JoeBot:
     joePic_ = JoePic.JoePic()
     bot = commands.Bot
-    channels = Channels.Channels
+    channels = Constants.Channels
 
     def __init__(self, bot):
         self.bot = bot
-        self.channels = Channels.Channels(bot)
-        print(self.channels.reaction_channel, self.channels.suggestion_channel, self.channels.profile_picture)
+        for server in self.bot.guilds:
+            self.channels = Constants.Channels(server.id, bot)
 
     async def on_ready(self):
         """starts joebot"""
-        for msg_id in Constants.GUIDELINES_MSG_ID:
-            for channel in self.channels.reaction_channel.values():
-                try:
-                    msg = await channel.fetch_message(msg_id)
-                    await msg.add_reaction(Constants.CHECK)
-                except NotFound:
-                    continue
+        msg = await self.channels.get_channel(self.channels.GUIDELINES_CHANNEL_ID).fetch_message(self.channels.GUIDELINES_MSG_ID)
+        await msg.add_reaction(Constants.EMOJI_ACCEPT_GUIDELINES)
         print('joeBot have logged in as {0.user}'.format(self.bot))
 
     async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
-        if ctx.message.guild.id in self.channels.profile_picture and ctx.message.channel.id == self.channels.profile_picture[ctx.message.guild.id].id:
-            answer = self.joePic_.do_profile_picture(ctx.message.content)
-            if len(answer) == 2:
+        if ctx.message.channel.id == self.channels.JOEPIC_CHANNEL_ID:
+            try:
+                answer = self.joePic_.do_profile_picture(ctx.message.content)
                 await ctx.reply(answer[0], file=answer[1])
-            else:
-                e = discord.Embed(title="Error on command !",
-                                  description=Constants.ERROR_ON_JOEPIC,
+            except ValueError:
+                e = discord.Embed(title="Error on {} command !".format(Constants.PROFILE_PICTURE_COMMAND[1:]),
+                                  description=Constants.ERROR_ON_PROFILE_PICTURE,
                                   color=0xF24E4D)
                 await ctx.reply(embed=e)
         return
 
     async def on_command_error(self, ctx, error):
-        if ctx.message.channel.id == self.channels.profile_picture[ctx.message.guild.id].id and isinstance(error, commands.CommandNotFound):
-            await ctx.reply(Constants.ERROR_ON_JOEPIC)
+        if ctx.message.channel.id == self.channels.JOEPIC_CHANNEL_ID and isinstance(error, commands.CommandNotFound):
+            e = discord.Embed(title="Error on {} command !".format(Constants.PROFILE_PICTURE_COMMAND[1:]),
+                              description=Constants.ERROR_ON_PROFILE_PICTURE,
+                              color=0xF24E4D)
+            await ctx.reply(embed=e)
             return
         raise error
 
     async def suggest(self, ctx):
         """command for suggestions"""
-        if not ctx.message.guild.id in self.channels.suggestion_channel:
-            print("Channel " + Constants.JOESUGGEST_CHANNEL_NAME + " not found in " + ctx.message.guild)
-            return
         msg = ctx.message.content[9:]
         if msg != "":
             e = discord.Embed(title="Suggestion",
                               url=ctx.message.jump_url,
                               description=msg,
                               color=0xF24E4D)
-            await self.channels.suggestion_channel[ctx.message.guild.id].send(embed=e)
-            await ctx.message.add_reaction(Constants.CHECK)
+            await self.channels.get_channel(self.channels.SUGGESTION_CHANNEL_ID).send(embed=e)
+            await ctx.message.add_reaction(Constants.EMOJI_CHECK)
         else:
             await ctx.reply("To make a suggestion, please do `!suggest [your suggestion here]`")
         return
 
     async def on_raw_reaction_add(self, payload):
-        """Add joe role when a reaction is added on a particular message (not a message from joebot or a
-        reaction of joebot) """
+        """Add the role VERIFIED_USER_ROLE from people that react to the message in GUIDELINES_MSG_ID with the emoji EMOJI_GUIDELINES"""
         if payload.user_id == self.bot.user.id or payload.message_id == self.bot.user.id:  # check if user that reacted is not joeBot and that the message isn't from joeBot
             return
-        if not (payload.guild_id in self.channels.reaction_channel and
-                self.channels.reaction_channel[payload.guild_id].id == payload.channel_id):
-            return
-        if payload.message_id in Constants.GUIDELINES_MSG_ID and payload.emoji.name == Constants.CHECK:
+        if payload.channel_id == self.channels.GUIDELINES_CHANNEL_ID and payload.message_id == self.channels.GUIDELINES_MSG_ID and payload.emoji.name == Constants.EMOJI_ACCEPT_GUIDELINES:
             member_ = payload.member
-            role = discord.utils.get(member_.guild.roles, name=Constants.ROLE_TO_VIEW)
+            role = discord.utils.get(member_.guild.roles, name=Constants.VERIFIED_USER_ROLE)
             await member_.add_roles(role)
         return
 
     async def on_raw_reaction_remove(self, payload):
-        """harder to remove than add a role, to do"""
+        """Remove the role VERIFIED_USER_ROLE from people that unreact to the message in GUIDELINES_MSG_ID"""
         if payload.user_id == self.bot.user.id or payload.message_id == self.bot.user.id:  # check if user that reacted is not joeBot and that the message isn't from joeBot
             return
-        if not (payload.guild_id in self.channels.reaction_channel and
-                self.channels.reaction_channel[payload.guild_id].id == payload.channel_id):
-            return
-        if payload.message_id in Constants.GUIDELINES_MSG_ID and payload.emoji == Constants.emoji:
+        if payload.channel_id == self.channels.GUIDELINES_CHANNEL_ID and payload.message_id == self.channels.GUIDELINES_MSG_ID and payload.emoji.name == Constants.EMOJI_ACCEPT_GUIDELINES:
             guild = None
             for guild in self.bot.guilds:
                 if guild == payload.guild_id:
@@ -97,7 +83,7 @@ class JoeBot:
             if guild is None:
                 return
             member_ = guild.get_member(payload.user_id)
-            role = discord.utils.get(member_.guild.roles, name=Constants.ROLE_TO_VIEW)
+            role = discord.utils.get(member_.guild.roles, name=Constants.VERIFIED_USER_ROLE)
             await member_.remove_roles(role)
         return
 
@@ -155,14 +141,15 @@ class JoeBot:
                   delete_days: typing.Optional[int] = 0, *,
                   reason: str):
         """Mass bans members with an optional delete_days parameter, send a message before banning people to be sure it's not a mistake"""
-        if (ctx.channel.name == Constants.ADMIN_CHANNEL_NAME):  # to change to an id / channel not a name
+        if ctx.channel.id == self.channels.COMMAND_CHANNEL_ID:  # to change to an id / channel not a name
             accept_decline = await ctx.send(
                 "Do you really want to ban {}".format(" ".join([member.mention for member in members])))
-            await accept_decline.add_reaction(Constants.CHECK)
-            await accept_decline.add_reaction(Constants.CROSS)
+            await accept_decline.add_reaction(Constants.EMOJI_CHECK)
+            await accept_decline.add_reaction(Constants.EMOJI_CROSS)
 
-            def check(reaction, user):
-                return user == ctx.message.author and (str(reaction.emoji) == '✅' or str(reaction.emoji) == '❌')
+            def check(reaction_, user_):
+                return user_ == ctx.message.author and (str(reaction_.emoji) in (
+                Constants.EMOJI_CHECK, Constants.EMOJI_CROSS))
 
             try:
                 reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
@@ -171,7 +158,7 @@ class JoeBot:
                 await ctx.send('Timed out')
             else:
                 await accept_decline.delete()
-                if reaction.emoji == Constants.CHECK:
+                if reaction.emoji == Constants.EMOJI_CHECK:
                     for member in members:
                         await member.ban(delete_message_days=delete_days, reason=reason)
                     if delete_days is not None:

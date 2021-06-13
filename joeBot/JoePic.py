@@ -2,7 +2,7 @@ import re
 import discord
 import numpy as np
 from cairosvg import svg2png
-from constants import Constants
+from joeBot import Constants
 
 
 class JoePic:
@@ -33,7 +33,7 @@ class JoePic:
                     new_color <= 255):
                 new_color = "%02x%02x%02x" % tuple(new_color)
             else:
-                return "RGB colours are between 0 and 255 and need 3 integers, like '127 255 212' or '127,255,212'"
+                raise ValueError
         if self.hex_regex.match(new_color) is not None and len(new_color) == 6:
             return new_color
         raise ValueError
@@ -41,8 +41,8 @@ class JoePic:
     def do_profile_picture(self, content):
         beard = None
         try:
-            if Constants.BEARD in content:
-                splt = content.split(Constants.BEARD)
+            if Constants.COMMAND_BEARD in content:
+                splt = content.split(Constants.COMMAND_BEARD)
                 content = splt[0].rstrip()
                 beard = splt[1].lstrip()
                 beard = beard.split(" ")
@@ -81,7 +81,5 @@ class JoePic:
                     self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = "FDFDFD"
             svg2png("".join(self.joeSVG), write_to="utils/joe-logo.png")
             return "Here is your personalized profile picture!", discord.File("utils/joe-logo.png")
-        except ValueError:
-            return "Please write a HEX color or a RGB color. in these formats: `#00FFFF`, `00FFFF`, `0 255 255` or `0,255,255`"
         except:
-            return "Unexpected error..."
+            raise ValueError
