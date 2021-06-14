@@ -10,8 +10,8 @@ class JoePic:
         self.hex_regex = re.compile("^[0-9a-fA-F]{6}")
         with open("utils/joe-logo.svg", "rb") as f:
             self.joeSVG = f.read().decode("utf-8")
-        self.joe_skin = str(self.joeSVG).find("#BD967F;}")
         self.joe_clothes = str(self.joeSVG).find("#DB5B54;}")
+        self.joe_skin = str(self.joeSVG).find("#BD967F;}")
         self.joe_beard = str(self.joeSVG).find("#FDFDFD;}")
         self.joeSVG = list(self.joeSVG)
 

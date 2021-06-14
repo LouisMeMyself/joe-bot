@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 import typing
 from datetime import datetime
 
@@ -13,6 +14,7 @@ class JoeBot:
     joePic_ = JoePic.JoePic()
     bot = commands.Bot
     channels = Constants.Channels
+    bank = {}
 
     def __init__(self, bot):
         self.bot = bot
@@ -171,3 +173,27 @@ class JoeBot:
                                                                delete_days, reason))
                 else:
                     await ctx.send("Bans canceled")
+
+
+    # async def play(self, ctx, number):
+    #     try:
+    #         number = int(number)
+    #     except:
+    #         return
+    #     if number <= 0:
+    #         await ctx.reply("You need to play at least 1 token.")
+    #         return
+    #     player_id = ctx.message.author.id
+    #     if player_id not in self.bank:
+    #         self.bank[player_id] = 500
+    #     if self.bank[player_id] < number or self.bank[player_id] <= 0:
+    #         await ctx.reply("You don't have enough token. (Your balance is : {})".format(self.bank[player_id]))
+    #         return
+    #     await ctx.send("You played {} token".format(number))
+    #     if random.randint(0, 1) == 0:
+    #         self.bank[player_id] += number
+    #         await ctx.send("You won {} token !".format(number * 2))
+    #     else:
+    #         self.bank[player_id] -= number
+    #         await ctx.send("You lost {} token :(".format(number))
+    #     await ctx.send("Your current balance is {} token.".format(self.bank[player_id]))

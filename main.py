@@ -28,28 +28,16 @@ async def joepic(ctx):
     await joeBot.joepic(ctx)
 
 
-@bot.event
-async def on_command_error(ctx, error):
-    await joeBot.on_command_error(ctx, error)
-
-
 @bot.command()
 async def suggest(ctx):
     """command for suggestions"""
     await joeBot.suggest(ctx)
 
-
-@bot.event
-async def on_raw_reaction_add(payload):
-    """Add joe role when a reaction is added on a particular message (not a message from joebot or a
-    reaction of joebot) """
-    await joeBot.on_raw_reaction_add(payload)
-
-
-@bot.event
-async def on_raw_reaction_remove(payload):
-    """harder to remove than add a role, to do"""
-    await joeBot.on_raw_reaction_remove(payload)
+# 
+# @bot.command()
+# async def play(ctx, msg):
+#     """command for suggestions"""
+#     await joeBot.play(ctx, msg)
 
 
 @bot.command(pass_context=True)
@@ -86,6 +74,24 @@ async def ban(ctx, members: commands.Greedy[discord.Member],
               delete_days: typing.Optional[int] = 0, *,
               reason: str):
     await joeBot.ban(ctx, members, delete_days, reason=reason)
+
+
+@bot.event
+async def on_raw_reaction_add(payload):
+    """Add joe role when a reaction is added on a particular message (not a message from joebot or a
+    reaction of joebot) """
+    await joeBot.on_raw_reaction_add(payload)
+
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    """harder to remove than add a role, to do"""
+    await joeBot.on_raw_reaction_remove(payload)
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    await joeBot.on_command_error(ctx, error)
 
 
 if __name__ == '__main__':
