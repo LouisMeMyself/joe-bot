@@ -38,12 +38,14 @@ class JoePic:
             return new_color
         raise ValueError
 
-    def do_profile_picture(self, content):
+    def do_profile_picture(self, msg):
+        if msg is None:
+            raise ValueError
         beard = None
         try:
-            if Constants.COMMAND_BEARD in content:
-                splt = content.split(Constants.COMMAND_BEARD)
-                content = splt[0].rstrip()
+            if Constants.COMMAND_BEARD in msg:
+                splt = msg.split(Constants.COMMAND_BEARD)
+                msg = splt[0].rstrip()
                 beard = splt[1].lstrip()
                 beard = beard.split(" ")
                 if len(beard) == 3: #R G B
@@ -52,33 +54,31 @@ class JoePic:
                     beard = beard[0]
                 else :
                     raise ValueError
-            if Constants.PROFILE_PICTURE_COMMAND in content:
-                colors = str(content.replace(Constants.PROFILE_PICTURE_COMMAND, "")[1:])
-                colors = colors.split(" ")
-                if len(colors) == 6:  # R G B and R G B
-                    colors = (",".join(colors[:3]), ",".join(colors[3:]))
-                elif len(colors) == 2:  # Hexa/Hexa or R,G,B/R,G,B or Hexa/R,G,B or R,G,B/Hexa
-                    colors = (colors[0], colors[1])
-                elif len(colors) == 4:
-                    if len(colors[0]) >= 6:  # Hexa/R G B
-                        colors = (colors[0], ",".join(colors[1:]))
-                    elif len(colors[3]) >= 6:  # R G B/Hexa
-                        colors = (",".join(colors[:3]), colors[3])
-                elif len(colors) == 3: #R G B
-                    colors = (",".join(colors[:3]),)
-                elif len(colors) == 1: #Hexa
-                    colors = colors
-                else:
-                    raise ValueError
-                self.joeSVG[self.joe_clothes + 1: self.joe_clothes + 7] = self.str2hex(colors[0])
-                if len(colors) == 2:
-                    self.joeSVG[self.joe_skin + 1: self.joe_skin + 7] = self.str2hex(colors[1])
-                else:
-                    self.joeSVG[self.joe_skin + 1: self.joe_skin + 7] = "BD967F"
-                if beard is not None:
-                    self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = self.str2hex(beard)
-                else :
-                    self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = "FDFDFD"
+            colors = msg.split(" ")
+            if len(colors) == 6:  # R G B and R G B
+                colors = (",".join(colors[:3]), ",".join(colors[3:]))
+            elif len(colors) == 2:  # Hexa/Hexa or R,G,B/R,G,B or Hexa/R,G,B or R,G,B/Hexa
+                colors = (colors[0], colors[1])
+            elif len(colors) == 4:
+                if len(colors[0]) >= 6:  # Hexa/R G B
+                    colors = (colors[0], ",".join(colors[1:]))
+                elif len(colors[3]) >= 6:  # R G B/Hexa
+                    colors = (",".join(colors[:3]), colors[3])
+            elif len(colors) == 3: #R G B
+                colors = (",".join(colors[:3]),)
+            elif len(colors) == 1: #Hexa
+                colors = colors
+            else:
+                raise ValueError
+            self.joeSVG[self.joe_clothes + 1: self.joe_clothes + 7] = self.str2hex(colors[0])
+            if len(colors) == 2:
+                self.joeSVG[self.joe_skin + 1: self.joe_skin + 7] = self.str2hex(colors[1])
+            else:
+                self.joeSVG[self.joe_skin + 1: self.joe_skin + 7] = "BD967F"
+            if beard is not None:
+                self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = self.str2hex(beard)
+            else :
+                self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = "FDFDFD"
             svg2png("".join(self.joeSVG), write_to="utils/joe-logo.png")
             return "Here is your personalized profile picture!", discord.File("utils/joe-logo.png")
         except:
