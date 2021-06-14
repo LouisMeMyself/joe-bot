@@ -18,7 +18,7 @@ class JoePic:
 
     def str2hex(self, new_color):
         if new_color.replace(" ", "").replace(",", "") == "":  # handles empty messages
-            return """Please write a HEX color or a RGB color. in these formats: '#00FFFF', '00FFFF', '0 255 255' or '0,255,255\nThe command should look like this: `!joepic [color]`"""
+            raise ValueError
         if new_color[0] == "#" and self.hex_regex.match(new_color[1:]) is not None and len(
                 new_color) == 7:  # handles the "#XXXXXX" hex colours
             new_color = new_color[1:]
@@ -39,8 +39,6 @@ class JoePic:
         raise ValueError
 
     def do_profile_picture(self, msg):
-        if msg is None:
-            raise ValueError
         beard = None
         try:
             if Constants.COMMAND_BEARD in msg:

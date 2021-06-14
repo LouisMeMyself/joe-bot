@@ -23,15 +23,15 @@ async def on_ready():
 
 
 @bot.command()
-async def joepic(ctx, msg=None):
+async def joepic(ctx):
     """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
-    await joeBot.joepic(ctx, msg)
+    await joeBot.joepic(ctx)
 
 
 @bot.command()
-async def suggest(ctx, msg=None):
+async def suggest(ctx):
     """command for suggestions"""
-    await joeBot.suggest(ctx, msg)
+    await joeBot.suggest(ctx)
 
 
 #

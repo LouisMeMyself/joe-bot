@@ -27,11 +27,11 @@ class JoeBot:
         await msg.add_reaction(Constants.EMOJI_ACCEPT_GUIDELINES)
         print('joeBot have logged in as {0.user}'.format(self.bot))
 
-    async def joepic(self, ctx, msg):
+    async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
         if ctx.message.channel.id == self.channels.JOEPIC_CHANNEL_ID:
             try:
-                answer = self.joePic_.do_profile_picture(msg)
+                answer = self.joePic_.do_profile_picture(ctx.message.content.replace(Constants.PROFILE_PICTURE_COMMAND, "")[1:])
                 await ctx.reply(answer[0], file=answer[1])
             except ValueError:
                 e = discord.Embed(title="Error on {} command !".format(Constants.PROFILE_PICTURE_COMMAND[1:]),
@@ -49,9 +49,10 @@ class JoeBot:
             return
         raise error
 
-    async def suggest(self, ctx, msg):
+    async def suggest(self, ctx):
         """command for suggestions"""
-        if msg is not None:
+        msg = ctx.message.content[9:]
+        if msg != "":
             e = discord.Embed(title="Suggestion",
                               url=ctx.message.jump_url,
                               description=msg,
