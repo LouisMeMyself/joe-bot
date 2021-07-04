@@ -12,21 +12,21 @@ from joeBot import JoePic, Constants, JoeSubGraph
 
 class JoeBot:
     joePic_ = JoePic.JoePic()
-    bot = commands.Bot
+    discord_bot = commands.Bot
     channels = Constants.Channels
-    bank = {}
+    # bank = {}
 
-    def __init__(self, bot):
-        self.bot = bot
-        for server in self.bot.guilds:
-            self.channels = Constants.Channels(server.id, bot)
+    def __init__(self, discord_bot):
+        self.discord_bot = discord_bot
+        for server in self.discord_bot.guilds:
+            self.channels = Constants.Channels(server.id, discord_bot)
 
     async def on_ready(self):
         """starts joebot"""
         msg = await self.channels.get_channel(self.channels.GUIDELINES_CHANNEL_ID).fetch_message(self.channels.GUIDELINES_MSG_ID)
         await msg.add_reaction(Constants.EMOJI_ACCEPT_GUIDELINES)
-        print('joeBot have logged in as {0.user}'.format(self.bot))
-        self.bot.loop.create_task(self.joeTicker())
+        print('joeBot have logged in as {0.user}'.format(self.discord_bot))
+        self.discord_bot.loop.create_task(self.joeTicker())
 
     async def joeTicker(self):
         while 1:
@@ -35,7 +35,7 @@ class JoeBot:
                 while 1:
                     price = await JoeSubGraph.getJoePrice()
                     activity = "JOE: ${}".format(round(price, 4))
-                    await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
+                    await self.discord_bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
                     await asyncio.sleep(60)
             except:
                 print("Error on joeTicker, retrying in 60 seconds...")
@@ -79,7 +79,7 @@ class JoeBot:
 
     async def on_raw_reaction_add(self, payload):
         """Add the role VERIFIED_USER_ROLE from people that react to the message in GUIDELINES_MSG_ID with the emoji EMOJI_GUIDELINES"""
-        if payload.user_id == self.bot.user.id or payload.message_id == self.bot.user.id:  # check if user that reacted is not joeBot and that the message isn't from joeBot
+        if payload.user_id == self.discord_bot.user.id or payload.message_id == self.discord_bot.user.id:  # check if user that reacted is not joeBot and that the message isn't from joeBot
             return
         if payload.channel_id == self.channels.GUIDELINES_CHANNEL_ID and payload.message_id == self.channels.GUIDELINES_MSG_ID and payload.emoji.name == Constants.EMOJI_ACCEPT_GUIDELINES:
             member_ = payload.member
@@ -89,11 +89,11 @@ class JoeBot:
 
     async def on_raw_reaction_remove(self, payload):
         """Remove the role VERIFIED_USER_ROLE from people that unreact to the message in GUIDELINES_MSG_ID"""
-        if payload.user_id == self.bot.user.id or payload.message_id == self.bot.user.id:  # check if user that reacted is not joeBot and that the message isn't from joeBot
+        if payload.user_id == self.discord_bot.user.id or payload.message_id == self.discord_bot.user.id:  # check if user that reacted is not joeBot and that the message isn't from joeBot
             return
         if payload.channel_id == self.channels.GUIDELINES_CHANNEL_ID and payload.message_id == self.channels.GUIDELINES_MSG_ID and payload.emoji.name == Constants.EMOJI_ACCEPT_GUIDELINES:
             guild = None
-            for guild in self.bot.guilds:
+            for guild in self.discord_bot.guilds:
                 if guild == payload.guild_id:
                     break
             if guild is None:
@@ -168,7 +168,7 @@ class JoeBot:
                 Constants.EMOJI_CHECK, Constants.EMOJI_CROSS))
 
             try:
-                reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+                reaction, user = await self.discord_bot.wait_for('reaction_add', timeout=60.0, check=check)
             except asyncio.TimeoutError:
                 await accept_decline.delete()
                 await ctx.send('Timed out')
@@ -189,24 +189,26 @@ class JoeBot:
                     await ctx.send("Bans canceled")
 
 
-    async def play(self, ctx, number):
-        try:
-            number = int(number)
-        except:
-            return
-        if number <= 0:
-            await ctx.reply("You need to play at least 1 token.")
-            return
-        player_id = ctx.message.author.id
-        if player_id not in self.bank:
-            self.bank[player_id] = 500
-        if self.bank[player_id] < number or self.bank[player_id] <= 0:
-            await ctx.reply("You don't have enough tokens. (Your balance is : {})".format(self.bank[player_id]))
-            return
-        await ctx.send("You played {} tokens".format(number))
-        if random.randint(0, 1) == 0:
-            self.bank[player_id] += number
-            await ctx.send("You won {} tokens ! (Your balance is : {})".format(number * 2, self.bank[player_id]))
-        else:
-            self.bank[player_id] -= number
-            await ctx.send("You lost {} tokens... (Your balance is : {})".format(number, self.bank[player_id]))
+    # async def play(self, ctx, number):
+    #     try:
+    #         number = int(number)
+    #     except:
+    #         return
+    #     if number <= 0:
+    #         await ctx.reply("You need to play at least 1 token.")
+    #         return
+    #     player_id = ctx.message.author.id
+    #     if player_id not in self.bank:
+    #         self.bank[player_id] = 500
+    #     if self.bank[player_id] < number or self.bank[player_id] <= 0:
+    #         await ctx.reply("You don't have enough tokens. (Your balance is : {})".format(self.bank[player_id]))
+    #         return
+    #     await ctx.send("You played {} tokens".format(number))
+    #     if random.randint(0, 1) == 0:
+    #         self.bank[player_id] += number
+    #         await ctx.send("You won {} tokens ! (Your balance is : {})".format(number * 2, self.bank[player_id]))
+    #     else:
+    #         self.bank[player_id] -= number
+    #         await ctx.send("You lost {} tokens... (Your balance is : {})".format(number, self.bank[player_id]))
+
+
