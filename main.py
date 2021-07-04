@@ -99,9 +99,4 @@ async def on_command_error(ctx, error):
 if __name__ == '__main__':
     with open(".key", "r") as f:
         key = f.read().replace("\n", "")
-    while 1:
-        try:
-            bot.run(key)
-        except:
-            print("Error trying to run joebot, retrying in 60 seconds")
-        asyncio.sleep(60)
+    bot.run(key)
