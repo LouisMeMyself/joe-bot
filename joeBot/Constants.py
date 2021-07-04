@@ -1,7 +1,6 @@
 # Server
 TEST_SERVER_ID = 852632556137611334
 LIVE_SERVER_ID = 830990443457806347
-
 # Emojis
 EMOJI_CHECK = "✅"
 EMOJI_CROSS = "❌"
@@ -14,6 +13,9 @@ PROFILE_PICTURE_COMMAND = "!joepic"
 # Roles
 ROLE_FOR_CMD = "Bot Master"
 VERIFIED_USER_ROLE = "Joe"
+
+#SubGraph links
+JOE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
 
 # Errors
 ERROR_ON_PROFILE_PICTURE ="""How to use joeBot for profile pictures:

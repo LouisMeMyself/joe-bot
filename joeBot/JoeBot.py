@@ -7,7 +7,7 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from joeBot import JoePic, Constants
+from joeBot import JoePic, Constants, JoeSubGraph
 
 
 class JoeBot:
@@ -26,6 +26,20 @@ class JoeBot:
         msg = await self.channels.get_channel(self.channels.GUIDELINES_CHANNEL_ID).fetch_message(self.channels.GUIDELINES_MSG_ID)
         await msg.add_reaction(Constants.EMOJI_ACCEPT_GUIDELINES)
         print('joeBot have logged in as {0.user}'.format(self.bot))
+        self.bot.loop.create_task(self.joeTicker())
+
+    async def joeTicker(self):
+        while 1:
+            try:
+                print("joeTicker is up")
+                while 1:
+                    price = await JoeSubGraph.getJoePrice()
+                    activity = "JOE: ${}".format(round(price, 3))
+                    await self.bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
+                    await asyncio.sleep(60)
+            except:
+                print("Error on joeTicker, retrying in 60 seconds...")
+            await asyncio.sleep(60)
 
     async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
@@ -175,25 +189,24 @@ class JoeBot:
                     await ctx.send("Bans canceled")
 
 
-    # async def play(self, ctx, number):
-    #     try:
-    #         number = int(number)
-    #     except:
-    #         return
-    #     if number <= 0:
-    #         await ctx.reply("You need to play at least 1 token.")
-    #         return
-    #     player_id = ctx.message.author.id
-    #     if player_id not in self.bank:
-    #         self.bank[player_id] = 500
-    #     if self.bank[player_id] < number or self.bank[player_id] <= 0:
-    #         await ctx.reply("You don't have enough token. (Your balance is : {})".format(self.bank[player_id]))
-    #         return
-    #     await ctx.send("You played {} token".format(number))
-    #     if random.randint(0, 1) == 0:
-    #         self.bank[player_id] += number
-    #         await ctx.send("You won {} token !".format(number * 2))
-    #     else:
-    #         self.bank[player_id] -= number
-    #         await ctx.send("You lost {} token :(".format(number))
-    #     await ctx.send("Your current balance is {} token.".format(self.bank[player_id]))
+    async def play(self, ctx, number):
+        try:
+            number = int(number)
+        except:
+            return
+        if number <= 0:
+            await ctx.reply("You need to play at least 1 token.")
+            return
+        player_id = ctx.message.author.id
+        if player_id not in self.bank:
+            self.bank[player_id] = 500
+        if self.bank[player_id] < number or self.bank[player_id] <= 0:
+            await ctx.reply("You don't have enough tokens. (Your balance is : {})".format(self.bank[player_id]))
+            return
+        await ctx.send("You played {} tokens".format(number))
+        if random.randint(0, 1) == 0:
+            self.bank[player_id] += number
+            await ctx.send("You won {} tokens ! (Your balance is : {})".format(number * 2, self.bank[player_id]))
+        else:
+            self.bank[player_id] -= number
+            await ctx.send("You lost {} tokens... (Your balance is : {})".format(number, self.bank[player_id]))
