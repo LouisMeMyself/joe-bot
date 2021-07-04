@@ -37,8 +37,11 @@ class JoeBot:
                     activity = "JOE: ${}".format(round(price, 4))
                     await self.discord_bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
                     await asyncio.sleep(60)
+            except ConnectionError:
+                print("Connection error, retrying in 60 seconds...")
             except:
-                print("Error on joeTicker, retrying in 60 seconds...")
+                print("Error, Quiting")
+                break
             await asyncio.sleep(60)
 
     async def joepic(self, ctx):
