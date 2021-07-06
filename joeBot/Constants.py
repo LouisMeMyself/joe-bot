@@ -1,6 +1,9 @@
+import json
+
 # Server
 TEST_SERVER_ID = 852632556137611334
 LIVE_SERVER_ID = 830990443457806347
+
 # Emojis
 EMOJI_CHECK = "✅"
 EMOJI_CROSS = "❌"
@@ -14,8 +17,15 @@ PROFILE_PICTURE_COMMAND = "!joepic"
 ROLE_FOR_CMD = "Bot Master"
 VERIFIED_USER_ROLE = "Joe"
 
-#SubGraph links
+# SubGraph links
 JOE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
+
+# address for web3
+JOETOKEN_ADDRESS = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
+
+# ABI for web3
+with open("utils/abi.json") as f:
+    JOETOKEN_ABI = json.load(f)
 
 # Errors
 ERROR_ON_PROFILE_PICTURE ="""How to use joeBot for profile pictures:
@@ -27,6 +37,24 @@ ERROR_ON_PROFILE_PICTURE ="""How to use joeBot for profile pictures:
 
 3. Save image + add as your Discord profile photo !"""
 
+ERROR_ON_PROFILE_PICTURE_TG ="""How to use /joepic for profile pictures:
+1. Choose a HEX color or a RGB color in this format: `#00FFFF`. [(color picker)](https://htmlcolorcodes.com/color-picker/)
+2. Enter this command `/joepic [color]` for the color of the jacket and `/joepic [color] [color]` for the color of the jacket and the skin with your selected color(s).
+   Add `beard [color]` at the end of the command to also change the color of the beard!"""
+
+
+# help
+HELP_TG = """JoeBot commands:
+/price : return the current price of $Joe.
+/about : return the current price of $Joe, the market cap and the circulating supply.
+/joepic : return a personnalised 3D Joe, (for more help, type /joepic).
+/tokenomics : return TraderJoe's tokenomics page.
+/contracts : return TraderJoe's contracts page.
+/docs : return TraderJoe's docs page.
+/discord : return TraderJoe's discord.
+/twitter : return TraderJoe's twitter.
+/website : return TraderJoe's website.
+"""
 
 class Channels:
     def __init__(self, server_id, bot):

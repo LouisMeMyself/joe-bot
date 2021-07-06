@@ -14,7 +14,6 @@ class JoeBot:
     joePic_ = JoePic.JoePic()
     discord_bot = commands.Bot
     channels = Constants.Channels
-    # bank = {}
 
     def __init__(self, discord_bot):
         self.discord_bot = discord_bot
@@ -190,28 +189,5 @@ class JoeBot:
                                                                delete_days, reason))
                 else:
                     await ctx.send("Bans canceled")
-
-
-    # async def play(self, ctx, number):
-    #     try:
-    #         number = int(number)
-    #     except:
-    #         return
-    #     if number <= 0:
-    #         await ctx.reply("You need to play at least 1 token.")
-    #         return
-    #     player_id = ctx.message.author.id
-    #     if player_id not in self.bank:
-    #         self.bank[player_id] = 500
-    #     if self.bank[player_id] < number or self.bank[player_id] <= 0:
-    #         await ctx.reply("You don't have enough tokens. (Your balance is : {})".format(self.bank[player_id]))
-    #         return
-    #     await ctx.send("You played {} tokens".format(number))
-    #     if random.randint(0, 1) == 0:
-    #         self.bank[player_id] += number
-    #         await ctx.send("You won {} tokens ! (Your balance is : {})".format(number * 2, self.bank[player_id]))
-    #     else:
-    #         self.bank[player_id] -= number
-    #         await ctx.send("You lost {} tokens... (Your balance is : {})".format(number, self.bank[player_id]))
 
 

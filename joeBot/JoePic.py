@@ -38,7 +38,7 @@ class JoePic:
             return new_color
         raise ValueError
 
-    def do_profile_picture(self, msg):
+    def do_profile_picture(self, msg, website="Discord"):
         beard = None
         try:
             if Constants.COMMAND_BEARD in msg:
@@ -78,6 +78,9 @@ class JoePic:
             else :
                 self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = "FDFDFD"
             svg2png("".join(self.joeSVG), write_to="utils/joe-logo.png")
-            return "Here is your personalized profile picture!", discord.File("utils/joe-logo.png")
+            if website == "Discord":
+                return "Here is your personalized profile picture!", discord.File("utils/joe-logo.png")
+            elif website == "Telegram":
+                return "utils/joe-logo.png"
         except:
             raise ValueError

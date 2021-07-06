@@ -1,4 +1,3 @@
-import asyncio
 import typing
 
 import discord
@@ -6,8 +5,6 @@ from discord.ext import commands
 from joeBot import Constants
 from joeBot.JoeBot import JoeBot
 import json
-
-from aiogram import Bot, Dispatcher, executor, types
 
 # Discord
 intents = discord.Intents.all()
@@ -37,13 +34,6 @@ async def joepic(ctx):
 async def suggest(ctx):
     """command for suggestions"""
     await joeBot.suggest(ctx)
-
-
-
-@discord_bot.command()
-async def play(ctx, msg):
-    """command for suggestions"""
-    await joeBot.play(ctx, msg)
 
 
 @discord_bot.command(pass_context=True)
