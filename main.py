@@ -31,6 +31,12 @@ async def joepic(ctx):
 
 
 @discord_bot.command()
+async def about(ctx):
+    """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
+    await joeBot.about(ctx)
+
+
+@discord_bot.command()
 async def suggest(ctx):
     """command for suggestions"""
     await joeBot.suggest(ctx)

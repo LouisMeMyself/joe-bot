@@ -6,9 +6,16 @@ from datetime import datetime
 
 import discord
 from discord.ext import commands
+from web3 import Web3
 
 from joeBot import JoePic, Constants, JoeSubGraph
 
+
+# web3
+w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
+if not w3.isConnected():
+    print("Error web3 can't connect")
+joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.JOETOKEN_ABI)
 
 class JoeBot:
     joePic_ = JoePic.JoePic()
@@ -42,6 +49,14 @@ class JoeBot:
                 print("Error, Quiting")
                 break
             await asyncio.sleep(60)
+
+    async def about(self, ctx):
+        if ctx.message.channel.id == self.channels.COMMAND_CHANNEL_ID:
+            price = await JoeSubGraph.getJoePrice()
+            csupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
+            mktcap = price * csupply
+            await ctx.send("""JOE price is ${}\nMarket Cap: ${}\nCirculating Supply: {}""".format(round(price, 4), '{:,}'.format(int(mktcap)).replace(',', ' '),'{:,}'.format(int(csupply))).replace(',', ' '))
+        return
 
     async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
@@ -189,5 +204,3 @@ class JoeBot:
                                                                delete_days, reason))
                 else:
                     await ctx.send("Bans canceled")
-
-
