@@ -2,7 +2,7 @@ import logging, json
 
 from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
-from joeBot import JoeSubGraph, Constants, JoePic
+from joeBot import JoeSubGraph, JoePic, Constants
 
 joePic_ = JoePic.JoePic()
 
@@ -35,7 +35,11 @@ async def about(message: types.Message):
     price = await JoeSubGraph.getJoePrice()
     csupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
     mktcap = price * csupply
-    await bot.send_message(message.chat.id, """JOE price is ${}\nMarket Cap: ${}\nCirculating Supply: {}""".format(round(price, 4), '{:,}'.format(int(mktcap)).replace(',', ' '), '{:,}'.format(int(csupply))).replace(',', ' '))
+    tvl = await JoeSubGraph.getTVL()
+    await bot.send_message(message.chat.id, """JOE price is ${}
+Market Cap: ${}
+Circulating Supply: {}
+Total Value Locked: ${}""".format(readable(price, 4), readable(mktcap), readable(csupply), readable(tvl)))
 
 @dp.message_handler(commands='joepic')
 async def joepic(message: types.Message):
@@ -82,7 +86,8 @@ async def help(message: types.Message):
     '''print Constants.HELP_TG'''
     await bot.send_message(message.chat.id, Constants.HELP_TG)
 
-
+def readable(nb, rounding=0):
+    return '{:,}'.format(round(nb, rounding)).replace(',', ' ')
 
 if __name__ == "__main__":
     executor.start_polling(dp)

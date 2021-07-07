@@ -24,7 +24,7 @@ JOE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
 JOETOKEN_ADDRESS = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
 
 # ABI for web3
-with open("utils/abi.json") as f:
+with open("utils/abi.json", "r") as f:
     JOETOKEN_ABI = json.load(f)
 
 # Errors

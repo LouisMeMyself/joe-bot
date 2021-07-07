@@ -17,4 +17,14 @@ async def getJoePrice():
     joeDerivedAvax = float(query["data"]["token"]["derivedAVAX"])
     return avaxPrice * joeDerivedAvax
 
+
+async def getTVL():
+    query = await genericQuery("""{pairs{reserveUSD}}""")
+    sum_ = 0
+    for reserveUSD in query["data"]["pairs"]:
+        sum_ += float(reserveUSD["reserveUSD"])
+    return sum_
+
+
 # print(asyncio.run(getJoePrice()))
+# print(asyncio.run(getTVL()))

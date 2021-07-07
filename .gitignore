@@ -9,5 +9,5 @@ venv
 
 # Personal Files
 .key
-*.json
+save
 *.png

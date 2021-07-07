@@ -1,6 +1,5 @@
 import asyncio
 import json
-import random
 import typing
 from datetime import datetime
 
@@ -8,8 +7,7 @@ import discord
 from discord.ext import commands
 from web3 import Web3
 
-from joeBot import JoePic, Constants, JoeSubGraph
-
+from joeBot import JoePic, JoeSubGraph, Constants
 
 # web3
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
@@ -51,11 +49,14 @@ class JoeBot:
             # await asyncio.sleep(60)
 
     async def about(self, ctx):
-        if ctx.message.channel.id == self.channels.COMMAND_CHANNEL_ID:
-            price = await JoeSubGraph.getJoePrice()
-            csupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
-            mktcap = price * csupply
-            await ctx.send("""JOE price is ${}\nMarket Cap: ${}\nCirculating Supply: {}""".format(round(price, 4), '{:,}'.format(int(mktcap)).replace(',', ' '),'{:,}'.format(int(csupply))).replace(',', ' '))
+        price = await JoeSubGraph.getJoePrice()
+        csupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
+        mktcap = price * csupply
+        tvl = await JoeSubGraph.getTVL()
+        await ctx.send("""JOE price is ${}
+Market Cap: ${}
+Circulating Supply: {}
+Total Value Locked: ${}""".format(readable(price, 4), readable(mktcap), readable(csupply), readable(tvl)))
         return
 
     async def joepic(self, ctx):
@@ -159,7 +160,7 @@ class JoeBot:
 
         server = {"server": categories, "member": members, "roles": roles}
 
-        with open('{}.json'.format(datetime.now().strftime("%d_%m_%Y %H_%M_%S")), 'w', encoding='utf-8') as f:
+        with open('save{}.json'.format(datetime.now().strftime("%d_%m_%Y %H_%M_%S")), 'w', encoding='utf-8') as f:
             json.dump(server, f, ensure_ascii=False, indent=4)
 
         await ctx.reply("Server has been saved")
@@ -182,7 +183,7 @@ class JoeBot:
 
             def check(reaction_, user_):
                 return user_ == ctx.message.author and (str(reaction_.emoji) in (
-                Constants.EMOJI_CHECK, Constants.EMOJI_CROSS))
+                    Constants.EMOJI_CHECK, Constants.EMOJI_CROSS))
 
             try:
                 reaction, user = await self.discord_bot.wait_for('reaction_add', timeout=60.0, check=check)
@@ -204,3 +205,10 @@ class JoeBot:
                                                                delete_days, reason))
                 else:
                     await ctx.send("Bans canceled")
+
+
+def readable(nb, rounding=0):
+    if rounding == 0:
+        return '{:,}'.format(int(nb)).replace(',', ' ')
+    else:
+        return '{:,}'.format(round(nb, rounding)).replace(',', ' ')
