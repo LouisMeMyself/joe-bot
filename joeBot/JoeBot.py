@@ -44,7 +44,10 @@ class JoeBot:
             except ConnectionError:
                 print("Connection error, retrying in 60 seconds...")
             except AssertionError:
-                print(AssertionError)
+                print("Assertion Error, retrying in 60 seconds...")
+            except KeyboardInterrupt:
+                print(KeyboardInterrupt)
+                break
             await asyncio.sleep(60)
 
     async def about(self, ctx):
