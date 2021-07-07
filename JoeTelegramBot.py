@@ -38,8 +38,8 @@ async def about(message: types.Message):
     tvl = await JoeSubGraph.getTVL()
     await bot.send_message(message.chat.id, """JOE price is ${}
 Market Cap: ${}
-Circulating Supply: {}
-Total Value Locked: ${}""".format(readable(price, 4), readable(mktcap), readable(csupply), readable(tvl)))
+Circ. Supply: {}
+TVL: ${}""".format(readable(price, 4), readable(mktcap), readable(csupply), readable(tvl)))
 
 @dp.message_handler(commands='joepic')
 async def joepic(message: types.Message):
