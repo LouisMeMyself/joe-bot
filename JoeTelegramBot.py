@@ -87,7 +87,10 @@ async def help(message: types.Message):
     await bot.send_message(message.chat.id, Constants.HELP_TG)
 
 def readable(nb, rounding=0):
-    return '{:,}'.format(round(nb, rounding)).replace(',', ' ')
+    if rounding == 0:
+        return '{:,}'.format(int(nb)).replace(',', ' ')
+    else:
+        return '{:,}'.format(round(nb, rounding)).replace(',', ' ')
 
 if __name__ == "__main__":
     executor.start_polling(dp)
