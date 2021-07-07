@@ -33,20 +33,19 @@ class JoeBot:
         self.discord_bot.loop.create_task(self.joeTicker())
 
     async def joeTicker(self):
-        # while 1:
-            # try:
-        print("joeTicker is up")
         while 1:
-            price = await JoeSubGraph.getJoePrice()
-            activity = "JOE: ${}".format(round(price, 4))
-            await self.discord_bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
+            try:
+                print("joeTicker is up")
+                while 1:
+                    price = await JoeSubGraph.getJoePrice()
+                    activity = "JOE: ${}".format(round(price, 4))
+                    await self.discord_bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
+                    await asyncio.sleep(60)
+            except ConnectionError:
+                print("Connection error, retrying in 60 seconds...")
+            except AssertionError:
+                print(AssertionError)
             await asyncio.sleep(60)
-            # except ConnectionError:
-            #     print("Connection error, retrying in 60 seconds...")
-            # except:
-            #     print("Error, Quiting")
-            #     break
-            # await asyncio.sleep(60)
 
     async def about(self, ctx):
         price = await JoeSubGraph.getJoePrice()
