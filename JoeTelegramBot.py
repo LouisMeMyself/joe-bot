@@ -3,6 +3,7 @@ import logging, json
 from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
 from joeBot import JoeSubGraph, JoePic, Constants
+from utils.beautify_string import readable, human_format
 
 joePic_ = JoePic.JoePic()
 
@@ -39,7 +40,7 @@ async def about(message: types.Message):
     await bot.send_message(message.chat.id, """JOE price is ${}
 Market Cap: ${}
 Circ. Supply: {}
-TVL: ${}""".format(readable(price, 4), readable(mktcap), readable(csupply), readable(tvl)))
+TVL: ${}""".format(readable(price, 4), human_format(mktcap), human_format(csupply), human_format(tvl)))
 
 @dp.message_handler(commands='joepic')
 async def joepic(message: types.Message):
@@ -85,12 +86,6 @@ async def website(message: types.Message):
 async def help(message: types.Message):
     '''print Constants.HELP_TG'''
     await bot.send_message(message.chat.id, Constants.HELP_TG)
-
-def readable(nb, rounding=0):
-    if rounding == 0:
-        return '{:,}'.format(int(nb)).replace(',', ' ')
-    else:
-        return '{:,}'.format(round(nb, rounding)).replace(',', ' ')
 
 if __name__ == "__main__":
     executor.start_polling(dp)

@@ -2,7 +2,7 @@ import asyncio
 import json
 import typing
 from datetime import datetime
-
+from utils.beautify_string import readable, human_format
 import discord
 from discord.ext import commands
 from web3 import Web3
@@ -58,7 +58,7 @@ class JoeBot:
         await ctx.send("""JOE price is ${}
 Market Cap: ${}
 Circulating Supply: {}
-Total Value Locked: ${}""".format(readable(price, 4), readable(mktcap), readable(csupply), readable(tvl)))
+Total Value Locked: ${}""".format(readable(price, 4), human_format(mktcap), human_format(csupply), human_format(tvl)))
         return
 
     async def joepic(self, ctx):
@@ -207,10 +207,3 @@ Total Value Locked: ${}""".format(readable(price, 4), readable(mktcap), readable
                                                                delete_days, reason))
                 else:
                     await ctx.send("Bans canceled")
-
-
-def readable(nb, rounding=0):
-    if rounding == 0:
-        return '{:,}'.format(int(nb)).replace(',', ' ')
-    else:
-        return '{:,}'.format(round(nb, rounding)).replace(',', ' ')
