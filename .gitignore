@@ -9,5 +9,5 @@ venv
 
 # Personal Files
 .key
-save
+*save*
 *.png

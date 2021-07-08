@@ -46,7 +46,7 @@ ERROR_ON_PROFILE_PICTURE_TG ="""How to use /joepic for profile pictures:
 # help
 HELP_TG = """JoeBot commands:
 /price : return the current price of $Joe.
-/about : return the current price of $Joe, the market cap and the circulating supply.
+/about : return the current price of $Joe, the market cap, the circulating supply and the total value locked.
 /joepic : return a personnalised 3D Joe, (for more help, type /joepic).
 /tokenomics : return TraderJoe's tokenomics page.
 /contracts : return TraderJoe's contracts page.
