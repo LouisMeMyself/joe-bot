@@ -55,17 +55,17 @@ async def joepic(message: types.Message):
 @dp.message_handler(commands='tokenomics')
 async def tokenomics(message: types.Message):
     '''return TraderJoe's tokenomics page.'''
-    await bot.send_message(message.chat.id, "https://docs.traderjoe.xyz/tokenomics")
+    await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com/en/tokenomics")
 
 @dp.message_handler(commands='contracts')
 async def contracts(message: types.Message):
     '''return TraderJoe's contracts page.'''
-    await bot.send_message(message.chat.id, "https://docs.traderjoe.xyz/contracts")
+    await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com/en/contracts")
 
 @dp.message_handler(commands='docs')
 async def docs(message: types.Message):
     '''return TraderJoe's docs page.'''
-    await bot.send_message(message.chat.id, "https://docs.traderjoe.xyz")
+    await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com")
 
 @dp.message_handler(commands='discord')
 async def discord(message: types.Message):
@@ -80,7 +80,7 @@ async def twitter(message: types.Message):
 @dp.message_handler(commands='website')
 async def website(message: types.Message):
     '''return TraderJoe's website.'''
-    await bot.send_message(message.chat.id, "https://www.traderjoe.xyz")
+    await bot.send_message(message.chat.id, "https://www.traderjoexyz.com")
 
 @dp.message_handler(commands='help')
 async def help(message: types.Message):
