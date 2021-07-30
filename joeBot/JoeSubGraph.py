@@ -3,14 +3,19 @@ import json, requests
 from joeBot import Constants
 
 
-async def genericQuery(query):
-    r = requests.post(Constants.JOE_SG_URL, json={'query': query})
+async def genericExchangeQuery(query):
+    r = requests.post(Constants.JOE_EXCHANGE_SG_URL, json={'query': query})
+    assert(r.status_code == 200)
+    return json.loads(r.text)
+
+async def genericBarQuery(query):
+    r = requests.post(Constants.JOE_BAR_SG_URL, json={'query': query})
     assert(r.status_code == 200)
     return json.loads(r.text)
 
 
 async def getJoePrice():
-    query = await genericQuery("""{
+    query = await genericExchangeQuery("""{
   token(id: "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd") {derivedAVAX}
   bundles {avaxPrice}}""")
     avaxPrice = float(query["data"]["bundles"][0]["avaxPrice"])
@@ -19,12 +24,15 @@ async def getJoePrice():
 
 
 async def getTVL():
-    query = await genericQuery("""{pairs{reserveUSD}}""")
-    sum_ = 0
-    for reserveUSD in query["data"]["pairs"]:
+    queryExchange = await genericExchangeQuery("""{pairs{reserveUSD}}""")
+    queryBar = await genericBarQuery("""{bars{joeHarvestedUSD}}""")
+
+    sum_ = float(queryBar["data"]["bars"][0]["joeHarvestedUSD"])
+    for reserveUSD in queryExchange["data"]["pairs"]:
         sum_ += float(reserveUSD["reserveUSD"])
     return sum_
 
 
+
 # print(asyncio.run(getJoePrice()))
-# print(asyncio.run(getTVL()))
+print(asyncio.run(getTVL()))

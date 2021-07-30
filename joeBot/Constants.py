@@ -18,14 +18,15 @@ ROLE_FOR_CMD = "Bot Master"
 VERIFIED_USER_ROLE = "Joe"
 
 # SubGraph links
-JOE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
+JOE_EXCHANGE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
+JOE_BAR_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/bar"
 
 # address for web3
 JOETOKEN_ADDRESS = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
 
 # ABI for web3
-with open("utils/abi.json", "r") as f:
-    JOETOKEN_ABI = json.load(f)
+# with open("utils/abi.json", "r") as f:
+#     JOETOKEN_ABI = json.load(f)
 
 # Errors
 ERROR_ON_PROFILE_PICTURE ="""How to use joeBot for profile pictures:
