@@ -55,7 +55,7 @@ async def joepic(message: types.Message):
 @dp.message_handler(commands='lambo')
 async def joepic(message: types.Message):
     '''return a cool joe car, (for more help, type /joepic).'''
-    await bot.send_photo(chat_id=message.chat.id, photo=open("utils/joelambo.jpg", 'rb'))
+    await bot.send_video(chat_id=message.chat.id, video=open("utils/joelambo.mp4", 'rb'), supports_streaming=True)
     return
 
 @dp.message_handler(commands='tokenomics')

@@ -33,6 +33,6 @@ async def getTVL():
     return sum_
 
 
-
-# print(asyncio.run(getJoePrice()))
-# print(asyncio.run(getTVL()))
+if __name__ == '__main__':
+    print(asyncio.run(getJoePrice()))
+    print(asyncio.run(getTVL()))
