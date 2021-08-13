@@ -52,6 +52,12 @@ async def joepic(message: types.Message):
         await bot.send_message(message.chat.id, Constants.ERROR_ON_PROFILE_PICTURE_TG)
         return
 
+@dp.message_handler(commands='lambo')
+async def joepic(message: types.Message):
+    '''return a cool joe car, (for more help, type /joepic).'''
+    await bot.send_photo(chat_id=message.chat.id, photo=open("utils/joelambo.jpg", 'rb'))
+    return
+
 @dp.message_handler(commands='tokenomics')
 async def tokenomics(message: types.Message):
     '''return TraderJoe's tokenomics page.'''
