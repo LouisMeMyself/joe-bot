@@ -35,4 +35,4 @@ async def getTVL():
 
 
 # print(asyncio.run(getJoePrice()))
-print(asyncio.run(getTVL()))
+# print(asyncio.run(getTVL()))
