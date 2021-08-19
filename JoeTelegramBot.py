@@ -1,4 +1,6 @@
+import asyncio
 import logging, json
+from datetime import datetime
 
 from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
@@ -6,6 +8,7 @@ from joeBot import JoeSubGraph, JoePic, Constants
 from utils.beautify_string import readable, human_format
 
 joePic_ = JoePic.JoePic()
+ticker_infos = {"started": False, "chat_id": 0}
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +26,58 @@ w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.JOETOKEN_ABI)
+
+@dp.message_handler(commands='startticker')
+async def startTicker(message: types.Message):
+    global ticker_infos
+    '''return the current price of $Joe'''
+    member = await bot.get_chat_member(message.chat.id, message.from_user.id)
+    if not member.is_chat_admin():
+        await bot.send_message(message.chat.id, "You're not admin, you can't use that command.")
+        return
+    if not ticker_infos["started"]:
+        ticker_infos["started"] = True
+        ticker_infos["chat_id"] = message.chat.id
+        await joeTicker()
+    else:
+        await bot.send_message(message.chat.id, "JoeTicker already started.")
+
+@dp.message_handler(commands='stopticker')
+async def stoptTicker(message: types.Message):
+    global ticker_infos
+    '''return the current price of $Joe'''
+    member = await bot.get_chat_member(message.chat.id, message.from_user.id)
+    if not member.is_chat_admin():
+        return
+    ticker_infos["started"] = False
+    ticker_infos["chat_id"] = 0
+    await bot.send_message(message.chat.id, "JoeTicker stopped.")
+
+
+async def joeTicker():
+    time_between_updates = 10
+    mess_id = await bot.send_message(ticker_infos["chat_id"],
+                           "JOE price is $X")
+    while ticker_infos["started"]:
+        try:
+            print("joeTicker is up")
+            while ticker_infos["started"]:
+                price = await JoeSubGraph.getJoePrice()
+                # await bot.set_chat_title(ticker_infos["chat_id"],
+                #                          "TEST Trader Joe Trading - $Joe: ${}".format(round(price, 4)))
+                await bot.edit_message_text("JOE price is ${} (updated at {} UTC)".format(round(price, 4), datetime.utcnow().strftime("%H:%M:%S")),
+                                            ticker_infos["chat_id"],
+                                            mess_id.message_id
+                                            )
+                await asyncio.sleep(time_between_updates)
+        except ConnectionError:
+            print("Connection error, retrying in 60 seconds...")
+        except AssertionError:
+            print("Assertion Error, retrying in 60 seconds...")
+        except KeyboardInterrupt:
+            print(KeyboardInterrupt)
+            break
+        await asyncio.sleep(time_between_updates)
 
 @dp.message_handler(commands='price')
 async def price(message: types.Message):
