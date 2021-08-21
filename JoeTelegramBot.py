@@ -109,13 +109,13 @@ async def joepic(message: types.Message):
 
 @dp.message_handler(commands='lambo')
 async def lambo(message: types.Message):
-    '''return a cool joe car, (for more help, type /joepic).'''
+    '''return a cool joe car.'''
     await bot.send_video(chat_id=message.chat.id, video=open("utils/joelambo.mp4", 'rb'), supports_streaming=True)
     return
 
 @dp.message_handler(commands='rain')
-async def lambo(message: types.Message):
-    '''return a cool joe car, (for more help, type /joepic).'''
+async def rain(message: types.Message):
+    '''return a cool joe rain.'''
     await bot.send_video(chat_id=message.chat.id, video=open("utils/joerain.mp4", 'rb'), supports_streaming=True)
     return
 
