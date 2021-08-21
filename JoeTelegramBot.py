@@ -51,6 +51,7 @@ async def stoptTicker(message: types.Message):
         return
     ticker_infos["started"] = False
     ticker_infos["chat_id"] = 0
+
     await bot.send_message(message.chat.id, "JoeTicker stopped.")
 
 
@@ -58,17 +59,16 @@ async def joeTicker():
     time_between_updates = 10
     mess_id = await bot.send_message(ticker_infos["chat_id"],
                            "JOE price is $X")
+    mess = "JOE price is $X"
     while ticker_infos["started"]:
         try:
             print("joeTicker is up")
             while ticker_infos["started"]:
                 price = await JoeSubGraph.getJoePrice()
-                # await bot.set_chat_title(ticker_infos["chat_id"],
-                #                          "TEST Trader Joe Trading - $Joe: ${}".format(round(price, 4)))
-                await bot.edit_message_text("JOE price is ${} (updated at {} UTC)".format(round(price, 4), datetime.utcnow().strftime("%H:%M:%S")),
-                                            ticker_infos["chat_id"],
-                                            mess_id.message_id
-                                            )
+                new_mess = "JOE price is ${} (updated at {} UTC)".format(round(price, 4), datetime.utcnow().strftime("%H:%M:%S"))
+                if new_mess != mess:
+                    mess = new_mess
+                    await bot.edit_message_text(mess, ticker_infos["chat_id"], mess_id.message_id )
                 await asyncio.sleep(time_between_updates)
         except ConnectionError:
             print("Connection error, retrying in 60 seconds...")
@@ -111,6 +111,12 @@ async def joepic(message: types.Message):
 async def lambo(message: types.Message):
     '''return a cool joe car, (for more help, type /joepic).'''
     await bot.send_video(chat_id=message.chat.id, video=open("utils/joelambo.mp4", 'rb'), supports_streaming=True)
+    return
+
+@dp.message_handler(commands='rain')
+async def lambo(message: types.Message):
+    '''return a cool joe car, (for more help, type /joepic).'''
+    await bot.send_video(chat_id=message.chat.id, video=open("utils/joerain.mp4", 'rb'), supports_streaming=True)
     return
 
 @dp.message_handler(commands='comfy')
