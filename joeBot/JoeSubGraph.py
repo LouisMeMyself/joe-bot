@@ -1,7 +1,14 @@
 import asyncio
 import json, requests
+
+from web3 import Web3
 from joeBot import Constants
 
+# web3
+w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
+if not w3.isConnected():
+    print("Error web3 can't connect")
+joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.JOETOKEN_ABI)
 
 async def genericExchangeQuery(query):
     r = requests.post(Constants.JOE_EXCHANGE_SG_URL, json={'query': query})
@@ -22,12 +29,14 @@ async def getJoePrice():
     joeDerivedAvax = float(query["data"]["token"]["derivedAVAX"])
     return avaxPrice * joeDerivedAvax
 
+import numpy as np
 
 async def getTVL():
     queryExchange = await genericExchangeQuery("""{pairs{reserveUSD}}""")
-    queryBar = await genericBarQuery("""{bars{joeHarvestedUSD}}""")
+    JoeHeldInJoeBar = float(w3.fromWei(joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(), 'ether'))
+    joePrice = await  getJoePrice()
 
-    sum_ = float(queryBar["data"]["bars"][0]["joeHarvestedUSD"])
+    sum_ = JoeHeldInJoeBar * joePrice
     for reserveUSD in queryExchange["data"]["pairs"]:
         sum_ += float(reserveUSD["reserveUSD"])
     return sum_

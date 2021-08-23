@@ -23,13 +23,15 @@ JOE_BAR_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/bar"
 
 # address for web3
 JOETOKEN_ADDRESS = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
+JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
 
 # ABI for web3
 try:
-    with open("utils/abi.json", "r") as f:
+    with open("utils/joetokenabi.json", "r") as f:
         JOETOKEN_ABI = json.load(f)
 except:
-    JOETOKEN_ABI = ""
+    with open("D:/Python_scripts/JoeBot/utils/joetokenabi.json", "r") as f:
+        JOETOKEN_ABI = json.load(f)
 
 # Errors
 ERROR_ON_PROFILE_PICTURE ="""How to use joeBot for profile pictures:
