@@ -27,14 +27,30 @@ JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
 
 # ABI for web3
 try:
-    with open("utils/joetokenabi.json", "r") as f:
+    with open("content/abis/joetokenabi.json", "r") as f:
         JOETOKEN_ABI = json.load(f)
 except:
-    with open("D:/Python_scripts/JoeBot/utils/joetokenabi.json", "r") as f:
+    with open("D:/Python_scripts/JoeBot/content/abis/joetokenabi.json", "r") as f:
         JOETOKEN_ABI = json.load(f)
 
+# assets address
+def reloadAvaxAssets():
+    try:
+        with open("utils/avaxassets.json", "r") as f:
+            dic = json.load(f)
+    except:
+        with open("D:/Python_scripts/JoeBot/utils/avaxassets.json", "r") as f:
+            dic = json.load(f)
+    return dic
+
+
+NAME2ADDRESS = reloadAvaxAssets()
+
+# joe ticker
+JOE_TICKER = {}
+
 # Errors
-ERROR_ON_PROFILE_PICTURE ="""How to use joeBot for profile pictures:
+ERROR_ON_PROFILE_PICTURE = """How to use joeBot for profile pictures:
 
 1. Choose a HEX color or a RGB color in this format: `#00FFFF`. [(color picker)](https://htmlcolorcodes.com/color-picker/)
 
@@ -43,11 +59,10 @@ ERROR_ON_PROFILE_PICTURE ="""How to use joeBot for profile pictures:
 
 3. Save image + add as your Discord profile photo !"""
 
-ERROR_ON_PROFILE_PICTURE_TG ="""How to use /joepic for profile pictures:
+ERROR_ON_PROFILE_PICTURE_TG = """How to use /joepic for profile pictures:
 1. Choose a HEX color or a RGB color in this format: `#00FFFF`. [(color picker)](https://htmlcolorcodes.com/color-picker/)
 2. Enter this command `/joepic [color]` for the color of the jacket and `/joepic [color] [color]` for the color of the jacket and the skin with your selected color(s).
    Add `beard [color]` at the end of the command to also change the color of the beard!"""
-
 
 # help
 HELP_TG = """JoeBot commands:
@@ -61,6 +76,7 @@ HELP_TG = """JoeBot commands:
 /twitter : return TraderJoe's twitter.
 /website : return TraderJoe's website.
 """
+
 
 class Channels:
     def __init__(self, server_id, bot):
@@ -79,11 +95,10 @@ class Channels:
 
         self.JOEPIC_CHANNEL_ID = (852663823982788678, 852632612451123221)[server_nb]  # "👨🏻-profile-pictures"
         self.SUGGESTION_CHANNEL_ID = (843655526906593380, 852632695522459709)[server_nb]  # "👨🏻-profile-pictures"
-        self.GUIDELINES_CHANNEL_ID = (830990443910529047, 852636664869158912)[server_nb]  # "📚-guidelines-and-resources"
+        self.GUIDELINES_CHANNEL_ID = (830990443910529047, 852636664869158912)[
+            server_nb]  # "📚-guidelines-and-resources"
         self.COMMAND_CHANNEL_ID = (852658830987100190, 853397123713204244)[server_nb]  # "🤖-bot-commands"
         self.GUIDELINES_MSG_ID = (843668142764589076, 852636768788021288)[server_nb]
 
     def get_channel(self, channel_id):
         return self.__channel[channel_id]
-
-

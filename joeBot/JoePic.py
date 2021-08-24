@@ -8,7 +8,7 @@ from joeBot import Constants
 class JoePic:
     def __init__(self):
         self.hex_regex = re.compile("^[0-9a-fA-F]{6}")
-        with open("utils/joe-logo.svg", "rb") as f:
+        with open("content/images/joe-logo.svg", "rb") as f:
             self.joeSVG = f.read().decode("utf-8")
         self.joe_clothes = str(self.joeSVG).find("#DB5B54;}")
         self.joe_skin = str(self.joeSVG).find("#BD967F;}")
