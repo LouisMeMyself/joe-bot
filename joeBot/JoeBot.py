@@ -2,7 +2,7 @@ import asyncio
 import json
 import typing
 from datetime import datetime
-from utils.beautify_string import readable, human_format
+from joeBot.beautify_string import readable, human_format
 import discord
 from discord.ext import commands
 from web3 import Web3
@@ -51,14 +51,8 @@ class JoeBot:
             await asyncio.sleep(60)
 
     async def about(self, ctx):
-        price = await JoeSubGraph.getJoePrice()
-        csupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
-        mktcap = price * csupply
-        tvl = await JoeSubGraph.getTVL()
-        await ctx.send("""JOE price is ${}
-Market Cap: ${}
-Circulating Supply: {}
-Total Value Locked: ${}""".format(readable(price, 4), human_format(mktcap), human_format(csupply), human_format(tvl)))
+        about = await JoeSubGraph.getAbout()
+        await ctx.send(about)
         return
 
     async def joepic(self, ctx):

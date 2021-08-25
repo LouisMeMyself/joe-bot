@@ -1,11 +1,12 @@
 import asyncio
 import json, requests
-import time
 
 from web3 import Web3
 from joeBot import Constants
 
 # web3
+from joeBot.beautify_string import readable, human_format
+
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
@@ -75,8 +76,19 @@ async def reloadAssets():
             dic[key] = value
     Constants.NAME2ADDRESS = dic
 
+async def getAbout():
+    joePrice = await getJoePrice()
+    avaxPrice = await getAvaxPrice()
+    csupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
+    mktcap = joePrice * csupply
+    tvl = await getTVL()
+    return "$JOE: ${}\n" \
+           "$AVAX: ${}\n" \
+           "Market Cap: ${}\n" \
+           "Circ. Supply: {}\n" \
+           "TVL: ${}".format(readable(joePrice, 4), human_format(avaxPrice), human_format(mktcap), human_format(csupply), human_format(tvl))
 
 if __name__ == '__main__':
     print(asyncio.run(getJoePrice()))
     print(asyncio.run(getTVL()))
-    print(asyncio.run(reloadAssets()))
+    print(asyncio.run(getAbout()))

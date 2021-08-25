@@ -5,7 +5,7 @@ from datetime import datetime
 from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
 from joeBot import JoeSubGraph, JoePic, Constants
-from utils.beautify_string import readable, human_format
+from joeBot.beautify_string import readable, human_format
 import time
 
 joePic_ = JoePic.JoePic()
@@ -138,12 +138,12 @@ async def price(message: types.Message):
                                                     "tracked with JoeBot")
             return
         priceInDollar, assetPerAvax = prices
-        await bot.send_message(message.chat.id, "${} : ${}\n{} {}/Avax".format(msg.upper(), human_format(priceInDollar),
+        await bot.send_message(message.chat.id, "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), human_format(priceInDollar),
                                                                                human_format(assetPerAvax), msg.upper()))
         return
     price = float(await JoeSubGraph.getJoePrice())
     avaxp = float(await JoeSubGraph.getAvaxPrice())
-    await bot.send_message(message.chat.id, "$JOE : ${}\n{} JOE/Avax".format(round(price, 4), round(avaxp/price, 4)))
+    await bot.send_message(message.chat.id, "$JOE: ${}\n{} $JOE/$AVAX".format(round(price, 4), round(avaxp/price, 4)))
 
 
 @dp.message_handler(commands='about')
@@ -151,14 +151,8 @@ async def about(message: types.Message):
     '''return the current price of $Joe, the market cap and the circulating supply.'''
     if not lasttime.isLast():
         return
-    price = await JoeSubGraph.getJoePrice()
-    csupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
-    mktcap = price * csupply
-    tvl = await JoeSubGraph.getTVL()
-    await bot.send_message(message.chat.id, """JOE price is ${}
-Market Cap: ${}
-Circ. Supply: {}
-TVL: ${}""".format(readable(price, 4), human_format(mktcap), human_format(csupply), human_format(tvl)))
+    about = await JoeSubGraph.getAbout()
+    await bot.send_message(message.chat.id, about)
 
 
 @dp.message_handler(commands='joepic')
