@@ -79,7 +79,11 @@ async def reloadAssets():
 async def getAbout():
     joePrice = await getJoePrice()
     avaxPrice = await getAvaxPrice()
-    csupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
+    tsupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
+    develeopmentFunds = float(w3.fromWei(joetoken_contract.functions.balanceOf("0xaFF90532E2937fF290009521e7e120ed062d4F34").call(), 'ether'))
+    foundationFunds = float(w3.fromWei(joetoken_contract.functions.balanceOf("0x66Fb02746d72bC640643FdBa3aEFE9C126f0AA4f").call(), 'ether'))
+    strategicInvestorFunds = float(w3.fromWei(joetoken_contract.functions.balanceOf("0xc13B1C927565C5AF8fcaF9eF7387172c447f6796").call(), 'ether'))
+    csupply = tsupply - develeopmentFunds - foundationFunds - strategicInvestorFunds
     mktcap = joePrice * csupply
     tvl = await getTVL()
     return "$JOE: ${}\n" \
