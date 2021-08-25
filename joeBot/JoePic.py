@@ -77,10 +77,10 @@ class JoePic:
                 self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = self.str2hex(beard)
             else :
                 self.joeSVG[self.joe_beard + 1: self.joe_beard + 7] = "FDFDFD"
-            svg2png("".join(self.joeSVG), write_to="utils/joe-logo.png")
+            svg2png("".join(self.joeSVG), write_to="content/images/joe-logo.png")
             if website == "Discord":
-                return "Here is your personalized profile picture!", discord.File("utils/joe-logo.png")
+                return "Here is your personalized profile picture!", discord.File("content/images/joe-logo.png")
             elif website == "Telegram":
-                return "utils/joe-logo.png"
+                return "content/images/joe-logo.png"
         except:
             raise ValueError
