@@ -269,9 +269,9 @@ async def help(message: types.Message):
     await bot.send_message(message.chat.id, Constants.HELP_TG)
 
 
-@dp.message_handler(commands='reloadAssets')
+@dp.message_handler(commands='reloadassets')
 async def reloadAssets(message: types.Message):
-    '''return assets'''
+    '''reload assets'''
     if not lasttime.isLast():
         return
     global ticker_infos
@@ -285,3 +285,4 @@ async def reloadAssets(message: types.Message):
 
 if __name__ == "__main__":
     executor.start_polling(dp)
+    Constants.NAME2ADDRESS = JoeSubGraph.reloadAssets()

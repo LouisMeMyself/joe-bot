@@ -73,9 +73,7 @@ async def reloadAssets():
             pass
         else:
             dic[key] = value
-    with open("D:/Python_scripts/JoeBot/utils/avaxassets.json", "w") as f:
-        json.dump(dic, f)
-    Constants.reloadAvaxAssets()
+    Constants.NAME2ADDRESS = dic
 
 
 if __name__ == '__main__':

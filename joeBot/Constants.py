@@ -34,17 +34,7 @@ except:
         JOETOKEN_ABI = json.load(f)
 
 # assets address
-def reloadAvaxAssets():
-    try:
-        with open("utils/avaxassets.json", "r") as f:
-            dic = json.load(f)
-    except:
-        with open("D:/Python_scripts/JoeBot/utils/avaxassets.json", "r") as f:
-            dic = json.load(f)
-    return dic
-
-
-NAME2ADDRESS = reloadAvaxAssets()
+NAME2ADDRESS = {}
 
 # joe ticker
 JOE_TICKER = {}
