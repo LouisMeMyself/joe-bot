@@ -30,26 +30,28 @@ joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Cons
 
 # safeguard to not spam
 
-class lastTime:
+class Timer:
     def __init__(self):
-        self.last_time = 0
+        self.last_msg_time = {}
         self.cooldown_in_s = 1
 
-    def isLast(self):
-        if self.last_time + self.cooldown_in_s > time.time():
+    def canMessageOnChatId(self, chat_id):
+        if chat_id not in self.last_msg_time:
+            self.last_msg_time[chat_id] = 0
+        if self.last_msg_time[chat_id] + self.cooldown_in_s > time.time():
             return False
         else:
-            self.last_time = time.time()
+            self.last_msg_time[chat_id] = time.time()
             return True
 
 
-lasttime = lastTime()
+timer = Timer()
 
 
 @dp.message_handler(commands='startticker')
 async def startTicker(message: types.Message):
     '''start joeticker'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
 
     member = await bot.get_chat_member(message.chat.id, message.from_user.id)
@@ -73,7 +75,7 @@ async def startTicker(message: types.Message):
 @dp.message_handler(commands='stopticker')
 async def stopTicker(message: types.Message):
     '''stop joeTicker'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     chat_id = message.chat.id
     member = await bot.get_chat_member(chat_id, message.from_user.id)
@@ -124,7 +126,7 @@ async def joeTicker(chat_id, mess_id):
 @dp.message_handler(commands='price')
 async def price(message: types.Message):
     '''return the current price of $Joe'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     msg = message.text.lower().replace("/price", "").replace(" ", "")
     if msg != "" and msg != "joe":
@@ -149,7 +151,7 @@ async def price(message: types.Message):
 @dp.message_handler(commands='about')
 async def about(message: types.Message):
     '''return the current price of $Joe, the market cap and the circulating supply.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     about = await JoeSubGraph.getAbout()
     await bot.send_message(message.chat.id, about)
@@ -158,7 +160,7 @@ async def about(message: types.Message):
 @dp.message_handler(commands='joepic')
 async def joepic(message: types.Message):
     '''return a personnalised 3D Joe, (for more help, type /joepic).'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     try:
         answer = joePic_.do_profile_picture(message.text[8:], "Telegram")
@@ -171,7 +173,7 @@ async def joepic(message: types.Message):
 @dp.message_handler(commands='pricelist')
 async def pricelist(message: types.Message):
     '''return TraderJoe's tokenomics page.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     tokens = [i.upper() for i in Constants.NAME2ADDRESS.keys()]
     await bot.send_message(message.chat.id,
@@ -181,7 +183,7 @@ async def pricelist(message: types.Message):
 @dp.message_handler(commands='lambo')
 async def lambo(message: types.Message):
     '''return a cool joe car.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_video(chat_id=message.chat.id, video=open("content/videos/joelambo.mp4", 'rb'),
                          supports_streaming=True)
@@ -191,7 +193,7 @@ async def lambo(message: types.Message):
 @dp.message_handler(commands='rain')
 async def rain(message: types.Message):
     '''return a cool joe rain.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_video(chat_id=message.chat.id, video=open("content/videos/joerain.mp4", 'rb'),
                          supports_streaming=True)
@@ -201,7 +203,7 @@ async def rain(message: types.Message):
 @dp.message_handler(commands='comfy')
 async def comfy(message: types.Message):
     '''return a cool joe car, (for more help, type /joepic).'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_photo(chat_id=message.chat.id, photo=open("content/images/joecomfy.png", 'rb'))
     return
@@ -210,7 +212,7 @@ async def comfy(message: types.Message):
 @dp.message_handler(commands='tokenomics')
 async def tokenomics(message: types.Message):
     '''return TraderJoe's tokenomics page.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com/en/tokenomics")
 
@@ -218,7 +220,7 @@ async def tokenomics(message: types.Message):
 @dp.message_handler(commands='contracts')
 async def contracts(message: types.Message):
     '''return TraderJoe's contracts page.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com/en/contracts")
 
@@ -226,7 +228,7 @@ async def contracts(message: types.Message):
 @dp.message_handler(commands='docs')
 async def docs(message: types.Message):
     '''return TraderJoe's docs page.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com")
 
@@ -234,7 +236,7 @@ async def docs(message: types.Message):
 @dp.message_handler(commands='discord')
 async def discord(message: types.Message):
     '''return TraderJoe's discord.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_message(message.chat.id, "https://discord.com/invite/GHZceZhbZU")
 
@@ -242,7 +244,7 @@ async def discord(message: types.Message):
 @dp.message_handler(commands='twitter')
 async def twitter(message: types.Message):
     '''return TraderJoe's twitter.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_message(message.chat.id, "https://twitter.com/traderjoe_xyz")
 
@@ -250,7 +252,7 @@ async def twitter(message: types.Message):
 @dp.message_handler(commands='website')
 async def website(message: types.Message):
     '''return TraderJoe's website.'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_message(message.chat.id, "https://www.traderjoexyz.com")
 
@@ -258,7 +260,7 @@ async def website(message: types.Message):
 @dp.message_handler(commands='help')
 async def help(message: types.Message):
     '''print Constants.HELP_TG'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_message(message.chat.id, Constants.HELP_TG)
 
@@ -266,7 +268,7 @@ async def help(message: types.Message):
 @dp.message_handler(commands='reloadassets')
 async def reloadAssets(message: types.Message):
     '''reload assets'''
-    if not lasttime.isLast():
+    if not timer.canMessageOnChatId(message.chat.id):
         return
     global ticker_infos
     member = await bot.get_chat_member(message.chat.id, message.from_user.id)
