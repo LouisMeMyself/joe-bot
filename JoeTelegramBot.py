@@ -276,9 +276,6 @@ async def reloadAssets(message: types.Message):
         return
     global ticker_infos
     member = await bot.get_chat_member(message.chat.id, message.from_user.id)
-    if not member.is_chat_admin():
-        await bot.send_message(message.chat.id, "You're not admin, you can't use that command.")
-        return
     await JoeSubGraph.reloadAssets()
     await bot.send_message(message.chat.id, "Assets have been reloaded")
 
