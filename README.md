@@ -18,10 +18,12 @@ Installation of the dependencies required for the project:
 (venv) ... $> pip install -r requirements.txt
 ```
 
-Then, to launch the bot sumply type:
+Then, to launch the bot simply type:
 ```bash
-# installation of dependencies (only after having activated the virtual environment!)
+# start the discord bot
 (venv) ... $> python main.py
+# start the telegram bot
+(venv) ... $> python JoeTelegramBot.py
 ```
 
 Don't forget to add a ".key" file at the root of the project with discord bot key in it !
