@@ -1,6 +1,6 @@
 import asyncio
 import logging, json
-from datetime import datetime
+import datetime
 
 from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
@@ -48,6 +48,12 @@ class Timer:
 timer = Timer()
 
 
+#
+# @dp.message_handler()
+# async def test(message: types.Message):
+#     print(message.text)
+
+
 @dp.message_handler(commands='startticker')
 async def startTicker(message: types.Message):
     '''start joeticker'''
@@ -69,7 +75,6 @@ async def startTicker(message: types.Message):
         Constants.JOE_TICKER[message.chat.id] = mess_id
         await bot.pin_chat_message(message.chat.id, mess_id)
         await joeTicker(message.chat.id, mess_id)
-
 
 
 @dp.message_handler(commands='stopticker')
@@ -107,7 +112,8 @@ async def joeTicker(chat_id, mess_id):
             while chat_id in Constants.JOE_TICKER and Constants.JOE_TICKER[chat_id] == mess_id:
                 price = await JoeSubGraph.getJoePrice()
                 new_mess = "JOE price is ${} (updated at {} UTC)".format(round(price, 4),
-                                                                         datetime.utcnow().strftime("%H:%M:%S"))
+                                                                         datetime.datetime.utcnow().strftime(
+                                                                             "%H:%M:%S"))
                 if new_mess != mess:
                     mess = new_mess
                     await bot.edit_message_text(mess, chat_id, mess_id)
@@ -140,12 +146,30 @@ async def price(message: types.Message):
                                                     "tracked with JoeBot")
             return
         priceInDollar, assetPerAvax = prices
-        await bot.send_message(message.chat.id, "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), human_format(priceInDollar),
-                                                                               human_format(assetPerAvax), msg.upper()))
+        await bot.send_message(message.chat.id,
+                               "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), human_format(priceInDollar),
+                                                               human_format(assetPerAvax), msg.upper()))
         return
     price = float(await JoeSubGraph.getJoePrice())
     avaxp = float(await JoeSubGraph.getAvaxPrice())
-    await bot.send_message(message.chat.id, "$JOE: ${}\n{} $JOE/$AVAX".format(round(price, 4), round(avaxp/price, 4)))
+    await bot.send_message(message.chat.id, "$JOE: ${}\n{} $JOE/$AVAX".format(round(price, 4), round(avaxp / price, 4)))
+
+
+@dp.message_handler(commands='address')
+async def address(message: types.Message):
+    '''return the current price of $Joe'''
+    if not timer.canMessageOnChatId(message.chat.id):
+        return
+    msg = message.text.lower().replace("/address", "").replace(" ", "")
+    if msg != "":
+        if msg == "avax":
+            await bot.send_message(message.chat.id, "$WAVAX: 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7")
+            return
+        if msg in Constants.NAME2ADDRESS:
+            await bot.send_message(message.chat.id, "${}: {}".format(msg.upper(), Constants.NAME2ADDRESS[msg]))
+        else:
+            await bot.send_message(message.chat.id, "Unknown token symbol, use /pricelist to know which token can be "
+                                                    "tracked with JoeBot")
 
 
 @dp.message_handler(commands='about')
@@ -175,6 +199,7 @@ async def pricelist(message: types.Message):
     '''return TraderJoe's tokenomics page.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
+    await JoeSubGraph.reloadAssets()
     tokens = [i.upper() for i in Constants.NAME2ADDRESS.keys()]
     await bot.send_message(message.chat.id,
                            "Tokens that can get their price from TJ are :\nAVAX, " + ", ".join(tokens))
@@ -271,11 +296,9 @@ async def reloadAssets(message: types.Message):
     if not timer.canMessageOnChatId(message.chat.id):
         return
     global ticker_infos
-    member = await bot.get_chat_member(message.chat.id, message.from_user.id)
     await JoeSubGraph.reloadAssets()
     await bot.send_message(message.chat.id, "Assets have been reloaded")
 
 
 if __name__ == "__main__":
     executor.start_polling(dp)
-    Constants.NAME2ADDRESS = JoeSubGraph.reloadAssets()
