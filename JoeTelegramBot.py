@@ -115,6 +115,7 @@ async def joeTicker(chat_id, mess_id):
                                                                          datetime.datetime.utcnow().strftime(
                                                                              "%H:%M:%S"))
                 if new_mess != mess:
+                    await JoeSubGraph.reloadAssets()
                     mess = new_mess
                     await bot.edit_message_text(mess, chat_id, mess_id)
                 await asyncio.sleep(time_between_updates)
@@ -199,7 +200,6 @@ async def pricelist(message: types.Message):
     '''return TraderJoe's tokenomics page.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    await JoeSubGraph.reloadAssets()
     tokens = [i.upper() for i in Constants.NAME2ADDRESS.keys()]
     await bot.send_message(message.chat.id,
                            "Tokens that can get their price from TJ are :\nAVAX, " + ", ".join(tokens))
