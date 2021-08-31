@@ -47,6 +47,7 @@ class Timer:
 
 timer = Timer()
 time_between_updates = 10
+last_reload = None
 
 #
 # @dp.message_handler()
@@ -104,6 +105,7 @@ async def stopTicker(message: types.Message):
 
 
 async def joeTicker(chat_id, mess_id):
+    global last_reload
     mess = "JOE price is $X"
     while chat_id in Constants.JOE_TICKER and Constants.JOE_TICKER[chat_id] == mess_id:
         try:
@@ -113,6 +115,10 @@ async def joeTicker(chat_id, mess_id):
                 new_mess = "JOE price is ${} (updated at {} UTC)".format(round(price, 4),
                                                                          datetime.datetime.utcnow().strftime(
                                                                              "%H:%M:%S"))
+                if last_reload is None or (datetime.datetime.utcnow() - last_reload).total_seconds() < 3600:
+                    await JoeSubGraph.reloadAssets()
+                    last_reload = datetime.datetime.utcnow()
+
                 if new_mess != mess:
                     await JoeSubGraph.reloadAssets()
                     mess = new_mess
