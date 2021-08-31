@@ -46,7 +46,7 @@ class Timer:
 
 
 timer = Timer()
-
+time_between_updates = 10
 
 #
 # @dp.message_handler()
@@ -70,11 +70,12 @@ async def startTicker(message: types.Message):
         await joeTicker(message.chat.id, message.reply_to_message.message_id)
         await bot.pin_chat_message(message.chat.id, message.reply_to_message.message_id)
 
-    elif message.chat.id not in Constants.JOE_TICKER:
+    else:
         mess_id = (await bot.send_message(message.chat.id, "JOE price is $X")).message_id
         Constants.JOE_TICKER[message.chat.id] = mess_id
         await bot.pin_chat_message(message.chat.id, mess_id)
         await joeTicker(message.chat.id, mess_id)
+
 
 
 @dp.message_handler(commands='stopticker')
@@ -103,8 +104,6 @@ async def stopTicker(message: types.Message):
 
 
 async def joeTicker(chat_id, mess_id):
-    time_between_updates = 10
-
     mess = "JOE price is $X"
     while chat_id in Constants.JOE_TICKER and Constants.JOE_TICKER[chat_id] == mess_id:
         try:
