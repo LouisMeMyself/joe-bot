@@ -4,7 +4,7 @@ import datetime
 
 from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
-from joeBot import JoeSubGraph, JoePic, Constants
+from joeBot import JoeSubGraph, JoePic, Constants, JoeChart
 from joeBot.beautify_string import readable, human_format
 import time
 
@@ -33,12 +33,11 @@ joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Cons
 class Timer:
     def __init__(self):
         self.last_msg_time = {}
-        self.cooldown_in_s = 1
 
-    def canMessageOnChatId(self, chat_id):
+    def canMessageOnChatId(self, chat_id, cd_in_s=1):
         if chat_id not in self.last_msg_time:
             self.last_msg_time[chat_id] = 0
-        if self.last_msg_time[chat_id] + self.cooldown_in_s > time.time():
+        if self.last_msg_time[chat_id] + cd_in_s > time.time():
             return False
         else:
             self.last_msg_time[chat_id] = time.time()
@@ -48,6 +47,7 @@ class Timer:
 timer = Timer()
 time_between_updates = 10
 last_reload = None
+
 
 #
 # @dp.message_handler()
@@ -76,7 +76,6 @@ async def startTicker(message: types.Message):
         Constants.JOE_TICKER[message.chat.id] = mess_id
         await bot.pin_chat_message(message.chat.id, mess_id)
         await joeTicker(message.chat.id, mess_id)
-
 
 
 @dp.message_handler(commands='stopticker')
@@ -208,6 +207,25 @@ async def pricelist(message: types.Message):
     tokens = [i.upper() for i in Constants.NAME2ADDRESS.keys()]
     await bot.send_message(message.chat.id,
                            "Tokens that can get their price from TJ are :\nAVAX, " + ", ".join(tokens))
+
+
+@dp.message_handler(commands='chart')
+async def chart(message: types.Message):
+    '''return a cool joe car, (for more help, type /joepic).'''
+    if not timer.canMessageOnChatId(message.chat.id):
+        return
+
+    msgs = message.text[7:].split(" ")
+    if msgs[-1] == "d" or msgs[-1] == "days":
+        period = "day"
+    else:
+        period = "month"
+    if msgs[0] == "":
+        await JoeChart.getChart("joe", period)
+    else:
+        await JoeChart.getChart(msgs[0], period)
+    await bot.send_photo(chat_id=message.chat.id, photo=open("content/images/chart.png", 'rb'))
+    return
 
 
 @dp.message_handler(commands='lambo')

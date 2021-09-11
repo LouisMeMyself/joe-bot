@@ -20,17 +20,20 @@ VERIFIED_USER_ROLE = "Joe"
 # SubGraph links
 JOE_EXCHANGE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
 JOE_BAR_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/bar"
+JOE_DEXCANDLES_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/dexcandles"
 
 # address for web3
 JOETOKEN_ADDRESS = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
 JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
+WAVAX_ADDRESS = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
+USDTe_ADDRESS = "0xc7198437980c041c805A1EDcbA50c1Ce5db95118"
 
 # ABI for web3
 try:
     with open("content/abis/joetokenabi.json", "r") as f:
         JOETOKEN_ABI = json.load(f)
 except:
-    with open("D:/Python_scripts/JoeBot/content/abis/joetokenabi.json", "r") as f:
+    with open("C:/PythonScripts/JoeBot/content/abis/joetokenabi.json", "r") as f:
         JOETOKEN_ABI = json.load(f)
 
 # assets address

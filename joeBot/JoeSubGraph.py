@@ -1,6 +1,8 @@
 import asyncio
 import json, requests
+import datetime
 
+import pandas as pd
 from web3 import Web3
 from joeBot import Constants
 
@@ -13,16 +15,38 @@ if not w3.isConnected():
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.JOETOKEN_ABI)
 
 
-async def genericExchangeQuery(query):
-    r = requests.post(Constants.JOE_EXCHANGE_SG_URL, json={'query': query})
+async def genericExchangeQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
+    r = requests.post(sg_url, json={'query': query})
     assert (r.status_code == 200)
     return json.loads(r.text)
 
 
-async def genericBarQuery(query):
-    r = requests.post(Constants.JOE_BAR_SG_URL, json={'query': query})
-    assert (r.status_code == 200)
-    return json.loads(r.text)
+async def getTokenCandles(token_address, period, nb):
+    if token_address < Constants.WAVAX_ADDRESS:
+        token0, token1 = token_address, Constants.WAVAX_ADDRESS
+        isTokenPerAvax = False
+    elif token_address > Constants.WAVAX_ADDRESS:
+        token0, token1 = Constants.WAVAX_ADDRESS, token_address
+        isTokenPerAvax = True
+    else:
+        token0, token1 = Constants.WAVAX_ADDRESS, Constants.USDTe_ADDRESS
+        isTokenPerAvax = False
+
+    query = await genericExchangeQuery('{candles(first:' + nb + ', orderBy: time, orderDirection: desc, \
+    where: {token0: "' + token0 + '", token1: "' + token1 + '",\
+      period: ' + period + '}) {time, open, high, low, close}}', Constants.JOE_DEXCANDLES_SG_URL)
+    query["isTokenPerAvax"] = token0 == Constants.WAVAX_ADDRESS
+
+    data_df = pd.DataFrame(query["data"]["candles"])
+
+    data_df["date"] = data_df["time"].apply(lambda x: datetime.datetime.utcfromtimestamp(x))
+    data_df = data_df.set_index('date')
+
+    if not isTokenPerAvax:
+        data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(lambda x: 1/float(x))
+    else:
+        data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(lambda x: float(x))
+    return data_df
 
 
 async def getAvaxPrice():
@@ -110,8 +134,9 @@ async def getAbout():
 
 
 if __name__ == '__main__':
-    print(asyncio.run(getJoePrice()))
-    print(asyncio.run(getTVL()))
-    print(asyncio.run(getAbout()))
+    # print(asyncio.run(getJoePrice()))
+    # print(asyncio.run(getTVL()))
+    # print(asyncio.run(getAbout()))
     asyncio.run(reloadAssets())
     print(Constants.NAME2ADDRESS)
+    print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
