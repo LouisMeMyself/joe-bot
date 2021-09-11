@@ -9,8 +9,8 @@ from joeBot.JoeSubGraph import getTokenCandles
 
 async def getTokenCandlesPerAvax(token_address, period, nb):
     token_candle = await getTokenCandles(token_address, period, nb)
-    if token_address == Constants.USDTe_ADDRESS:
-        return token_candle
+    if token_address == Constants.WAVAX_ADDRESS:
+        return token_candle[::-1]
 
     avax_candle = await getTokenCandles(Constants.WAVAX_ADDRESS, period, nb)
 
@@ -31,7 +31,10 @@ async def getTokenCandlesPerAvax(token_address, period, nb):
 async def getChart(token_symbol, period):
     token_symbol = token_symbol.lower().replace(" ", "")
     try:
-        token_address = Constants.NAME2ADDRESS[token_symbol]
+        if token_symbol == 'avax':
+            token_address = Constants.WAVAX_ADDRESS
+        else:
+            token_address = Constants.NAME2ADDRESS[token_symbol]
     except KeyError:
         raise KeyError
 
