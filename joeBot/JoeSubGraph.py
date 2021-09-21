@@ -52,9 +52,15 @@ async def getTokenCandles(token_address, period, nb):
     return data_df
 
 
+# # Using subgraph
+# async def getAvaxPrice():
+#     query = await genericExchangeQuery("{bundles {avaxPrice}}")
+#     return float(query["data"]["bundles"][0]["avaxPrice"])
+
+
+# Using contracts reserve directly
 async def getAvaxPrice():
-    query = await genericExchangeQuery("{bundles {avaxPrice}}")
-    return float(query["data"]["bundles"][0]["avaxPrice"])
+    return JoeContract.getAvaxPrice()
 
 
 # Using contracts reserve directly
@@ -62,7 +68,7 @@ async def getJoePrice():
     return JoeContract.getJoePrice()
 
 
-# Using subgtaph
+# # Using subgraph
 # async def getJoePrice():
 #   query = await genericExchangeQuery("""{
 # token(id: "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd") {derivedAVAX}}""")
@@ -144,8 +150,8 @@ async def getAbout():
 
 if __name__ == '__main__':
     print(asyncio.run(getJoePrice()))
-    # print(asyncio.run(getTVL()))
-    # print(asyncio.run(getAbout()))
+    print(asyncio.run(getTVL()))
+    print(asyncio.run(getAbout()))
     # asyncio.run(reloadAssets())
     # print(Constants.NAME2ADDRESS)
     # print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
