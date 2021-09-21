@@ -31,6 +31,7 @@ WAVAX_ADDRESS = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
 USDTe_ADDRESS = "0xc7198437980c041c805A1EDcbA50c1Ce5db95118"
 USDCe_ADDRESS = "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664"
 
+JOEFACTORY_ADDRESS = "0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10"
 JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
 JOEWAVAX_ADDRESS = "0x454E67025631C065d3cFAD6d71E6892f74487a15"
 JOEUSDTE_ADDRESS = "0x1643de2efB8e35374D796297a9f95f64C082a8ce"
@@ -39,29 +40,17 @@ WAVAXUSDCE_ADDRESS = "0xA389f9430876455C36478DeEa9769B7Ca4E3DDB1"
 
 # ABI for web3
 try:
-    with open("content/abis/joetokenabi.json", "r") as f:
-        JOETOKEN_ABI = json.load(f)
+    with open("content/abis/erc20tokenabi.json", "r") as f:
+        ERC20_ABI = json.load(f)
 except:
-    with open("C:/PythonScripts/JoeBot/content/abis/joetokenabi.json", "r") as f:
-        JOETOKEN_ABI = json.load(f)
+    with open("C:/PythonScripts/JoeBot/content/abis/erc20tokenabi.json", "r") as f:
+        ERC20_ABI = json.load(f)
 try:
-    with open("content/abis/usdteabi.json", "r") as f:
-        USDTE_ABI = json.load(f)
+    with open("content/abis/joefactoryabi.json", "r") as f:
+        JOEFACTORY_ABI = json.load(f)
 except:
-    with open("C:/PythonScripts/JoeBot/content/abis/usdceabi.json", "r") as f:
-        USDTE_ABI = json.load(f)
-try:
-    with open("content/abis/usdteabi.json", "r") as f:
-        USDCE_ABI = json.load(f)
-except:
-    with open("C:/PythonScripts/JoeBot/content/abis/usdceabi.json", "r") as f:
-        USDCE_ABI = json.load(f)
-try:
-    with open("content/abis/wavaxabi.json", "r") as f:
-        WAVAX_ABI = json.load(f)
-except:
-    with open("C:/PythonScripts/JoeBot/content/abis/wavaxabi.json", "r") as f:
-        WAVAX_ABI = json.load(f)
+    with open("C:/PythonScripts/JoeBot/content/abis/joefactoryabi.json", "r") as f:
+        JOEFACTORY_ABI = json.load(f)
 
 # assets address
 NAME2ADDRESS = {}

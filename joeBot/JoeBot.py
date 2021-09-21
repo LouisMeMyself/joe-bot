@@ -12,7 +12,7 @@ from joeBot import JoePic, JoeSubGraph, Constants
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
-joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.JOETOKEN_ABI)
+joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
 class JoeBot:
     joePic_ = JoePic.JoePic()

@@ -27,7 +27,7 @@ dp = Dispatcher(bot)
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
-joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.JOETOKEN_ABI)
+joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
 
 # safeguard to not spam
@@ -148,14 +148,14 @@ async def price(message: types.Message):
             await bot.send_message(message.chat.id, "{} : ${}".format(msg.upper(), human_format(avaxp)))
             return
         prices = await JoeSubGraph.getPriceOf(msg)
-        if prices == "Unknown Token symbol":
+        if prices == "Unknown Token Symbol" or prices == "Can't find a pair with avax and that token":
             await bot.send_message(message.chat.id, "Unknown token symbol, use /pricelist to know which token can be "
                                                     "tracked with JoeBot")
             return
-        priceInDollar, assetPerAvax = prices
+        derivedPrice, priceInDollar = prices
         await bot.send_message(message.chat.id,
                                "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), human_format(priceInDollar),
-                                                               human_format(assetPerAvax), msg.upper()))
+                                                               human_format(derivedPrice), msg.upper()))
         return
     price = float(await JoeSubGraph.getJoePrice())
     avaxp = float(await JoeSubGraph.getAvaxPrice())

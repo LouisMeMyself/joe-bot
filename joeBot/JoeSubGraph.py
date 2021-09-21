@@ -13,7 +13,7 @@ from joeBot.beautify_string import readable, human_format
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
-joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.JOETOKEN_ABI)
+joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
 
 async def genericExchangeQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
@@ -68,7 +68,7 @@ async def getJoePrice():
     return JoeContract.getJoePrice()
 
 
-# # Using subgraph
+# # Using contracts reserve directly
 # async def getJoePrice():
 #   query = await genericExchangeQuery("""{
 # token(id: "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd") {derivedAVAX}}""")
@@ -79,7 +79,7 @@ async def getJoePrice():
 
 async def getTVL():
     JoeHeldInJoeBar = float(w3.fromWei(joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(), 'ether'))
-    joePrice = await  getJoePrice()
+    joePrice = await getJoePrice()
 
     sum_ = JoeHeldInJoeBar * joePrice
 
@@ -92,16 +92,23 @@ async def getTVL():
     return sum_
 
 
+# Using subgraph
 async def getPriceOf(symbol):
-    symbol = symbol.lower().replace(" ", "")
-    try:
-        address = Constants.NAME2ADDRESS[symbol]
-    except:
-        return "Unknown Token symbol"
-    query = await genericExchangeQuery('{token(id: "' + address + '") {derivedAVAX}}')
-    avaxPrice = await getAvaxPrice()
-    derivedAvax = float(query["data"]["token"]["derivedAVAX"])
-    return avaxPrice * derivedAvax, 1 / derivedAvax
+    prices = JoeContract.getPriceAndDerivedPriceOfToken(symbol)
+    return prices
+
+
+# # Using subgraph
+# async def getPriceOf(symbol):
+#     symbol = symbol.lower().replace(" ", "")
+#     try:
+#         address = Constants.NAME2ADDRESS[symbol]
+#     except:
+#         return "Unknown Token Symbol"
+#     query = await genericExchangeQuery('{token(id: "' + address + '") {derivedAVAX}}')
+#     avaxPrice = await getAvaxPrice()
+#     derivedAvax = float(query["data"]["token"]["derivedAVAX"])
+#     return avaxPrice * derivedAvax, 1 / derivedAvax
 
 
 async def reloadAssets():
@@ -149,9 +156,10 @@ async def getAbout():
 
 
 if __name__ == '__main__':
-    print(asyncio.run(getJoePrice()))
-    print(asyncio.run(getTVL()))
-    print(asyncio.run(getAbout()))
-    # asyncio.run(reloadAssets())
+    # print(asyncio.run(getJoePrice()))
+    # print(asyncio.run(getTVL()))
+    # print(asyncio.run(getAbout()))
+    asyncio.run(reloadAssets())
+    print(getPriceOf("snob"))
     # print(Constants.NAME2ADDRESS)
     # print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
