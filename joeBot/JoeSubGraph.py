@@ -1,11 +1,12 @@
 import asyncio
-import json, requests
 import datetime
+import json
 
 import pandas as pd
+import requests
 from web3 import Web3
-from joeBot import Constants
 
+from joeBot import Constants, JoeContract
 # web3
 from joeBot.beautify_string import readable, human_format
 
@@ -43,9 +44,11 @@ async def getTokenCandles(token_address, period, nb):
     data_df = data_df.set_index('date')
 
     if not isTokenPerAvax:
-        data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(lambda x: 1/float(x))
+        data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(
+            lambda x: 1 / float(x))
     else:
-        data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(lambda x: float(x))
+        data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(
+            lambda x: float(x))
     return data_df
 
 
@@ -54,12 +57,18 @@ async def getAvaxPrice():
     return float(query["data"]["bundles"][0]["avaxPrice"])
 
 
+# Using contracts reserve directly
 async def getJoePrice():
-    query = await genericExchangeQuery("""{
-  token(id: "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd") {derivedAVAX}}""")
-    avaxPrice = await getAvaxPrice()
-    joeDerivedAvax = float(query["data"]["token"]["derivedAVAX"])
-    return avaxPrice * joeDerivedAvax
+    return JoeContract.getJoePrice()
+
+
+# Using subgtaph
+# async def getJoePrice():
+#   query = await genericExchangeQuery("""{
+# token(id: "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd") {derivedAVAX}}""")
+#   avaxPrice = await getAvaxPrice()
+#   joeDerivedAvax = float(query["data"]["token"]["derivedAVAX"])
+#   return avaxPrice * joeDerivedAvax
 
 
 async def getTVL():
@@ -134,9 +143,9 @@ async def getAbout():
 
 
 if __name__ == '__main__':
-    # print(asyncio.run(getJoePrice()))
+    print(asyncio.run(getJoePrice()))
     # print(asyncio.run(getTVL()))
     # print(asyncio.run(getAbout()))
-    asyncio.run(reloadAssets())
-    print(Constants.NAME2ADDRESS)
-    print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
+    # asyncio.run(reloadAssets())
+    # print(Constants.NAME2ADDRESS)
+    # print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))

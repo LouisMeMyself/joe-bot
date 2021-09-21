@@ -9,6 +9,9 @@ EMOJI_CHECK = "✅"
 EMOJI_CROSS = "❌"
 EMOJI_ACCEPT_GUIDELINES = "✅"
 
+# utils
+E12 = 10 ** 12
+E18 = 10 ** 18
 # Commands
 COMMAND_BEARD = "beard"
 PROFILE_PICTURE_COMMAND = "!joepic"
@@ -24,17 +27,33 @@ JOE_DEXCANDLES_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/d
 
 # address for web3
 JOETOKEN_ADDRESS = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
-JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
 WAVAX_ADDRESS = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
 USDTe_ADDRESS = "0xc7198437980c041c805A1EDcbA50c1Ce5db95118"
+
+JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
+JOEWAVAX_ADDRESS = "0x454E67025631C065d3cFAD6d71E6892f74487a15"
+JOEUSDTE_ADDRESS = "0x1643de2efB8e35374D796297a9f95f64C082a8ce"
+WAVAXUSDTE_ADDRESS = "0xeD8CBD9F0cE3C6986b22002F03c6475CEb7a6256"
 
 # ABI for web3
 try:
     with open("content/abis/joetokenabi.json", "r") as f:
         JOETOKEN_ABI = json.load(f)
 except:
-    with open("C:/PythonScripts/JoeBot/content/abis/joetokenabi.json", "r") as f:
+    with open("D:/Python_scripts/JoeBot/content/abis/joetokenabi.json", "r") as f:
         JOETOKEN_ABI = json.load(f)
+try:
+    with open("content/abis/usdteabi.json", "r") as f:
+        USDTE_ABI = json.load(f)
+except:
+    with open("D:/Python_scripts/JoeBot/content/abis/usdteabi.json", "r") as f:
+        USDTE_ABI = json.load(f)
+try:
+    with open("content/abis/wavaxabi.json", "r") as f:
+        WAVAX_ABI = json.load(f)
+except:
+    with open("D:/Python_scripts/JoeBot/content/abis/wavaxabi.json", "r") as f:
+        WAVAX_ABI = json.load(f)
 
 # assets address
 NAME2ADDRESS = {}

@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 
 import mplfinance as fplt
 

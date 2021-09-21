@@ -1,12 +1,14 @@
 import asyncio
-import logging, json
 import datetime
+import json
+import logging
+import time
 
 from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
+
 from joeBot import JoeSubGraph, JoePic, Constants, JoeChart
-from joeBot.beautify_string import readable, human_format
-import time
+from joeBot.beautify_string import human_format
 
 joePic_ = JoePic.JoePic()
 

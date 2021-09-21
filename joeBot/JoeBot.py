@@ -2,7 +2,6 @@ import asyncio
 import json
 import typing
 from datetime import datetime
-from joeBot.beautify_string import readable, human_format
 import discord
 from discord.ext import commands
 from web3 import Web3
