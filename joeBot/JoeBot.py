@@ -26,8 +26,8 @@ class JoeBot:
 
     async def on_ready(self):
         """starts joebot"""
-        msg = await self.channels.get_channel(self.channels.GUIDELINES_CHANNEL_ID).fetch_message(self.channels.GUIDELINES_MSG_ID)
-        await msg.add_reaction(Constants.EMOJI_ACCEPT_GUIDELINES)
+        # msg = await self.channels.get_channel(self.channels.GUIDELINES_CHANNEL_ID).fetch_message(self.channels.GUIDELINES_MSG_ID)
+        # await msg.add_reaction(Constants.EMOJI_ACCEPT_GUIDELINES)
         print('joeBot have logged in as {0.user}'.format(self.discord_bot))
         self.discord_bot.loop.create_task(self.joeTicker())
 

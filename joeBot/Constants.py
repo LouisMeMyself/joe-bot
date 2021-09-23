@@ -43,15 +43,22 @@ try:
     with open("content/abis/erc20tokenabi.json", "r") as f:
         ERC20_ABI = json.load(f)
 except:
-    with open("C:/PythonScripts/JoeBot/content/abis/erc20tokenabi.json", "r") as f:
-        ERC20_ABI = json.load(f)
+    try:
+        with open("C:/PythonScripts/JoeBot/content/abis/erc20tokenabi.json", "r") as f:
+            ERC20_ABI = json.load(f)
+    except:
+        with open("D:/Python_scripts/JoeBot/content/abis/erc20tokenabi.json", "r") as f:
+            ERC20_ABI = json.load(f)
 try:
     with open("content/abis/joefactoryabi.json", "r") as f:
         JOEFACTORY_ABI = json.load(f)
 except:
-    with open("C:/PythonScripts/JoeBot/content/abis/joefactoryabi.json", "r") as f:
-        JOEFACTORY_ABI = json.load(f)
-
+    try:
+        with open("C:/PythonScripts/JoeBot/content/abis/joefactoryabi.json", "r") as f:
+            JOEFACTORY_ABI = json.load(f)
+    except:
+        with open("D:/Python_scripts/JoeBot/content/abis/joefactoryabi.json", "r") as f:
+            JOEFACTORY_ABI = json.load(f)
 # assets address
 NAME2ADDRESS = {}
 

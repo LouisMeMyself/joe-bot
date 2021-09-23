@@ -134,6 +134,7 @@ async def reloadAssets():
     Constants.NAME2ADDRESS = name2address
 
 
+
 async def getAbout():
     joePrice = await getJoePrice()
     avaxPrice = await getAvaxPrice()
@@ -160,6 +161,6 @@ if __name__ == '__main__':
     # print(asyncio.run(getTVL()))
     # print(asyncio.run(getAbout()))
     asyncio.run(reloadAssets())
-    print(getPriceOf("snob"))
+    print(asyncio.run(getPriceOf("snob")))
     # print(Constants.NAME2ADDRESS)
     # print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
