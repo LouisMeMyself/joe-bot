@@ -148,10 +148,11 @@ async def price(message: types.Message):
             await bot.send_message(message.chat.id, "${} : ${}".format(msg.upper(), human_format(avaxp)))
             return
         prices = JoeSubGraph.getPriceOf(msg)
-        if prices == "Unknown Token Symbol" or prices == "Can't find a pair with avax and that token":
-            await bot.send_message(message.chat.id, "Unknown token symbol, use /pricelist to know which token can be "
+        if len(prices) != 2:
+            await bot.send_message(message.chat.id, prices + "\nUse /pricelist to know which token can be "
                                                     "tracked with JoeBot")
             return
+        print(prices)
         derivedPrice, priceInDollar = prices
         await bot.send_message(message.chat.id,
                                "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), human_format(priceInDollar),
@@ -211,7 +212,9 @@ async def pricelist(message: types.Message):
     '''return TraderJoe's tokenomics page.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    tokens = [i.upper() for i in Constants.NAME2ADDRESS.keys()]
+    addresses = list(Constants.NAME2ADDRESS.keys())
+    addresses.sort()
+    tokens = [i.upper() for i in addresses]
     await bot.send_message(message.chat.id,
                            "Tokens that can get their price from TJ are :\nAVAX, " + ", ".join(tokens))
 

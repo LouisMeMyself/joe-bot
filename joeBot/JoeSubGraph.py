@@ -65,38 +65,13 @@ async def getTokenCandles(token_address, period, nb):
     return data_df
 
 
-# # Using subgraph
-# async def getAvaxPrice():
-#     query = await genericExchangeQuery("{bundles {avaxPrice}}")
-#     return float(query["data"]["bundles"][0]["avaxPrice"])
-
-
-# # Using contracts reserve directly
-# async def getAvaxPrice():
-#     return JoeContract.getAvaxPrice()
-
-
 # Using API
 def getAvaxPrice():
     return getPrice(Constants.WAVAX_ADDRESS) / E18
 
-
-# # Using contracts reserve directly
-# async def getJoePrice():
-#     return JoeContract.getJoePrice()
-
 # Using API
 def getJoePrice():
     return getPrice(Constants.JOETOKEN_ADDRESS) / E18
-
-
-# # Using contracts reserve directly
-# async def getJoePrice():
-#   query = await genericExchangeQuery("""{
-# token(id: "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd") {derivedAVAX}}""")
-#   avaxPrice = await getAvaxPrice()
-#   joeDerivedAvax = float(query["data"]["token"]["derivedAVAX"])
-#   return avaxPrice * joeDerivedAvax
 
 
 def getTVL():
@@ -114,38 +89,22 @@ def getTVL():
     return sum_
 
 
-# # Using Contract
-# async def getPriceOf(symbol):
-#     prices = JoeContract.getPriceAndDerivedPriceOfToken(symbol)
-#     return prices
-
-
 # Using API
 def getPriceOf(tokenAddress):
     tokenAddress = tokenAddress.lower().replace(" ", "")
-
     try:
         tokenAddress = Web3.toChecksumAddress(Constants.NAME2ADDRESS[tokenAddress])
     except:
-        derivedPrice = getDerivedPrice(tokenAddress)
-        try:
-            dPrice = int(derivedPrice) / E18
-            avaxPrice = getAvaxPrice()
-            return dPrice, (dPrice * avaxPrice)
-        except:
-            return derivedPrice
+        pass
 
-# # Using subgraph
-# async def getPriceOf(symbol):
-#     symbol = symbol.lower().replace(" ", "")
-#     try:
-#         address = Constants.NAME2ADDRESS[symbol]
-#     except:
-#         return "Unknown Token Symbol"
-#     query = await genericExchangeQuery('{token(id: "' + address + '") {derivedAVAX}}')
-#     avaxPrice = await getAvaxPrice()
-#     derivedAvax = float(query["data"]["token"]["derivedAVAX"])
-#     return avaxPrice * derivedAvax, 1 / derivedAvax
+    try:
+        derivedPrice = getDerivedPrice(tokenAddress)
+    except:
+        return "Error: Given address " + tokenAddress + " is not a valid Ethereum address or a valid symbol."
+
+    dPrice = int(derivedPrice) / E18
+    avaxPrice = getAvaxPrice()
+    return dPrice, (dPrice * avaxPrice)
 
 
 def reloadAssets():
@@ -197,8 +156,7 @@ if __name__ == '__main__':
     # print(asyncio.run(getJoePrice()))
     # print(asyncio.run(getTVL()))
     # print(asyncio.run(getAbout()))
-    asyncio.run(reloadAssets())
+    reloadAssets()
     print(getPriceOf("snob"))
-    print(getPrice(Constants.WAVAX_ADDRESS))
     # print(Constants.NAME2ADDRESS)
     # print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
