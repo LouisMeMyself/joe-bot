@@ -112,16 +112,16 @@ async def joeTicker(chat_id, mess_id):
         try:
             print("joeTicker is up")
             while chat_id in Constants.JOE_TICKER and Constants.JOE_TICKER[chat_id] == mess_id:
-                price = await JoeSubGraph.getJoePrice()
+                price = JoeSubGraph.getJoePrice()
                 new_mess = "JOE price is ${} (updated at {} UTC)".format(round(price, 4),
                                                                          datetime.datetime.utcnow().strftime(
                                                                              "%H:%M:%S"))
                 if last_reload is None or (datetime.datetime.utcnow() - last_reload).total_seconds() < 3600:
-                    await JoeSubGraph.reloadAssets()
+                    JoeSubGraph.reloadAssets()
                     last_reload = datetime.datetime.utcnow()
 
                 if new_mess != mess:
-                    await JoeSubGraph.reloadAssets()
+                    JoeSubGraph.reloadAssets()
                     mess = new_mess
                     await bot.edit_message_text(mess, chat_id, mess_id)
                 await asyncio.sleep(time_between_updates)
@@ -144,10 +144,10 @@ async def price(message: types.Message):
     msg = message.text.lower().replace("/price", "").replace(" ", "")
     if msg != "" and msg != "joe":
         if msg == "avax":
-            avaxp = await JoeSubGraph.getAvaxPrice()
-            await bot.send_message(message.chat.id, "{} : ${}".format(msg.upper(), human_format(avaxp)))
+            avaxp = JoeSubGraph.getAvaxPrice()
+            await bot.send_message(message.chat.id, "${} : ${}".format(msg.upper(), human_format(avaxp)))
             return
-        prices = await JoeSubGraph.getPriceOf(msg)
+        prices = JoeSubGraph.getPriceOf(msg)
         if prices == "Unknown Token Symbol" or prices == "Can't find a pair with avax and that token":
             await bot.send_message(message.chat.id, "Unknown token symbol, use /pricelist to know which token can be "
                                                     "tracked with JoeBot")
@@ -155,11 +155,16 @@ async def price(message: types.Message):
         derivedPrice, priceInDollar = prices
         await bot.send_message(message.chat.id,
                                "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), human_format(priceInDollar),
-                                                               human_format(derivedPrice), msg.upper()))
+                                                               human_format(1 / derivedPrice), msg.upper()))
         return
-    price = float(await JoeSubGraph.getJoePrice())
-    avaxp = float(await JoeSubGraph.getAvaxPrice())
-    await bot.send_message(message.chat.id, "$JOE: ${}\n{} $JOE/$AVAX".format(round(price, 4), round(avaxp / price, 4)))
+
+    prices = JoeSubGraph.getPriceOf(Constants.JOETOKEN_ADDRESS)
+
+    if len(prices) != 2:
+        await bot.send_message(message.chat.id, prices)
+        return
+    dprice, price = prices
+    await bot.send_message(message.chat.id, "$JOE: ${}\n{} $JOE/$AVAX".format(round(price, 4), round(1/dprice, 4)))
 
 
 @dp.message_handler(commands='address')
@@ -184,7 +189,7 @@ async def about(message: types.Message):
     '''return the current price of $Joe, the market cap and the circulating supply.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    about = await JoeSubGraph.getAbout()
+    about = JoeSubGraph.getAbout()
     await bot.send_message(message.chat.id, about)
 
 
@@ -321,7 +326,8 @@ async def reloadAssets(message: types.Message):
     if not timer.canMessageOnChatId(message.chat.id):
         return
     global ticker_infos
-    await JoeSubGraph.reloadAssets()
+
+    JoeSubGraph.reloadAssets()
     await bot.send_message(message.chat.id, "Assets have been reloaded")
 
 

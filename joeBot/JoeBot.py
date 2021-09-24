@@ -36,7 +36,7 @@ class JoeBot:
             try:
                 print("joeTicker is up")
                 while 1:
-                    price = await JoeSubGraph.getJoePrice()
+                    price = JoeSubGraph.getJoePrice()
                     activity = "JOE: ${}".format(round(price, 4))
                     await self.discord_bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
                     await asyncio.sleep(60)
@@ -50,7 +50,7 @@ class JoeBot:
             await asyncio.sleep(60)
 
     async def about(self, ctx):
-        about = await JoeSubGraph.getAbout()
+        about = JoeSubGraph.getAbout()
         await ctx.send(about)
         return
 

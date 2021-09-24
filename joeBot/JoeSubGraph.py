@@ -7,17 +7,30 @@ import requests
 from web3 import Web3
 
 from joeBot import Constants, JoeContract
-# web3
+from joeBot.Constants import E18
 from joeBot.beautify_string import readable, human_format
 
+# web3
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
 
-async def genericExchangeQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
+def genericExchangeQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
     r = requests.post(sg_url, json={'query': query})
+    assert (r.status_code == 200)
+    return json.loads(r.text)
+
+
+def getPrice(tokenAddress):
+    r = requests.get("https://api.traderjoexyz.com/priceusd/{}".format(tokenAddress))
+    assert (r.status_code == 200)
+    return json.loads(r.text)
+
+
+def getDerivedPrice(tokenAddress):
+    r = requests.get("https://api.traderjoexyz.com/priceavax/{}".format(tokenAddress))
     assert (r.status_code == 200)
     return json.loads(r.text)
 
@@ -33,7 +46,7 @@ async def getTokenCandles(token_address, period, nb):
         token0, token1 = Constants.WAVAX_ADDRESS, Constants.USDTe_ADDRESS
         isTokenPerAvax = False
 
-    query = await genericExchangeQuery('{candles(first:' + nb + ', orderBy: time, orderDirection: desc, \
+    query = genericExchangeQuery('{candles(first:' + nb + ', orderBy: time, orderDirection: desc, \
     where: {token0: "' + token0 + '", token1: "' + token1 + '",\
       period: ' + period + '}) {time, open, high, low, close}}', Constants.JOE_DEXCANDLES_SG_URL)
     query["isTokenPerAvax"] = token0 == Constants.WAVAX_ADDRESS
@@ -58,14 +71,23 @@ async def getTokenCandles(token_address, period, nb):
 #     return float(query["data"]["bundles"][0]["avaxPrice"])
 
 
-# Using contracts reserve directly
-async def getAvaxPrice():
-    return JoeContract.getAvaxPrice()
+# # Using contracts reserve directly
+# async def getAvaxPrice():
+#     return JoeContract.getAvaxPrice()
 
 
-# Using contracts reserve directly
-async def getJoePrice():
-    return JoeContract.getJoePrice()
+# Using API
+def getAvaxPrice():
+    return getPrice(Constants.WAVAX_ADDRESS) / E18
+
+
+# # Using contracts reserve directly
+# async def getJoePrice():
+#     return JoeContract.getJoePrice()
+
+# Using API
+def getJoePrice():
+    return getPrice(Constants.JOETOKEN_ADDRESS) / E18
 
 
 # # Using contracts reserve directly
@@ -77,26 +99,41 @@ async def getJoePrice():
 #   return avaxPrice * joeDerivedAvax
 
 
-async def getTVL():
+def getTVL():
     JoeHeldInJoeBar = float(w3.fromWei(joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(), 'ether'))
-    joePrice = await getJoePrice()
+    joePrice = float(getJoePrice())
 
     sum_ = JoeHeldInJoeBar * joePrice
 
     skip, queryExchange = 0, {}
     while skip == 0 or len(queryExchange["data"]["pairs"]) == 1000:
-        queryExchange = await genericExchangeQuery("{pairs(first: 1000, skip: " + str(skip) + "){reserveUSD}}")
+        queryExchange = genericExchangeQuery("{pairs(first: 1000, skip: " + str(skip) + "){reserveUSD}}")
         for reserveUSD in queryExchange["data"]["pairs"]:
             sum_ += float(reserveUSD["reserveUSD"])
         skip += 1000
     return sum_
 
 
-# Using subgraph
-async def getPriceOf(symbol):
-    prices = JoeContract.getPriceAndDerivedPriceOfToken(symbol)
-    return prices
+# # Using Contract
+# async def getPriceOf(symbol):
+#     prices = JoeContract.getPriceAndDerivedPriceOfToken(symbol)
+#     return prices
 
+
+# Using API
+def getPriceOf(tokenAddress):
+    tokenAddress = tokenAddress.lower().replace(" ", "")
+
+    try:
+        tokenAddress = Web3.toChecksumAddress(Constants.NAME2ADDRESS[tokenAddress])
+    except:
+        derivedPrice = getDerivedPrice(tokenAddress)
+        try:
+            dPrice = int(derivedPrice) / E18
+            avaxPrice = getAvaxPrice()
+            return dPrice, (dPrice * avaxPrice)
+        except:
+            return derivedPrice
 
 # # Using subgraph
 # async def getPriceOf(symbol):
@@ -111,10 +148,10 @@ async def getPriceOf(symbol):
 #     return avaxPrice * derivedAvax, 1 / derivedAvax
 
 
-async def reloadAssets():
+def reloadAssets():
     skip, queryExchange, tempdic = 0, {}, {}
     while skip == 0 or len(queryExchange["data"]["tokens"]) == 1000:
-        queryExchange = await genericExchangeQuery(
+        queryExchange = genericExchangeQuery(
             "{tokens(first: 1000, skip: " + str(skip) + "){id, symbol, liquidity, derivedAVAX}}")
         for d in queryExchange["data"]["tokens"]:
             if float(d["liquidity"]) * float(d["derivedAVAX"]) >= 100:
@@ -135,9 +172,9 @@ async def reloadAssets():
 
 
 
-async def getAbout():
-    joePrice = await getJoePrice()
-    avaxPrice = await getAvaxPrice()
+def getAbout():
+    joePrice = getJoePrice()
+    avaxPrice = getAvaxPrice()
     tsupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
     develeopmentFunds = float(
         w3.fromWei(joetoken_contract.functions.balanceOf("0xaFF90532E2937fF290009521e7e120ed062d4F34").call(), 'ether'))
@@ -147,7 +184,7 @@ async def getAbout():
         w3.fromWei(joetoken_contract.functions.balanceOf("0xc13B1C927565C5AF8fcaF9eF7387172c447f6796").call(), 'ether'))
     csupply = tsupply - develeopmentFunds - foundationFunds - strategicInvestorFunds
     mktcap = joePrice * csupply
-    tvl = await getTVL()
+    tvl = getTVL()
     return "$JOE: ${}\n" \
            "$AVAX: ${}\n" \
            "Market Cap: ${}\n" \
@@ -161,6 +198,7 @@ if __name__ == '__main__':
     # print(asyncio.run(getTVL()))
     # print(asyncio.run(getAbout()))
     asyncio.run(reloadAssets())
-    print(asyncio.run(getPriceOf("snob")))
+    print(getPriceOf("snob"))
+    print(getPrice(Constants.WAVAX_ADDRESS))
     # print(Constants.NAME2ADDRESS)
     # print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
