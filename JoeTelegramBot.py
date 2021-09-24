@@ -47,7 +47,7 @@ class Timer:
 
 
 timer = Timer()
-time_between_updates = 10
+time_between_updates = 60
 last_reload = None
 
 
