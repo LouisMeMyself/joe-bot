@@ -132,6 +132,8 @@ async def joeTicker(chat_id, mess_id):
         except KeyboardInterrupt:
             print(KeyboardInterrupt)
             break
+        except:
+            pass
         await asyncio.sleep(time_between_updates)
     return
 
@@ -152,7 +154,6 @@ async def price(message: types.Message):
             await bot.send_message(message.chat.id, prices + "\nUse /pricelist to know which token can be "
                                                     "tracked with JoeBot")
             return
-        print(prices)
         derivedPrice, priceInDollar = prices
         await bot.send_message(message.chat.id,
                                "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), human_format(priceInDollar),
