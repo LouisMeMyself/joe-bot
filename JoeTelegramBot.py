@@ -208,6 +208,24 @@ async def joepic(message: types.Message):
         return
 
 
+@dp.message_handler(commands='avg7d')
+async def avg7d(message: types.Message):
+    '''return the average price on the last 42 4hours close data (7-day averageà, '''
+    if not timer.canMessageOnChatId(message.chat.id):
+        return
+
+    try:
+        answer = JoeSubGraph.avg7d(message.text[7:].replace(" ", ""))
+        if answer == -1:
+            await bot.send_message(message.chat.id, "Not enough data.")
+            return
+        await bot.send_message(message.chat.id, "7day average $JOE: ${}".format(human_format(answer)))
+    except:
+        await bot.send_message(message.chat.id, "An error occured, please use `/avg7d [timestamp]` to get the "
+                                                "7 day average $JOE price")
+    return
+
+
 @dp.message_handler(commands='pricelist')
 async def pricelist(message: types.Message):
     '''return TraderJoe's tokenomics page.'''

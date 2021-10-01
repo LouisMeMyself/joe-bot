@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from web3 import Web3
 
-from joeBot import Constants, JoeContract
+from joeBot import Constants
 from joeBot.Constants import E18
 from joeBot.beautify_string import readable, human_format
 
@@ -17,7 +17,7 @@ if not w3.isConnected():
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
 
-def genericExchangeQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
+def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
     r = requests.post(sg_url, json={'query': query})
     assert (r.status_code == 200)
     return json.loads(r.text)
@@ -46,7 +46,7 @@ async def getTokenCandles(token_address, period, nb):
         token0, token1 = Constants.WAVAX_ADDRESS, Constants.USDTe_ADDRESS
         isTokenPerAvax = False
 
-    query = genericExchangeQuery('{candles(first:' + nb + ', orderBy: time, orderDirection: desc, \
+    query = genericQuery('{candles(first:' + nb + ', orderBy: time, orderDirection: desc, \
     where: {token0: "' + token0 + '", token1: "' + token1 + '",\
       period: ' + period + '}) {time, open, high, low, close}}', Constants.JOE_DEXCANDLES_SG_URL)
     query["isTokenPerAvax"] = token0 == Constants.WAVAX_ADDRESS
@@ -69,6 +69,7 @@ async def getTokenCandles(token_address, period, nb):
 def getAvaxPrice():
     return getPrice(Constants.WAVAX_ADDRESS) / E18
 
+
 # Using API
 def getJoePrice():
     return getPrice(Constants.JOETOKEN_ADDRESS) / E18
@@ -82,7 +83,7 @@ def getTVL():
 
     skip, queryExchange = 0, {}
     while skip == 0 or len(queryExchange["data"]["pairs"]) == 1000:
-        queryExchange = genericExchangeQuery("{pairs(first: 1000, skip: " + str(skip) + "){reserveUSD}}")
+        queryExchange = genericQuery("{pairs(first: 1000, skip: " + str(skip) + "){reserveUSD}}")
         for reserveUSD in queryExchange["data"]["pairs"]:
             sum_ += float(reserveUSD["reserveUSD"])
         skip += 1000
@@ -110,7 +111,7 @@ def getPriceOf(tokenAddress):
 def reloadAssets():
     skip, queryExchange, tempdic = 0, {}, {}
     while skip == 0 or len(queryExchange["data"]["tokens"]) == 1000:
-        queryExchange = genericExchangeQuery(
+        queryExchange = genericQuery(
             "{tokens(first: 1000, skip: " + str(skip) + "){id, symbol, liquidity, derivedAVAX}}")
         for d in queryExchange["data"]["tokens"]:
             if float(d["liquidity"]) * float(d["derivedAVAX"]) >= 100:
@@ -128,7 +129,6 @@ def reloadAssets():
         else:
             name2address[key] = value
     Constants.NAME2ADDRESS = name2address
-
 
 
 def getAbout():
@@ -152,11 +152,25 @@ def getAbout():
                              human_format(csupply), human_format(tvl))
 
 
+def avg7d(timestamp):
+    query = genericQuery('{candles(where: {\
+      token0: "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd",\
+      token1: "0xc7198437980c041c805a1edcba50c1ce5db95118",\
+      period: 14400,\
+      time_lte: ' + timestamp + '},orderBy: time,orderDirection: desc,first: 42) \
+      {close}}', Constants.JOE_DEXCANDLES_SG_URL)
+    closes = query["data"]["candles"]
+    if len(closes) == 0:
+        return -1
+    return sum([1/float(i["close"]) for i in closes])/len(closes)
+
+
 if __name__ == '__main__':
     # print(asyncio.run(getJoePrice()))
     # print(asyncio.run(getTVL()))
     # print(asyncio.run(getAbout()))
-    reloadAssets()
-    print(getPriceOf("snob"))
+    # reloadAssets()
+    # print(getPriceOf("snob"))
+    print(avg7d("1630195200"))
     # print(Constants.NAME2ADDRESS)
     # print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
