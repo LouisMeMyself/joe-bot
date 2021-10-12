@@ -195,6 +195,15 @@ async def about(message: types.Message):
     await bot.send_message(message.chat.id, about)
 
 
+@dp.message_handler(commands='lending')
+async def about(message: types.Message):
+    '''return the current price of $Joe, the market cap and the circulating supply.'''
+    if not timer.canMessageOnChatId(message.chat.id):
+        return
+    lendingAbout = JoeSubGraph.getLendingAbout()
+    await bot.send_message(message.chat.id, lendingAbout)
+
+
 @dp.message_handler(commands='joepic')
 async def joepic(message: types.Message):
     '''return a personnalised 3D Joe, (for more help, type /joepic).'''

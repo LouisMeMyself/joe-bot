@@ -41,6 +41,18 @@ def getCirculatingSupply():
     return json.loads(r.text)
 
 
+def getLendingTotalSupply():
+    r = requests.get("https://api.traderjoexyz.com/lending/supply")
+    assert (r.status_code == 200)
+    return json.loads(r.text)
+
+
+def getLendingTotalBorrow():
+    r = requests.get("https://api.traderjoexyz.com/lending/borrow")
+    assert (r.status_code == 200)
+    return json.loads(r.text)
+
+
 async def getTokenCandles(token_address, period, nb):
     if token_address < Constants.WAVAX_ADDRESS:
         token0, token1 = token_address, Constants.WAVAX_ADDRESS
@@ -140,15 +152,20 @@ def reloadAssets():
 def getAbout():
     joePrice = getJoePrice()
     avaxPrice = getAvaxPrice()
-    csupply = float(w3.fromWei(getCirculatingSupply(), 'ether'))
+    csupply = float(getCirculatingSupply() / E18)
     mktcap = joePrice * csupply
-    tvl = getTVL()
+    farm_tvl = getTVL()
+    lending_tvl = float(getLendingTotalSupply() / E18)
+
     return "$JOE: ${}\n" \
            "$AVAX: ${}\n" \
            "Market Cap: ${}\n" \
            "Circ. Supply: {}\n" \
-           "TVL: ${}".format(readable(joePrice, 4), human_format(avaxPrice), human_format(mktcap),
-                             human_format(csupply), human_format(tvl))
+           "Farm TVL: ${}\n" \
+           "Lending TVL: ${}\n" \
+           "Total TVL: ${}\n".format(readable(joePrice, 4), human_format(avaxPrice), human_format(mktcap),
+                                     human_format(csupply), human_format(farm_tvl), human_format(lending_tvl),
+                                     human_format(lending_tvl + farm_tvl))
 
 
 def avg7d(timestamp):
@@ -161,15 +178,28 @@ def avg7d(timestamp):
     closes = query["data"]["candles"]
     if len(closes) == 0:
         return -1
-    return sum([1/float(i["close"]) for i in closes])/len(closes)
+    return sum([1 / float(i["close"]) for i in closes]) / len(closes)
 
 
-if __name__ == '__main__':
-    # print(asyncio.run(getJoePrice()))
-    # print(asyncio.run(getTVL()))
-    # print(asyncio.run(getAbout()))
-    # reloadAssets()
-    # print(getPriceOf("snob"))
-    print(avg7d("1630195200"))
-    # print(Constants.NAME2ADDRESS)
-    # print(asyncio.run(getTokenCandles("0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd", "3600", "24")))
+# TODO
+def getLendingAbout():
+    joePrice = getJoePrice()
+    avaxPrice = getAvaxPrice()
+    csupply = float(getCirculatingSupply() / E18)
+    mktcap = joePrice * csupply
+    farm_tvl = getTVL()
+    lending_tvl = float(getLendingTotalSupply() / E18)
+
+    return "$JOE: ${}\n" \
+           "$AVAX: ${}\n" \
+           "Market Cap: ${}\n" \
+           "Circ. Supply: {}\n" \
+           "Farm TVL: ${}\n" \
+           "Lending TVL: ${}\n" \
+           "Total TVL: ${}\n".format(readable(joePrice, 4), human_format(avaxPrice), human_format(mktcap),
+                                     human_format(csupply), human_format(farm_tvl), human_format(lending_tvl),
+                                     human_format(lending_tvl + farm_tvl))
+
+if __name__ == "__main__":
+    print(getAbout())
+    print("Done")

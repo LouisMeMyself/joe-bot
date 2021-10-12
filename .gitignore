@@ -10,4 +10,5 @@ venv
 # Personal Files
 .key
 *save*
+test.py
 *.png
