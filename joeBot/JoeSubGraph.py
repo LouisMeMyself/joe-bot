@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import json
 
@@ -181,25 +180,16 @@ def avg7d(timestamp):
     return sum([1 / float(i["close"]) for i in closes]) / len(closes)
 
 
-# TODO
 def getLendingAbout():
-    joePrice = getJoePrice()
-    avaxPrice = getAvaxPrice()
-    csupply = float(getCirculatingSupply() / E18)
-    mktcap = joePrice * csupply
-    farm_tvl = getTVL()
     lending_tvl = float(getLendingTotalSupply() / E18)
+    totalBorrow = float(getLendingTotalBorrow() / E18)
 
-    return "$JOE: ${}\n" \
-           "$AVAX: ${}\n" \
-           "Market Cap: ${}\n" \
-           "Circ. Supply: {}\n" \
-           "Farm TVL: ${}\n" \
-           "Lending TVL: ${}\n" \
-           "Total TVL: ${}\n".format(readable(joePrice, 4), human_format(avaxPrice), human_format(mktcap),
-                                     human_format(csupply), human_format(farm_tvl), human_format(lending_tvl),
-                                     human_format(lending_tvl + farm_tvl))
+    return "Lending informations:\n" \
+           "Total Deposited: ${}\n" \
+           "Total Borrowed: ${}\n".format(human_format(lending_tvl), human_format(totalBorrow))
+
 
 if __name__ == "__main__":
     print(getAbout())
+    print(getLendingAbout())
     print("Done")
