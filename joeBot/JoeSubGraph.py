@@ -35,6 +35,12 @@ def getDerivedPrice(tokenAddress):
     return json.loads(r.text)
 
 
+def getCirculatingSupply():
+    r = requests.get("https://api.traderjoexyz.com/supply/circulating")
+    assert (r.status_code == 200)
+    return json.loads(r.text)
+
+
 async def getTokenCandles(token_address, period, nb):
     if token_address < Constants.WAVAX_ADDRESS:
         token0, token1 = token_address, Constants.WAVAX_ADDRESS
@@ -134,14 +140,7 @@ def reloadAssets():
 def getAbout():
     joePrice = getJoePrice()
     avaxPrice = getAvaxPrice()
-    tsupply = float(w3.fromWei(joetoken_contract.functions.totalSupply().call(), 'ether'))
-    develeopmentFunds = float(
-        w3.fromWei(joetoken_contract.functions.balanceOf("0xaFF90532E2937fF290009521e7e120ed062d4F34").call(), 'ether'))
-    foundationFunds = float(
-        w3.fromWei(joetoken_contract.functions.balanceOf("0x66Fb02746d72bC640643FdBa3aEFE9C126f0AA4f").call(), 'ether'))
-    strategicInvestorFunds = float(
-        w3.fromWei(joetoken_contract.functions.balanceOf("0xc13B1C927565C5AF8fcaF9eF7387172c447f6796").call(), 'ether'))
-    csupply = tsupply - develeopmentFunds - foundationFunds - strategicInvestorFunds
+    csupply = float(w3.fromWei(getCirculatingSupply(), 'ether'))
     mktcap = joePrice * csupply
     tvl = getTVL()
     return "$JOE: ${}\n" \
