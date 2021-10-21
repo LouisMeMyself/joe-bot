@@ -1,4 +1,4 @@
-# [JoeBot](https://github.com/LouisMeMyself/joebot)
+# [JoeBot](https://github.com/traderjoe-xyz/joe-bot)
 
 A small bot to create profile picture using Joe logo and get informations about the token.
 
