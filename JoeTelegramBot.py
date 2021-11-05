@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
 
 from joeBot import JoeSubGraph, JoePic, Constants, JoeChart
-from joeBot.beautify_string import human_format
+from joeBot.beautify_string import smartRounding
 
 joePic_ = JoePic.JoePic()
 
@@ -147,20 +147,20 @@ async def price(message: types.Message):
     if msg != "" and msg != "joe":
         if msg == "avax":
             avaxp = JoeSubGraph.getAvaxPrice()
-            await bot.send_message(message.chat.id, "${} : ${}".format(msg.upper(), human_format(avaxp)))
+            await bot.send_message(message.chat.id, "${} : ${}".format(msg.upper(), smartRounding(avaxp)))
             return
-        prices = JoeSubGraph.getPriceOf(msg)
+        prices = JoeSubGraph.getPricesOf(msg)
         if len(prices) != 2:
             await bot.send_message(message.chat.id, prices + "\nUse /pricelist to know which token can be "
                                                     "tracked with JoeBot")
             return
         derivedPrice, priceInDollar = prices
         await bot.send_message(message.chat.id,
-                               "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), human_format(priceInDollar),
-                                                               human_format(1 / derivedPrice), msg.upper()))
+                               "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), smartRounding(priceInDollar),
+                                                               smartRounding(1 / derivedPrice), msg.upper()))
         return
 
-    prices = JoeSubGraph.getPriceOf(Constants.JOETOKEN_ADDRESS)
+    prices = JoeSubGraph.getPricesOf(Constants.JOETOKEN_ADDRESS)
 
     if len(prices) != 2:
         await bot.send_message(message.chat.id, prices)
@@ -228,7 +228,7 @@ async def avg7d(message: types.Message):
         if answer == -1:
             await bot.send_message(message.chat.id, "Not enough data.")
             return
-        await bot.send_message(message.chat.id, "7day average $JOE: ${}".format(human_format(answer)))
+        await bot.send_message(message.chat.id, "7day average $JOE: ${}".format(smartRounding(answer)))
     except:
         await bot.send_message(message.chat.id, "An error occured, please use `/avg7d [timestamp]` to get the "
                                                 "7 day average $JOE price")

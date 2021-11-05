@@ -26,39 +26,42 @@ JOE_BAR_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/bar"
 JOE_DEXCANDLES_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/dexcandles"
 
 # address for web3
+AVAX_RPC = "https://api.avax.network/ext/bc/C/rpc"
 JOETOKEN_ADDRESS = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
 WAVAX_ADDRESS = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
 USDTe_ADDRESS = "0xc7198437980c041c805A1EDcbA50c1Ce5db95118"
 USDCe_ADDRESS = "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664"
 
-JOEFACTORY_ADDRESS = "0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10"
 JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
-JOEWAVAX_ADDRESS = "0x454E67025631C065d3cFAD6d71E6892f74487a15"
+JOEFACTORY_ADDRESS = "0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10"
+JOEMAKER_ADDRESS = "0x861726BFE27931A4E22a7277bDe6cb8432b65856"
 JOEUSDTE_ADDRESS = "0x1643de2efB8e35374D796297a9f95f64C082a8ce"
-WAVAXUSDTE_ADDRESS = "0xeD8CBD9F0cE3C6986b22002F03c6475CEb7a6256"
+JOEWAVAX_ADDRESS = "0x454E67025631C065d3cFAD6d71E6892f74487a15"
 WAVAXUSDCE_ADDRESS = "0xA389f9430876455C36478DeEa9769B7Ca4E3DDB1"
+WAVAXUSDTE_ADDRESS = "0xeD8CBD9F0cE3C6986b22002F03c6475CEb7a6256"
 
 # ABI for web3
 try:
     with open("content/abis/erc20tokenabi.json", "r") as f:
         ERC20_ABI = json.load(f)
-except:
-    try:
-        with open("C:/PythonScripts/JoeBot/content/abis/erc20tokenabi.json", "r") as f:
-            ERC20_ABI = json.load(f)
-    except:
-        with open("D:/Python_scripts/JoeBot/content/abis/erc20tokenabi.json", "r") as f:
-            ERC20_ABI = json.load(f)
+except FileNotFoundError:
+    with open("../content/abis/erc20tokenabi.json", "r") as f:
+        ERC20_ABI = json.load(f)
+
 try:
     with open("content/abis/joefactoryabi.json", "r") as f:
         JOEFACTORY_ABI = json.load(f)
-except:
-    try:
-        with open("C:/PythonScripts/JoeBot/content/abis/joefactoryabi.json", "r") as f:
-            JOEFACTORY_ABI = json.load(f)
-    except:
-        with open("D:/Python_scripts/JoeBot/content/abis/joefactoryabi.json", "r") as f:
-            JOEFACTORY_ABI = json.load(f)
+except FileNotFoundError:
+    with open("../content/abis/joefactoryabi.json", "r") as f:
+        JOEFACTORY_ABI = json.load(f)
+
+try:
+    with open("content/abis/joemakerabi.json", "r") as f:
+        JOEMAKER_ABI = json.load(f)
+except FileNotFoundError:
+    with open("../content/abis/joemakerabi.json", "r") as f:
+        JOEMAKER_ABI = json.load(f)
+
 # assets address
 NAME2ADDRESS = {}
 
@@ -115,6 +118,7 @@ class Channels:
             server_nb]  # "📚-guidelines-and-resources"
         self.COMMAND_CHANNEL_ID = (852658830987100190, 853397123713204244)[server_nb]  # "🤖-bot-commands"
         self.GUIDELINES_MSG_ID = (843668142764589076, 852636768788021288)[server_nb]
+        self.BOT_FEED = (898964756508065852, 853397123713204244)[server_nb]
 
     def get_channel(self, channel_id):
         return self.__channel[channel_id]

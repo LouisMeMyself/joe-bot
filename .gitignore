@@ -12,3 +12,4 @@ venv
 *save*
 test.py
 *.png
+.env

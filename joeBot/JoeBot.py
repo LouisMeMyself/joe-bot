@@ -1,15 +1,17 @@
 import asyncio
 import json
+import random
 import typing
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
 from web3 import Web3
 
-from joeBot import JoePic, JoeSubGraph, Constants
-
+from joeBot import JoePic, JoeSubGraph, Constants, FeeCollector
 # web3
+from joeBot.beautify_string import readable
+
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
@@ -28,10 +30,50 @@ class JoeBot:
 
     async def on_ready(self):
         """starts joebot"""
+        print('joeBot have logged in as {0.user}'.format(self.discord_bot))
         # msg = await self.channels.get_channel(self.channels.GUIDELINES_CHANNEL_ID).fetch_message(
         # self.channels.GUIDELINES_MSG_ID) await msg.add_reaction(Constants.EMOJI_ACCEPT_GUIDELINES)
-        print('joeBot have logged in as {0.user}'.format(self.discord_bot))
         self.discord_bot.loop.create_task(self.joeTicker())
+        self.discord_bot.loop.create_task(self.joeMakerTicker(10000))
+
+    async def joeMakerTicker(self, min_usd_value):
+        """start JoeMakerTicker"""
+        print("JoeMaker Ticker is up")
+        while 1:
+            while 1:
+                try:
+                    now = datetime.utcnow()
+                    todayat8PMUTC = now.replace(hour=8, minute=0, second=0, microsecond=0)
+                    tomorrowAtAround8PMUTC = todayat8PMUTC + timedelta(days=1, minutes=random.randint(0, 59),
+                                                                       seconds=random.randint(0, 59))
+
+                    await asyncio.sleep((tomorrowAtAround8PMUTC - now).total_seconds())
+                    joeBoughtBack = FeeCollector.callConvert(min_usd_value)
+
+                    print(joeBoughtBack)
+
+                    message = "\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
+                                         joeBoughtBack.items()])
+                    sum_ = sum(joeBoughtBack.values())
+                    message += "\nTotal buyback: {} $JOE worth ${}".format(readable(sum_, 2),
+                                                                           readable(sum_ * JoeSubGraph.getJoePrice(),
+                                                                                    2))
+
+                    await self.channels.get_channel(self.channels.BOT_FEED).send(message)
+
+                except ConnectionError:
+                    print("Connection error, retrying in 60 seconds...")
+                    break
+                except AssertionError:
+                    print("Assertion Error, retrying in 60 seconds...")
+                    break
+                except KeyboardInterrupt:
+                    print(KeyboardInterrupt)
+                    return
+                except:
+                    break
+            print("Unknown error, retrying in 60 secs")
+            await asyncio.sleep(60)
 
     async def joeTicker(self):
         while 1:

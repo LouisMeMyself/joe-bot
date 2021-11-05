@@ -7,12 +7,13 @@ from web3 import Web3
 
 from joeBot import Constants
 from joeBot.Constants import E18
-from joeBot.beautify_string import readable, human_format
+from joeBot.beautify_string import readable, smartRounding
 
 # web3
-w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
+w3 = Web3(Web3.HTTPProvider(Constants.AVAX_RPC))
 if not w3.isConnected():
     print("Error web3 can't connect")
+
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
 
@@ -22,13 +23,13 @@ def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
     return json.loads(r.text)
 
 
-def getPrice(tokenAddress):
+def getPriceOf(tokenAddress):
     r = requests.get("https://api.traderjoexyz.com/priceusd/{}".format(tokenAddress))
     assert (r.status_code == 200)
     return json.loads(r.text)
 
 
-def getDerivedPrice(tokenAddress):
+def getDerivedPriceOf(tokenAddress):
     r = requests.get("https://api.traderjoexyz.com/priceavax/{}".format(tokenAddress))
     assert (r.status_code == 200)
     return json.loads(r.text)
@@ -52,7 +53,7 @@ def getLendingTotalBorrow():
     return json.loads(r.text)
 
 
-async def getTokenCandles(token_address, period, nb):
+def getTokenCandles(token_address, period, nb):
     if token_address < Constants.WAVAX_ADDRESS:
         token0, token1 = token_address, Constants.WAVAX_ADDRESS
         isTokenPerAvax = False
@@ -60,6 +61,7 @@ async def getTokenCandles(token_address, period, nb):
         token0, token1 = Constants.WAVAX_ADDRESS, token_address
         isTokenPerAvax = True
     else:
+        # Token is avax
         token0, token1 = Constants.WAVAX_ADDRESS, Constants.USDTe_ADDRESS
         isTokenPerAvax = False
 
@@ -82,14 +84,45 @@ async def getTokenCandles(token_address, period, nb):
     return data_df
 
 
+def getJoeMakerPostitions(min_usd_value):
+    """
+    getJoeMakerPostitions return the position of JoeMaker that are worth more than min_usd_value
+    and if he owns less than half the lp.
+
+    :param min_usd_value: The min USD value to be actually returned.
+    :return: 2 lists, the first one is the list of the token0 of the pairs that satisfied the requirements
+    the second one is the same thing but for token1.
+    """
+    skip, queryExchange = 0, {}
+    tokens0, tokens1 = [], []
+    while skip == 0 or len(queryExchange["data"]["liquidityPositions"]) == 1000:
+        queryExchange = genericQuery('{liquidityPositions(first: 1000, skip:' + str(skip) +
+                                     ' where: {user: "0x861726bfe27931a4e22a7277bde6cb8432b65856"}) '
+                                     '{liquidityTokenBalance, '
+                                     'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
+        for liquidityPosition in queryExchange["data"]["liquidityPositions"]:
+            pair = liquidityPosition["pair"]
+
+            joeMaker_balance = float(liquidityPosition["liquidityTokenBalance"])
+            pair_total_supply = float(pair["totalSupply"])
+            pair_reserve_usd = float(pair["reserveUSD"])
+
+            if joeMaker_balance / pair_total_supply * pair_reserve_usd > min_usd_value and \
+                    joeMaker_balance / pair_total_supply < 0.49:
+                tokens0.append(pair["token0"]["id"])
+                tokens1.append(pair["token1"]["id"])
+        skip += 1000
+    return tokens0, tokens1
+
+
 # Using API
 def getAvaxPrice():
-    return getPrice(Constants.WAVAX_ADDRESS) / E18
+    return getPriceOf(Constants.WAVAX_ADDRESS) / E18
 
 
 # Using API
 def getJoePrice():
-    return getPrice(Constants.JOETOKEN_ADDRESS) / E18
+    return getPriceOf(Constants.JOETOKEN_ADDRESS) / E18
 
 
 def getTVL():
@@ -108,7 +141,7 @@ def getTVL():
 
 
 # Using API
-def getPriceOf(tokenAddress):
+def getPricesOf(tokenAddress):
     tokenAddress = tokenAddress.lower().replace(" ", "")
     try:
         tokenAddress = Web3.toChecksumAddress(Constants.NAME2ADDRESS[tokenAddress])
@@ -116,7 +149,7 @@ def getPriceOf(tokenAddress):
         pass
 
     try:
-        derivedPrice = getDerivedPrice(tokenAddress)
+        derivedPrice = getDerivedPriceOf(tokenAddress)
     except:
         return "Error: Given address " + tokenAddress + " is not a valid Ethereum address or a valid symbol."
 
@@ -162,9 +195,9 @@ def getAbout():
            "Circ. Supply: {}\n" \
            "Farm TVL: ${}\n" \
            "Lending TVL: ${}\n" \
-           "Total TVL: ${}\n".format(readable(joePrice, 4), human_format(avaxPrice), human_format(mktcap),
-                                     human_format(csupply), human_format(farm_tvl), human_format(lending_tvl),
-                                     human_format(lending_tvl + farm_tvl))
+           "Total TVL: ${}\n".format(readable(joePrice, 4), smartRounding(avaxPrice), smartRounding(mktcap),
+                                     smartRounding(csupply), smartRounding(farm_tvl), smartRounding(lending_tvl),
+                                     smartRounding(lending_tvl + farm_tvl))
 
 
 def avg7d(timestamp):
@@ -186,7 +219,7 @@ def getLendingAbout():
 
     return "Lending informations:\n" \
            "Total Deposited: ${}\n" \
-           "Total Borrowed: ${}\n".format(human_format(lending_tvl), human_format(totalBorrow))
+           "Total Borrowed: ${}\n".format(smartRounding(lending_tvl), smartRounding(totalBorrow))
 
 
 if __name__ == "__main__":
