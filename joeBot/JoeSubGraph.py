@@ -1,5 +1,6 @@
 import datetime
 import json
+import time
 
 import pandas as pd
 import requests
@@ -84,7 +85,7 @@ def getTokenCandles(token_address, period, nb):
     return data_df
 
 
-def getJoeMakerPostitions(min_usd_value):
+def getJoeMakerV2Postitions(min_usd_value):
     """
     getJoeMakerPostitions return the position of JoeMaker that are worth more than min_usd_value
     and if he owns less than half the lp.
@@ -97,7 +98,7 @@ def getJoeMakerPostitions(min_usd_value):
     tokens0, tokens1 = [], []
     while skip == 0 or len(queryExchange["data"]["liquidityPositions"]) == 1000:
         queryExchange = genericQuery('{liquidityPositions(first: 1000, skip:' + str(skip) +
-                                     ' where: {user: "0x861726bfe27931a4e22a7277bde6cb8432b65856"}) '
+                                     ' where: {user: "' + Constants.JOEMAKER_ADDRESS.lower() + '"}) '
                                      '{liquidityTokenBalance, '
                                      'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
         for liquidityPosition in queryExchange["data"]["liquidityPositions"]:
@@ -119,6 +120,9 @@ def getJoeMakerPostitions(min_usd_value):
 def getAvaxPrice():
     return getPriceOf(Constants.WAVAX_ADDRESS) / E18
 
+
+def getAvaxBalance(address):
+    return round(float(w3.eth.getBalance(w3.toChecksumAddress(address))) / 1e18, 3)
 
 # Using API
 def getJoePrice():
@@ -181,6 +185,21 @@ def reloadAssets():
     Constants.NAME2ADDRESS = name2address
 
 
+def getJoeBuyBackLast7d():
+    now = datetime.datetime.utcnow()
+    lastweektimestamp = str(int((now - datetime.timedelta(days=6, hours=12)).timestamp()))
+    query = genericQuery('{servings(orderBy: timestamp, orderDirection: desc, first: 1000, where: {timestamp_gt: "' +
+                         lastweektimestamp + '"}) { joeServed}}', Constants.JOE_MAKER_SG_URL)
+
+    # avgPrice = avg7d(str(int(now.timestamp())))
+
+    joeServed = 0
+    for joeServ in query["data"]["servings"]:
+        joeServed += float(joeServ["joeServed"])
+    return joeServed
+    # return joeServed, joeServed * avgPrice
+
+
 def getAbout():
     joePrice = getJoePrice()
     avaxPrice = getAvaxPrice()
@@ -206,10 +225,11 @@ def avg7d(timestamp):
       token1: "0xc7198437980c041c805a1edcba50c1ce5db95118",\
       period: 14400,\
       time_lte: ' + timestamp + '},orderBy: time,orderDirection: desc,first: 42) \
-      {close}}', Constants.JOE_DEXCANDLES_SG_URL)
+      {close, time}}', Constants.JOE_DEXCANDLES_SG_URL)
     closes = query["data"]["candles"]
     if len(closes) == 0:
         return -1
+    print(query)
     return sum([1 / float(i["close"]) for i in closes]) / len(closes)
 
 
@@ -223,6 +243,8 @@ def getLendingAbout():
 
 
 if __name__ == "__main__":
-    print(getAbout())
-    print(getLendingAbout())
+    # print(getAbout())
+    # print(getLendingAbout())
+    # print(getJoeBuyBackLast7d())
+    print(getJoeMakerV2Postitions(100))
     print("Done")

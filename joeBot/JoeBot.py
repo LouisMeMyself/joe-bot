@@ -48,7 +48,9 @@ class JoeBot:
                                                                        seconds=random.randint(0, 59))
 
                     await asyncio.sleep((tomorrowAtAround8PMUTC - now).total_seconds())
+                    joeBoughtBackLast7d = JoeSubGraph.getJoeBuyBackLast7d()
                     joeBoughtBack = FeeCollector.callConvert(min_usd_value)
+                    joePrice = JoeSubGraph.getJoePrice()
 
                     print(joeBoughtBack)
 
@@ -56,8 +58,11 @@ class JoeBot:
                                          joeBoughtBack.items()])
                     sum_ = sum(joeBoughtBack.values())
                     message += "\nTotal buyback: {} $JOE worth ${}".format(readable(sum_, 2),
-                                                                           readable(sum_ * JoeSubGraph.getJoePrice(),
+                                                                           readable(sum_ * joePrice,
                                                                                     2))
+                    message += "\nLast 7 days buyback: {} $JOE worth ${}".format(
+                        readable(joeBoughtBackLast7d + sum_, 2),
+                        readable((joeBoughtBackLast7d + sum_) * joePrice))
 
                     await self.channels.get_channel(self.channels.BOT_FEED).send(message)
 

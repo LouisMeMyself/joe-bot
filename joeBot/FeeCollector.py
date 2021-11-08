@@ -1,12 +1,13 @@
 import asyncio
 import json
 import os
+from datetime import datetime
 
 from dotenv import load_dotenv
 from web3 import exceptions, Web3
 
 from joeBot import Constants, JoeSubGraph
-from joeBot.JoeSubGraph import getJoeMakerPostitions
+from joeBot.JoeSubGraph import getJoeMakerV2Postitions
 from joeBot.beautify_string import readable
 
 load_dotenv()
@@ -49,70 +50,51 @@ def callConvert(min_usd_value):
     joeBoughtBack = {}
 
     # get the tokens0 and tokens1 lists of joeMaker's pair that are worth more than min_usd_value
-    tokens0, tokens1 = getJoeMakerPostitions(min_usd_value)
-
-    # nb of list that are blacklisted and are worth more than 10k$
-    nb_blacklisted = 0
-    try:
-        with open("../content/utils/blacklist.json", "r") as f:
-            blacklist = json.load(f)
-    except FileNotFoundError:
-        with open("./content/utils/blacklist.json", "r") as f:
-            blacklist = json.load(f)
+    tokens0, tokens1 = getJoeMakerV2Postitions(min_usd_value)
 
     for i in range(len(tokens0)):
-        print("{}/{}".format(i, len(tokens0)))
+        # print("{}/{}".format(i, len(tokens0) - 1))
         token0 = Web3.toChecksumAddress(tokens0[i])
         token1 = Web3.toChecksumAddress(tokens1[i])
 
-        if "{} - {}".format(token0, token1) in blacklist["tokens"]:
-            nb_blacklisted += 1
-            continue
-
-        nonce = w3.eth.getTransactionCount(acct.address)
+        # nonce = w3.eth.getTransactionCount(acct.address)
         contract_func = joeMaker.functions.convert(token0, token1)
 
         try:
-            tx_hash = exec_contract(acct, nonce, contract_func)
-            w3.eth.waitForTransactionReceipt(tx_hash, timeout=120)
-
-            pairAddress = Web3.toChecksumAddress(
-                "0x{}".format((w3.eth.getTransactionReceipt(tx_hash)["logs"][0]["topics"][-2]).hex()[-40:]))
-            amountJoe = int(w3.eth.getTransactionReceipt(tx_hash)["logs"][-1]["data"][-64:], 16) / 1e18
-
-            token0Contract = w3.eth.contract(address=token0, abi=Constants.ERC20_ABI)
-            token1Contract = w3.eth.contract(address=token1, abi=Constants.ERC20_ABI)
-
-            try:
-                pairName = "{} - {}".format(token0Contract.functions.symbol().call(), token1Contract.functions.symbol().call())
-            except:
-                pairName = pairAddress
-
-            if pairName in joeBoughtBack:
-                joeBoughtBack[pairName + " " + pairAddress] = amountJoe
-            else:
-                joeBoughtBack[pairName] = amountJoe
+            contract_func.call()
         except exceptions.SolidityError as e:
-            if str(e) == "execution reverted: SafeERC20: Transfer failed":
-                blacklist["tokens"].append("{} - {}".format(token0, token1))
-            else:
-                print(e, token0, token1)
+            print("[{}]".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S")), e, "for", tokens0[i], tokens1[i])
 
-    try:
-        print("open")
-        with open("../content/utils/blacklist.json", "w") as f:
-            json.dump(blacklist, f)
-    except FileNotFoundError:
-        print("open2")
-        with open("./content/utils/blacklist.json", "w") as f:
-            json.dump(blacklist, f)
+        # try:
+            # tx_hash = exec_contract(acct, nonce, contract_func)
+            # w3.eth.waitForTransactionReceipt(tx_hash, timeout=120)
 
-    print("{} pairs were excluded because they are blacklisted.".format(nb_blacklisted))
+            # pairAddress = Web3.toChecksumAddress(
+            #     "0x{}".format((w3.eth.getTransactionReceipt(tx_hash)["logs"][0]["topics"][-2]).hex()[-40:]))
+            # amountJoe = int(w3.eth.getTransactionReceipt(tx_hash)["logs"][-1]["data"][-64:], 16) / 1e18
+            #
+            # token0Contract = w3.eth.contract(address=token0, abi=Constants.ERC20_ABI)
+            # token1Contract = w3.eth.contract(address=token1, abi=Constants.ERC20_ABI)
+            #
+            # try:
+            #     pairName = "{} - {}".format(token0Contract.functions.symbol().call(), token1Contract.functions.symbol().call())
+            # except:
+            #     pairName = pairAddress
+            #
+            # if pairName in joeBoughtBack:
+            #     joeBoughtBack[pairName + " " + pairAddress] = amountJoe
+            # else:
+            #     joeBoughtBack[pairName] = amountJoe
+        # except exceptions.SolidityError as e:
+            # if str(e) == "execution reverted: SafeERC20: Transfer failed":
+            #     blacklist["tokens"].append("{} - {}".format(token0, token1))
+            # else:
+            #     print(e, token0, token1)
 
     return joeBoughtBack
 
 
 # Only executed if you run main.py
 if __name__ == '__main__':
-    print("\n".join(
-        ["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(10000).items()]))
+    print(JoeSubGraph.getAvaxBalance(acct.address))
+    print("\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(1000).items()]))
