@@ -24,6 +24,8 @@ VERIFIED_USER_ROLE = "Joe"
 JOE_EXCHANGE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
 JOE_BAR_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/bar"
 JOE_DEXCANDLES_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/dexcandles"
+JOE_MAKER_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/maker"
+JOE_MAKERV2_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/makerv2"
 
 # address for web3
 AVAX_RPC = "https://api.avax.network/ext/bc/C/rpc"
@@ -35,6 +37,8 @@ USDCe_ADDRESS = "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664"
 JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
 JOEFACTORY_ADDRESS = "0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10"
 JOEMAKER_ADDRESS = "0x861726BFE27931A4E22a7277bDe6cb8432b65856"
+JOEMAKERV2_ADDRESS = "0xC98C3C547DDbcc0029F38E0383C645C202aD663d"
+
 JOEUSDTE_ADDRESS = "0x1643de2efB8e35374D796297a9f95f64C082a8ce"
 JOEWAVAX_ADDRESS = "0x454E67025631C065d3cFAD6d71E6892f74487a15"
 WAVAXUSDCE_ADDRESS = "0xA389f9430876455C36478DeEa9769B7Ca4E3DDB1"
