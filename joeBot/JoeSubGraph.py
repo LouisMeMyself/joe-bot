@@ -1,5 +1,6 @@
 import datetime
 import json
+import time
 
 import pandas as pd
 import requests
@@ -7,12 +8,13 @@ from web3 import Web3
 
 from joeBot import Constants
 from joeBot.Constants import E18
-from joeBot.beautify_string import readable, human_format
+from joeBot.beautify_string import readable, smartRounding
 
 # web3
-w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
+w3 = Web3(Web3.HTTPProvider(Constants.AVAX_RPC))
 if not w3.isConnected():
     print("Error web3 can't connect")
+
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
 
@@ -22,13 +24,13 @@ def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
     return json.loads(r.text)
 
 
-def getPrice(tokenAddress):
+def getPriceOf(tokenAddress):
     r = requests.get("https://api.traderjoexyz.com/priceusd/{}".format(tokenAddress))
     assert (r.status_code == 200)
     return json.loads(r.text)
 
 
-def getDerivedPrice(tokenAddress):
+def getDerivedPriceOf(tokenAddress):
     r = requests.get("https://api.traderjoexyz.com/priceavax/{}".format(tokenAddress))
     assert (r.status_code == 200)
     return json.loads(r.text)
@@ -52,7 +54,7 @@ def getLendingTotalBorrow():
     return json.loads(r.text)
 
 
-async def getTokenCandles(token_address, period, nb):
+def getTokenCandles(token_address, period, nb):
     if token_address < Constants.WAVAX_ADDRESS:
         token0, token1 = token_address, Constants.WAVAX_ADDRESS
         isTokenPerAvax = False
@@ -60,6 +62,7 @@ async def getTokenCandles(token_address, period, nb):
         token0, token1 = Constants.WAVAX_ADDRESS, token_address
         isTokenPerAvax = True
     else:
+        # Token is avax
         token0, token1 = Constants.WAVAX_ADDRESS, Constants.USDTe_ADDRESS
         isTokenPerAvax = False
 
@@ -82,14 +85,48 @@ async def getTokenCandles(token_address, period, nb):
     return data_df
 
 
+def getJoeMakerV2Postitions(min_usd_value):
+    """
+    getJoeMakerPostitions return the position of JoeMaker that are worth more than min_usd_value
+    and if he owns less than half the lp.
+
+    :param min_usd_value: The min USD value to be actually returned.
+    :return: 2 lists, the first one is the list of the token0 of the pairs that satisfied the requirements
+    the second one is the same thing but for token1.
+    """
+    skip, queryExchange = 0, {}
+    tokens0, tokens1 = [], []
+    while skip == 0 or len(queryExchange["data"]["liquidityPositions"]) == 1000:
+        queryExchange = genericQuery('{liquidityPositions(first: 1000, skip:' + str(skip) +
+                                     ' where: {user: "' + Constants.JOEMAKER_ADDRESS.lower() + '"}) '
+                                     '{liquidityTokenBalance, '
+                                     'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
+        for liquidityPosition in queryExchange["data"]["liquidityPositions"]:
+            pair = liquidityPosition["pair"]
+
+            joeMaker_balance = float(liquidityPosition["liquidityTokenBalance"])
+            pair_total_supply = float(pair["totalSupply"])
+            pair_reserve_usd = float(pair["reserveUSD"])
+
+            if joeMaker_balance / pair_total_supply * pair_reserve_usd > min_usd_value and \
+                    joeMaker_balance / pair_total_supply < 0.49:
+                tokens0.append(pair["token0"]["id"])
+                tokens1.append(pair["token1"]["id"])
+        skip += 1000
+    return tokens0, tokens1
+
+
 # Using API
 def getAvaxPrice():
-    return getPrice(Constants.WAVAX_ADDRESS) / E18
+    return getPriceOf(Constants.WAVAX_ADDRESS) / E18
 
+
+def getAvaxBalance(address):
+    return round(float(w3.eth.getBalance(w3.toChecksumAddress(address))) / 1e18, 3)
 
 # Using API
 def getJoePrice():
-    return getPrice(Constants.JOETOKEN_ADDRESS) / E18
+    return getPriceOf(Constants.JOETOKEN_ADDRESS) / E18
 
 
 def getTVL():
@@ -108,7 +145,7 @@ def getTVL():
 
 
 # Using API
-def getPriceOf(tokenAddress):
+def getPricesOf(tokenAddress):
     tokenAddress = tokenAddress.lower().replace(" ", "")
     try:
         tokenAddress = Web3.toChecksumAddress(Constants.NAME2ADDRESS[tokenAddress])
@@ -116,7 +153,7 @@ def getPriceOf(tokenAddress):
         pass
 
     try:
-        derivedPrice = getDerivedPrice(tokenAddress)
+        derivedPrice = getDerivedPriceOf(tokenAddress)
     except:
         return "Error: Given address " + tokenAddress + " is not a valid Ethereum address or a valid symbol."
 
@@ -148,6 +185,21 @@ def reloadAssets():
     Constants.NAME2ADDRESS = name2address
 
 
+def getJoeBuyBackLast7d():
+    now = datetime.datetime.utcnow()
+    lastweektimestamp = str(int((now - datetime.timedelta(days=6, hours=12)).timestamp()))
+    query = genericQuery('{servings(orderBy: timestamp, orderDirection: desc, first: 1000, where: {timestamp_gt: "' +
+                         lastweektimestamp + '"}) { joeServed}}', Constants.JOE_MAKER_SG_URL)
+
+    # avgPrice = avg7d(str(int(now.timestamp())))
+
+    joeServed = 0
+    for joeServ in query["data"]["servings"]:
+        joeServed += float(joeServ["joeServed"])
+    return joeServed
+    # return joeServed, joeServed * avgPrice
+
+
 def getAbout():
     joePrice = getJoePrice()
     avaxPrice = getAvaxPrice()
@@ -162,9 +214,9 @@ def getAbout():
            "Circ. Supply: {}\n" \
            "Farm TVL: ${}\n" \
            "Lending TVL: ${}\n" \
-           "Total TVL: ${}\n".format(readable(joePrice, 4), human_format(avaxPrice), human_format(mktcap),
-                                     human_format(csupply), human_format(farm_tvl), human_format(lending_tvl),
-                                     human_format(lending_tvl + farm_tvl))
+           "Total TVL: ${}\n".format(readable(joePrice, 4), smartRounding(avaxPrice), smartRounding(mktcap),
+                                     smartRounding(csupply), smartRounding(farm_tvl), smartRounding(lending_tvl),
+                                     smartRounding(lending_tvl + farm_tvl))
 
 
 def avg7d(timestamp):
@@ -173,10 +225,11 @@ def avg7d(timestamp):
       token1: "0xc7198437980c041c805a1edcba50c1ce5db95118",\
       period: 14400,\
       time_lte: ' + timestamp + '},orderBy: time,orderDirection: desc,first: 42) \
-      {close}}', Constants.JOE_DEXCANDLES_SG_URL)
+      {close, time}}', Constants.JOE_DEXCANDLES_SG_URL)
     closes = query["data"]["candles"]
     if len(closes) == 0:
         return -1
+    print(query)
     return sum([1 / float(i["close"]) for i in closes]) / len(closes)
 
 
@@ -186,10 +239,12 @@ def getLendingAbout():
 
     return "Lending informations:\n" \
            "Total Deposited: ${}\n" \
-           "Total Borrowed: ${}\n".format(human_format(lending_tvl), human_format(totalBorrow))
+           "Total Borrowed: ${}\n".format(smartRounding(lending_tvl), smartRounding(totalBorrow))
 
 
 if __name__ == "__main__":
-    print(getAbout())
-    print(getLendingAbout())
+    # print(getAbout())
+    # print(getLendingAbout())
+    # print(getJoeBuyBackLast7d())
+    print(getJoeMakerV2Postitions(100))
     print("Done")
