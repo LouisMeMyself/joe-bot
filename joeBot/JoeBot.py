@@ -43,7 +43,7 @@ class JoeBot:
             while 1:
                 try:
                     now = datetime.utcnow()
-                    todayat8PMUTC = now.replace(hour=8, minute=0, second=0, microsecond=0)
+                    todayat8PMUTC = now.replace(hour=20, minute=0, second=0, microsecond=0)
                     tomorrowAtAround8PMUTC = todayat8PMUTC + timedelta(days=1, minutes=random.randint(0, 59),
                                                                        seconds=random.randint(0, 59))
 

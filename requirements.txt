@@ -1,5 +1,4 @@
 discord~=1.0.1
-Cython~=0.29.24
 web3~=5.20.1
 numpy~=1.20.2
 CairoSVG~=2.5.2
