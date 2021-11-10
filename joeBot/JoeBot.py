@@ -34,7 +34,7 @@ class JoeBot:
         # msg = await self.channels.get_channel(self.channels.GUIDELINES_CHANNEL_ID).fetch_message(
         # self.channels.GUIDELINES_MSG_ID) await msg.add_reaction(Constants.EMOJI_ACCEPT_GUIDELINES)
         self.discord_bot.loop.create_task(self.joeTicker())
-        # self.discord_bot.loop.create_task(self.joeMakerTicker(10000))
+        self.discord_bot.loop.create_task(self.joeMakerTicker(10000))
 
     async def joeMakerTicker(self, min_usd_value):
         """start JoeMakerTicker"""
@@ -48,14 +48,15 @@ class JoeBot:
                                                                        seconds=random.randint(0, 59))
 
                     await asyncio.sleep((tomorrowAtAround8PMUTC - now).total_seconds())
+                    previousAvaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
                     joeBoughtBackLast7d = JoeSubGraph.getJoeBuyBackLast7d()
                     joeBoughtBack = FeeCollector.callConvert(min_usd_value)
+                    avaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
                     joePrice = JoeSubGraph.getJoePrice()
-
-                    print(joeBoughtBack)
 
                     message = "\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
                                          joeBoughtBack.items()])
+
                     sum_ = sum(joeBoughtBack.values())
                     message += "\nTotal buyback: {} $JOE worth ${}".format(readable(sum_, 2),
                                                                            readable(sum_ * joePrice,
@@ -63,6 +64,9 @@ class JoeBot:
                     message += "\nLast 7 days buyback: {} $JOE worth ${}".format(
                         readable(joeBoughtBackLast7d + sum_, 2),
                         readable((joeBoughtBackLast7d + sum_) * joePrice))
+
+                    message += "\nAvax Balance: {} (used {})".format(readable(avaxBalance, 2),
+                                                                     readable(previousAvaxBalance - avaxBalance, 2))
 
                     await self.channels.get_channel(self.channels.BOT_FEED).send(message)
 

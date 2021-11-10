@@ -98,7 +98,7 @@ def getJoeMakerV2Postitions(min_usd_value):
     tokens0, tokens1 = [], []
     while skip == 0 or len(queryExchange["data"]["liquidityPositions"]) == 1000:
         queryExchange = genericQuery('{liquidityPositions(first: 1000, skip:' + str(skip) +
-                                     ' where: {user: "' + Constants.JOEMAKER_ADDRESS.lower() + '"}) '
+                                     ' where: {user: "' + Constants.JOEMAKERV2_ADDRESS.lower() + '"}) '
                                      '{liquidityTokenBalance, '
                                      'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
         for liquidityPosition in queryExchange["data"]["liquidityPositions"]:
@@ -189,15 +189,12 @@ def getJoeBuyBackLast7d():
     now = datetime.datetime.utcnow()
     lastweektimestamp = str(int((now - datetime.timedelta(days=6, hours=12)).timestamp()))
     query = genericQuery('{servings(orderBy: timestamp, orderDirection: desc, first: 1000, where: {timestamp_gt: "' +
-                         lastweektimestamp + '"}) { joeServed}}', Constants.JOE_MAKER_SG_URL)
-
-    # avgPrice = avg7d(str(int(now.timestamp())))
+                         lastweektimestamp + '"}) {joeServed}}', Constants.JOE_MAKERV2_SG_URL)
 
     joeServed = 0
     for joeServ in query["data"]["servings"]:
         joeServed += float(joeServ["joeServed"])
     return joeServed
-    # return joeServed, joeServed * avgPrice
 
 
 def getAbout():

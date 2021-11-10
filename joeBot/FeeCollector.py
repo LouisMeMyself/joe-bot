@@ -57,7 +57,7 @@ def callConvert(min_usd_value):
         token0 = Web3.toChecksumAddress(tokens0[i])
         token1 = Web3.toChecksumAddress(tokens1[i])
 
-        # nonce = w3.eth.getTransactionCount(acct.address)
+        nonce = w3.eth.getTransactionCount(acct.address)
         contract_func = joeMaker.functions.convert(token0, token1)
 
         try:
@@ -65,31 +65,28 @@ def callConvert(min_usd_value):
         except exceptions.SolidityError as e:
             print("[{}]".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S")), e, "for", tokens0[i], tokens1[i])
 
-        # try:
-            # tx_hash = exec_contract(acct, nonce, contract_func)
-            # w3.eth.waitForTransactionReceipt(tx_hash, timeout=120)
+        try:
+            tx_hash = exec_contract(acct, nonce, contract_func)
+            w3.eth.waitForTransactionReceipt(tx_hash, timeout=120)
 
-            # pairAddress = Web3.toChecksumAddress(
-            #     "0x{}".format((w3.eth.getTransactionReceipt(tx_hash)["logs"][0]["topics"][-2]).hex()[-40:]))
-            # amountJoe = int(w3.eth.getTransactionReceipt(tx_hash)["logs"][-1]["data"][-64:], 16) / 1e18
-            #
-            # token0Contract = w3.eth.contract(address=token0, abi=Constants.ERC20_ABI)
-            # token1Contract = w3.eth.contract(address=token1, abi=Constants.ERC20_ABI)
-            #
-            # try:
-            #     pairName = "{} - {}".format(token0Contract.functions.symbol().call(), token1Contract.functions.symbol().call())
-            # except:
-            #     pairName = pairAddress
-            #
-            # if pairName in joeBoughtBack:
-            #     joeBoughtBack[pairName + " " + pairAddress] = amountJoe
-            # else:
-            #     joeBoughtBack[pairName] = amountJoe
-        # except exceptions.SolidityError as e:
-            # if str(e) == "execution reverted: SafeERC20: Transfer failed":
-            #     blacklist["tokens"].append("{} - {}".format(token0, token1))
-            # else:
-            #     print(e, token0, token1)
+            pairAddress = Web3.toChecksumAddress(
+                "0x{}".format((w3.eth.getTransactionReceipt(tx_hash)["logs"][0]["topics"][-2]).hex()[-40:]))
+            amountJoe = int(w3.eth.getTransactionReceipt(tx_hash)["logs"][-1]["data"][-64:], 16) / 1e18
+
+            token0Contract = w3.eth.contract(address=token0, abi=Constants.ERC20_ABI)
+            token1Contract = w3.eth.contract(address=token1, abi=Constants.ERC20_ABI)
+
+            try:
+                pairName = "{} - {}".format(token0Contract.functions.symbol().call(), token1Contract.functions.symbol().call())
+            except:
+                pairName = pairAddress
+
+            if pairName in joeBoughtBack:
+                joeBoughtBack[pairName + " " + pairAddress] = amountJoe
+            else:
+                joeBoughtBack[pairName] = amountJoe
+        except exceptions.SolidityError as e:
+            print(e, token0, token1)
 
     return joeBoughtBack
 
