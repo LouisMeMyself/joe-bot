@@ -1,14 +1,18 @@
 import asyncio
 import datetime
-import json
 import logging
 import time
+import os
 
 from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
 
 from joeBot import JoeSubGraph, JoePic, Constants, JoeChart
 from joeBot.beautify_string import smartRounding
+from dotenv import load_dotenv
+
+# Env
+load_dotenv()
 
 joePic_ = JoePic.JoePic()
 
@@ -16,10 +20,7 @@ joePic_ = JoePic.JoePic()
 logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
-with open(".key", "r") as f:
-    key = json.load(f)
-
-bot = Bot(token=key["telegram"])
+bot = Bot(token=os.getenv("TELEGRAM_KEY"))
 
 dp = Dispatcher(bot)
 
@@ -49,12 +50,6 @@ class Timer:
 timer = Timer()
 time_between_updates = 60
 last_reload = None
-
-
-#
-# @dp.message_handler()
-# async def test(message: types.Message):
-#     print(message.text)
 
 
 @dp.message_handler(commands='startticker')
@@ -152,7 +147,7 @@ async def price(message: types.Message):
         prices = JoeSubGraph.getPricesOf(msg)
         if len(prices) != 2:
             await bot.send_message(message.chat.id, prices + "\nUse /pricelist to know which token can be "
-                                                    "tracked with JoeBot")
+                                                             "tracked with JoeBot")
             return
         derivedPrice, priceInDollar = prices
         await bot.send_message(message.chat.id,
@@ -166,12 +161,12 @@ async def price(message: types.Message):
         await bot.send_message(message.chat.id, prices)
         return
     dprice, price = prices
-    await bot.send_message(message.chat.id, "$JOE: ${}\n{} $JOE/$AVAX".format(round(price, 4), round(1/dprice, 4)))
+    await bot.send_message(message.chat.id, "$JOE: ${}\n{} $JOE/$AVAX".format(round(price, 4), round(1 / dprice, 4)))
 
 
 @dp.message_handler(commands='address')
 async def address(message: types.Message):
-    '''return the current price of $Joe'''
+    '''return the address of a token (not working for all the tokens)'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
     msg = message.text.lower().replace("/address", "").replace(" ", "")
@@ -188,7 +183,7 @@ async def address(message: types.Message):
 
 @dp.message_handler(commands='about')
 async def about(message: types.Message):
-    '''return the current price of $Joe, the market cap and the circulating supply.'''
+    '''return the current price of $JOE and $AVAX, the market cap, the circulating supply and the TVL.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
     about = JoeSubGraph.getAbout()
@@ -196,8 +191,8 @@ async def about(message: types.Message):
 
 
 @dp.message_handler(commands='lending')
-async def about(message: types.Message):
-    '''return the current price of $Joe, the market cap and the circulating supply.'''
+async def lending(message: types.Message):
+    '''return the current Lending Total Supply of Banker Joe.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
     lendingAbout = JoeSubGraph.getLendingAbout()
@@ -219,7 +214,7 @@ async def joepic(message: types.Message):
 
 @dp.message_handler(commands='avg7d')
 async def avg7d(message: types.Message):
-    '''return the average price on the last 42 4hours close data (7-day averageà, '''
+    '''return the average price on the last 42 4hours close data (7-day averaged).'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
 
@@ -237,7 +232,7 @@ async def avg7d(message: types.Message):
 
 @dp.message_handler(commands='pricelist')
 async def pricelist(message: types.Message):
-    '''return TraderJoe's tokenomics page.'''
+    '''Returns the list of tokens for which you can request their price from joebot with !price.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
     addresses = list(Constants.NAME2ADDRESS.keys())
@@ -249,7 +244,7 @@ async def pricelist(message: types.Message):
 
 @dp.message_handler(commands='chart')
 async def chart(message: types.Message):
-    '''return a cool joe car, (for more help, type /joepic).'''
+    '''return the chart of a token (not working for all the tokens).'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
 
@@ -288,7 +283,7 @@ async def rain(message: types.Message):
 
 @dp.message_handler(commands='comfy')
 async def comfy(message: types.Message):
-    '''return a cool joe car, (for more help, type /joepic).'''
+    '''return a cool joe comfy.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_photo(chat_id=message.chat.id, photo=open("content/images/joecomfy.png", 'rb'))
@@ -356,8 +351,6 @@ async def reloadAssets(message: types.Message):
     '''reload assets'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    global ticker_infos
-
     JoeSubGraph.reloadAssets()
     await bot.send_message(message.chat.id, "Assets have been reloaded")
 

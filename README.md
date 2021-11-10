@@ -1,6 +1,8 @@
 # [JoeBot](https://github.com/LouisMeMyself/joebot)
 
-A small bot to create profile picture using Joe logo.
+A small bot to create profile picture using Joe logo and get informations about the token.
+
+Works for Discord and Telegram.
 
 Installation
 -------
@@ -18,6 +20,15 @@ Installation of the dependencies required for the project:
 (venv) ... $> pip install -r requirements.txt
 ```
 
+Don't forget to add your keys (Wallet private key, discord API and Telegram API keys):
+```bash
+# Create a .env file
+(venv) ... $> cp .env.example .env
+# Add your keys
+(venv) ... $> nano .env
+```
+
+
 Then, to launch the bot simply type:
 ```bash
 # start the discord bot
@@ -25,5 +36,3 @@ Then, to launch the bot simply type:
 # start the telegram bot
 (venv) ... $> python JoeTelegramBot.py
 ```
-
-Don't forget to add a ".key" file at the root of the project with discord bot key in it !

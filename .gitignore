@@ -7,9 +7,9 @@ venv
 # PyCharm Files
 .idea
 
-# Personal Files
-.key
-*save*
-test.py
-*.png
+# Bots generated images
+joe-logo.png
+chart.png
+
+# Env
 .env
