@@ -61,11 +61,11 @@ except FileNotFoundError:
         JOEFACTORY_ABI = json.load(f)
 
 try:
-    with open("content/abis/joemakerabi.json", "r") as f:
-        JOEMAKER_ABI = json.load(f)
+    with open("content/abis/joemakerv2abi.json", "r") as f:
+        JOEMAKERV2_ABI = json.load(f)
 except FileNotFoundError:
-    with open("../content/abis/joemakerabi.json", "r") as f:
-        JOEMAKER_ABI = json.load(f)
+    with open("../content/abis/joemakerv2abi.json", "r") as f:
+        JOEMAKERV2_ABI = json.load(f)
 
 # assets address
 NAME2ADDRESS = {}

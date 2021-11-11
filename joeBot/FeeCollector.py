@@ -19,7 +19,7 @@ if not w3.isConnected():
 acct = w3.eth.account.privateKeyToAccount((os.getenv("PRIVATE_KEY")))
 
 # contracts
-joeMaker = w3.eth.contract(address=Constants.JOEMAKER_ADDRESS, abi=Constants.JOEMAKER_ABI)
+joeMakerV2 = w3.eth.contract(address=Constants.JOEMAKERV2_ADDRESS, abi=Constants.JOEMAKERV2_ABI)
 
 
 def exec_contract(acct_, nonce_, func_):
@@ -34,9 +34,9 @@ def exec_contract(acct_, nonce_, func_):
 
 def callConvert(min_usd_value):
     """
-    Call convert on all the pairs that meets the requirements (see getJoeMakerPositions for more help).
+    Call convert on all the pairs that meets the requirements (see getJoeMakerV2Positions for more help).
     If one of the transaction revert because of "execution reverted: SafeERC20: Transfer failed", we
-    add it to the blacklist because it's a reflect token, and JoeMaker convert function doesn't handle
+    add it to the blacklist because it's a reflect token, and JoeMakerV2 convert function doesn't handle
     that currently.
     If one of the transaction revert because of another error, we print it with the 2 tokens of the
     pair that was problematic. We don't add them to the blacklist because that could change (like if a
@@ -47,7 +47,7 @@ def callConvert(min_usd_value):
 
     joeBoughtBack = {}
 
-    # get the tokens0 and tokens1 lists of joeMaker's pair that are worth more than min_usd_value
+    # get the tokens0 and tokens1 lists of JoeMakerV2's pair that are worth more than min_usd_value
     tokens0, tokens1 = getJoeMakerV2Postitions(min_usd_value)
 
     for i in range(len(tokens0)):
@@ -56,7 +56,7 @@ def callConvert(min_usd_value):
         token1 = Web3.toChecksumAddress(tokens1[i])
 
         nonce = w3.eth.getTransactionCount(acct.address)
-        contract_func = joeMaker.functions.convert(token0, token1)
+        contract_func = joeMakerV2.functions.convert(token0, token1)
 
         try:
             contract_func.call()
@@ -75,7 +75,8 @@ def callConvert(min_usd_value):
             token1Contract = w3.eth.contract(address=token1, abi=Constants.ERC20_ABI)
 
             try:
-                pairName = "{} - {}".format(token0Contract.functions.symbol().call(), token1Contract.functions.symbol().call())
+                pairName = "{} - {}".format(token0Contract.functions.symbol().call(),
+                                            token1Contract.functions.symbol().call())
             except:
                 pairName = pairAddress
 
@@ -92,4 +93,5 @@ def callConvert(min_usd_value):
 # Only executed if you run main.py
 if __name__ == '__main__':
     print(JoeSubGraph.getAvaxBalance(acct.address))
-    print("\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(1000).items()]))
+    print(JoeSubGraph.getJoeMakerV2Postitions(10000))
+    print("\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(10000).items()]))
