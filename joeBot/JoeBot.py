@@ -1,11 +1,11 @@
 import asyncio
 import random
-import discord
+from datetime import datetime, timedelta
 
+import discord
 from discord.ext import commands
 from web3 import Web3
 
-from datetime import datetime, timedelta
 from joeBot import JoePic, JoeSubGraph, Constants, FeeCollector
 from joeBot.beautify_string import readable
 
@@ -14,6 +14,8 @@ w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
+
+MIN_USD_VALUE = 10000
 
 
 class JoeBot:
@@ -30,9 +32,9 @@ class JoeBot:
         """starts joebot"""
         print('joeBot have logged in as {0.user}'.format(self.discord_bot))
         self.discord_bot.loop.create_task(self.joeTicker())
-        self.discord_bot.loop.create_task(self.joeMakerTicker(10000))
+        self.discord_bot.loop.create_task(self.joeMakerTicker())
 
-    async def joeMakerTicker(self, min_usd_value):
+    async def joeMakerTicker(self):
         """start JoeMakerTicker"""
         print("JoeMaker Ticker is up")
         while 1:
@@ -49,29 +51,7 @@ class JoeBot:
                                                                         seconds=random.randint(0, 59))
 
                     await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
-
-                    previousAvaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
-                    joeBoughtBackLast7d = JoeSubGraph.getJoeBuyBackLast7d()
-                    joeBoughtBack = FeeCollector.callConvert(min_usd_value)
-                    avaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
-                    joePrice = JoeSubGraph.getJoePrice()
-
-                    message = "\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
-                                         joeBoughtBack.items()])
-
-                    sum_ = sum(joeBoughtBack.values())
-
-                    message += "\nTotal buyback: {} $JOE worth ${}".format(readable(sum_, 2),
-                                                                           readable(sum_ * joePrice,
-                                                                                    2))
-                    message += "\nLast 7 days buyback: {} $JOE worth ${}".format(
-                        readable(joeBoughtBackLast7d + sum_, 2),
-                        readable((joeBoughtBackLast7d + sum_) * joePrice, 2))
-
-                    message += "\nAvax Balance: {} (used {})".format(readable(avaxBalance, 2),
-                                                                     readable(previousAvaxBalance - avaxBalance, 2))
-
-                    await self.channels.get_channel(self.channels.BOT_FEED).send(message)
+                    await self.call_convert(None)
 
                 except ConnectionError:
                     print("Connection error, retrying in 60 seconds...")
@@ -112,6 +92,42 @@ class JoeBot:
         about = JoeSubGraph.getAbout()
         await ctx.send(about)
         return
+
+    async def set_min_usd_value(self, ctx):
+        global MIN_USD_VALUE
+        value = ctx.message.content.replace(Constants.SET_MIN_USD_COMMAND, "").rstrip().lstrip()
+        try:
+            MIN_USD_VALUE = float(value)
+            await ctx.send("Min usd value is now set to : ${}".format(readable(MIN_USD_VALUE, 2)))
+        except:
+            await ctx.send("Min usd value is currently : ${}".format(readable(MIN_USD_VALUE, 2)))
+        return
+
+    async def call_convert(self, ctx):
+        previousAvaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
+        joeBoughtBackLast7d = JoeSubGraph.getJoeBuyBackLast7d()
+        joeBoughtBack, errorOnPairs = FeeCollector.callConvert(MIN_USD_VALUE)
+        avaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
+        joePrice = JoeSubGraph.getJoePrice()
+
+        message = "\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
+                             joeBoughtBack.items()])
+
+        sum_ = sum(joeBoughtBack.values())
+
+        message += "\nTotal buyback: {} $JOE worth ${}".format(readable(sum_, 2),
+                                                               readable(sum_ * joePrice,
+                                                                        2))
+        message += "\nLast 7 days buyback: {} $JOE worth ${}".format(
+            readable(joeBoughtBackLast7d + sum_, 2),
+            readable((joeBoughtBackLast7d + sum_) * joePrice, 2))
+
+        message += "\nAvax Balance: {} (used {})".format(readable(avaxBalance, 2),
+                                                         readable(previousAvaxBalance - avaxBalance, 2))
+
+        await self.channels.get_channel(self.channels.BOT_FEED).send(message)
+        if len(errorOnPairs) > 0:
+            await self.channels.get_channel(self.channels.ERRORS_ON_PAIRS).send("\n".join(errorOnPairs))
 
     async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile

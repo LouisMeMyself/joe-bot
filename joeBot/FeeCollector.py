@@ -46,6 +46,7 @@ def callConvert(min_usd_value):
     """
 
     joeBoughtBack = {}
+    errorOnPairs = []
 
     # get the tokens0 and tokens1 lists of JoeMakerV2's pair that are worth more than min_usd_value
     tokens0, tokens1 = getJoeMakerV2Postitions(min_usd_value)
@@ -61,7 +62,10 @@ def callConvert(min_usd_value):
         try:
             contract_func.call()
         except exceptions.SolidityError as e:
-            print("[{}]".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S")), e, "for", tokens0[i], tokens1[i])
+            message = "[{}] {} for {}/{}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"), e, tokens0[i], tokens1[i])
+            errorOnPairs.append(message)
+            print(message)
+            continue
 
         try:
             tx_hash = exec_contract(acct, nonce, contract_func)
@@ -87,11 +91,11 @@ def callConvert(min_usd_value):
         except exceptions.SolidityError as e:
             print(e, token0, token1)
 
-    return joeBoughtBack
+    return joeBoughtBack, errorOnPairs
 
 
 # Only executed if you run main.py
 if __name__ == '__main__':
     print(JoeSubGraph.getAvaxBalance(acct.address))
     print(JoeSubGraph.getJoeMakerV2Postitions(10000))
-    print("\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(10000).items()]))
+    print("\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(10000)[0].items()]))
