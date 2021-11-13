@@ -15,6 +15,8 @@ E18 = 10 ** 18
 # Commands
 COMMAND_BEARD = "beard"
 PROFILE_PICTURE_COMMAND = "!joepic"
+SET_MIN_USD_COMMAND = "!setmin"
+CONVERT_COMMAND = "!convert"
 
 # Roles
 ROLE_FOR_CMD = "Bot Master"
@@ -124,6 +126,7 @@ class Channels:
         self.COMMAND_CHANNEL_ID = (852658830987100190, 853397123713204244)[server_nb]  # "🤖-bot-commands"
         self.GUIDELINES_MSG_ID = (843668142764589076, 852636768788021288)[server_nb]
         self.BOT_FEED = (898964756508065852, 853397123713204244)[server_nb]
+        self.ERRORS_ON_PAIRS = (909093515634561106, 853397123713204244)[server_nb]
 
     def get_channel(self, channel_id):
         return self.__channel[channel_id]
