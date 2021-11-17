@@ -38,34 +38,26 @@ class JoeBot:
         """start JoeMakerTicker"""
         print("JoeMaker Ticker is up")
         while 1:
-            while 1:
-                try:
-                    now = datetime.utcnow()
-                    todayat8PMUTC = now.replace(hour=20, minute=0, second=0, microsecond=0)
+            try:
+                now = datetime.utcnow()
+                todayat8PMUTC = now.replace(hour=20, minute=0, second=0, microsecond=0)
 
-                    if todayat8PMUTC < now:
-                        nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=1, minutes=random.randint(0, 59),
-                                                                        seconds=random.randint(0, 59))
-                    else:
-                        nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=0, minutes=random.randint(0, 59),
-                                                                        seconds=random.randint(0, 59))
+                if todayat8PMUTC < now:
+                    nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=1, minutes=random.randint(0, 59),
+                                                                    seconds=random.randint(0, 59))
+                else:
+                    nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=0, minutes=random.randint(0, 59),
+                                                                    seconds=random.randint(0, 59))
 
-                    await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
-                    await self.call_convert(None)
-
-                except ConnectionError:
-                    print("Connection error, retrying in 60 seconds...")
-                    break
-                except AssertionError:
-                    print("Assertion Error, retrying in 60 seconds...")
-                    break
-                except KeyboardInterrupt:
-                    print(KeyboardInterrupt)
-                    return
-                except:
-                    break
-            print("Unknown error, retrying in 60 secs")
-            await asyncio.sleep(60)
+                await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
+                await self.call_convert(None)
+            except KeyboardInterrupt:
+                print(KeyboardInterrupt)
+                return
+            except Exception as e:
+                await self.channels.get_channel(self.channels.BOT_ERRORS).send("\n".join(repr(e)))
+                break
+        await self.channels.get_channel(self.channels.BOT_ERRORS).send("JoeMaker Ticker is down")
 
     async def joeTicker(self):
         while 1:
@@ -127,7 +119,7 @@ class JoeBot:
 
         await self.channels.get_channel(self.channels.BOT_FEED).send(message)
         if len(errorOnPairs) > 0:
-            await self.channels.get_channel(self.channels.ERRORS_ON_PAIRS).send("\n".join(errorOnPairs))
+            await self.channels.get_channel(self.channels.BOT_ERRORS).send("\n".join(errorOnPairs))
 
     async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile
