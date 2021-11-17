@@ -37,6 +37,7 @@ class JoeBot:
     async def joeMakerTicker(self):
         """start JoeMakerTicker"""
         print("JoeMaker Ticker is up")
+        ranToday = True
         while 1:
             try:
                 now = datetime.utcnow()
@@ -48,37 +49,36 @@ class JoeBot:
                 else:
                     nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=0, minutes=random.randint(0, 59),
                                                                     seconds=random.randint(0, 59))
+                if ranToday:
+                    await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
+                else:
+                    await self.channels.get_channel(self.channels.BOT_ERRORS).send("Retrying in 60 seconds.")
+                    await asyncio.sleep(60)
 
-                await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
-                await self.call_convert(None)
+                await self.call_convert()
+
+                ranToday = True
             except KeyboardInterrupt:
                 print(KeyboardInterrupt)
                 return
             except Exception as e:
-                await self.channels.get_channel(self.channels.BOT_ERRORS).send("\n".join(repr(e)))
-                break
-        await self.channels.get_channel(self.channels.BOT_ERRORS).send("JoeMaker Ticker is down")
+                await self.channels.get_channel(self.channels.BOT_ERRORS).send(repr(e))
+                ranToday = False
 
     async def joeTicker(self):
         while 1:
             print("joeTicker is up")
             try:
-                while 1:
-                    price = JoeSubGraph.getJoePrice()
-                    activity = "JOE: ${}".format(round(price, 4))
-                    await self.discord_bot.change_presence(
-                        activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
-                    await asyncio.sleep(60)
-            except ConnectionError:
-                print("Connection error, retrying in 60 seconds...")
-            except AssertionError:
-                print("Assertion Error, retrying in 60 seconds...")
+                price = JoeSubGraph.getJoePrice()
+                activity = "JOE: ${}".format(round(price, 4))
+                await self.discord_bot.change_presence(
+                    activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
+                await asyncio.sleep(60)
             except KeyboardInterrupt:
                 print(KeyboardInterrupt)
                 break
             except:
                 pass
-            await asyncio.sleep(60)
 
     async def about(self, ctx):
         about = JoeSubGraph.getAbout()
@@ -95,7 +95,7 @@ class JoeBot:
             await ctx.send("Min usd value is currently : ${}".format(readable(MIN_USD_VALUE, 2)))
         return
 
-    async def call_convert(self, ctx):
+    async def call_convert(self):
         previousAvaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joeBoughtBackLast7d = JoeSubGraph.getJoeBuyBackLast7d()
         joeBoughtBack, errorOnPairs = FeeCollector.callConvert(MIN_USD_VALUE)

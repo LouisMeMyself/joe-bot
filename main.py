@@ -49,7 +49,7 @@ async def setmin(ctx):
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def convert(ctx):
     """Calls convert on JoeMakerV2."""
-    await joeBot.call_convert(ctx)
+    await joeBot.call_convert()
 
 
 @discord_bot.event

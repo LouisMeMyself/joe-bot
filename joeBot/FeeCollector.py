@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from web3 import exceptions, Web3
+from web3 import Web3
 
 from joeBot import Constants, JoeSubGraph
 from joeBot.JoeSubGraph import getJoeMakerV2Postitions
@@ -52,7 +52,6 @@ def callConvert(min_usd_value):
     tokens0, tokens1 = getJoeMakerV2Postitions(min_usd_value)
 
     for i in range(len(tokens0)):
-        # print("{}/{}".format(i, len(tokens0) - 1))
         token0 = Web3.toChecksumAddress(tokens0[i])
         token1 = Web3.toChecksumAddress(tokens1[i])
 
@@ -61,13 +60,7 @@ def callConvert(min_usd_value):
 
         try:
             contract_func.call()
-        except exceptions.SolidityError as e:
-            message = "[{}] {} for {}/{}\nSolidity error:\n{}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
-                                                                      e, tokens0[i], tokens1[i], repr(e))
-            errorOnPairs.append(message)
-            continue
 
-        try:
             tx_hash = exec_contract(acct, nonce, contract_func)
             w3.eth.waitForTransactionReceipt(tx_hash, timeout=120)
 
@@ -88,7 +81,7 @@ def callConvert(min_usd_value):
                 joeBoughtBack[pairName + " " + pairAddress] = amountJoe
             else:
                 joeBoughtBack[pairName] = amountJoe
-        except exceptions.SolidityError as e:
+        except Exception as e:
             message = "[{}] {} for {}/{}\nSolidity error:\n{}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
                                                                       e, tokens0[i], tokens1[i], repr(e))
             errorOnPairs.append(message)
