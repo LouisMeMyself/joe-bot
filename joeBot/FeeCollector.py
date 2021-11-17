@@ -62,9 +62,9 @@ def callConvert(min_usd_value):
         try:
             contract_func.call()
         except exceptions.SolidityError as e:
-            message = "[{}] {} for {}/{}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"), e, tokens0[i], tokens1[i])
+            message = "[{}] {} for {}/{}\nSolidity error:\n{}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                                                                      e, tokens0[i], tokens1[i], repr(e))
             errorOnPairs.append(message)
-            print(message)
             continue
 
         try:
@@ -89,7 +89,9 @@ def callConvert(min_usd_value):
             else:
                 joeBoughtBack[pairName] = amountJoe
         except exceptions.SolidityError as e:
-            print(e, token0, token1)
+            message = "[{}] {} for {}/{}\nSolidity error:\n{}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                                                                      e, tokens0[i], tokens1[i], repr(e))
+            errorOnPairs.append(message)
 
     return joeBoughtBack, errorOnPairs
 
@@ -98,4 +100,5 @@ def callConvert(min_usd_value):
 if __name__ == '__main__':
     print(JoeSubGraph.getAvaxBalance(acct.address))
     print(JoeSubGraph.getJoeMakerV2Postitions(10000))
-    print("\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(10000)[0].items()]))
+    print("\n".join(
+        ["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(10000)[0].items()]))
