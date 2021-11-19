@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from web3 import Web3
+from web3 import exceptions, Web3
 
 from joeBot import Constants, JoeSubGraph
 from joeBot.JoeSubGraph import getJoeMakerV2Postitions
@@ -81,9 +81,13 @@ def callConvert(min_usd_value):
                 joeBoughtBack[pairName + " " + pairAddress] = amountJoe
             else:
                 joeBoughtBack[pairName] = amountJoe
+        except exceptions.SolidityError as e:
+            message = "[{}] Solidity Error: {}/{}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                                                              tokens0[i], tokens1[i], repr(e))
+            errorOnPairs.append(message)
         except Exception as e:
-            message = "[{}] {} for {}/{}\nSolidity error:\n{}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
-                                                                      e, tokens0[i], tokens1[i], repr(e))
+            message = "[{}] Error: {}/{}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                                                     tokens0[i], tokens1[i], repr(e))
             errorOnPairs.append(message)
 
     return joeBoughtBack, errorOnPairs

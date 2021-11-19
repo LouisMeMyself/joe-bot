@@ -49,10 +49,15 @@ class JoeBot:
                 else:
                     nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=0, minutes=random.randint(0, 59),
                                                                     seconds=random.randint(0, 59))
+
+                await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                    "Info: schedule of next buyback : [{}] .".format(nextAround8PMUTC_TS.strftime("%d/%m/%Y %H:%M:%S")))
+
                 if ranToday:
                     await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
                 else:
-                    await self.channels.get_channel(self.channels.BOT_ERRORS).send("Retrying in 60 seconds.")
+                    await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                        "Error: JoeMaker didn't convert today, retrying in 60 seconds.")
                     await asyncio.sleep(60)
 
                 await self.call_convert()
@@ -62,7 +67,7 @@ class JoeBot:
                 print(KeyboardInterrupt)
                 return
             except Exception as e:
-                await self.channels.get_channel(self.channels.BOT_ERRORS).send(repr(e))
+                await self.channels.get_channel(self.channels.BOT_ERRORS).send("Error: {}".format(repr(e)))
                 ranToday = False
 
     async def joeTicker(self):
@@ -96,30 +101,30 @@ class JoeBot:
         return
 
     async def call_convert(self):
-        previousAvaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
-        joeBoughtBackLast7d = JoeSubGraph.getJoeBuyBackLast7d()
-        joeBoughtBack, errorOnPairs = FeeCollector.callConvert(MIN_USD_VALUE)
-        avaxBalance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
-        joePrice = JoeSubGraph.getJoePrice()
+        previous_avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
+        joe_bought_back_last7d = JoeSubGraph.getJoeBuyBackLast7d()
+        joe_bought_back, error_on_pairs = FeeCollector.callConvert(MIN_USD_VALUE)
+        avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
+        joe_price = JoeSubGraph.getJoePrice()
 
-        message = "\n".join(["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
-                             joeBoughtBack.items()])
+        list_of_string = ["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
+                          joe_bought_back.items()]
 
-        sum_ = sum(joeBoughtBack.values())
+        sum_ = sum(joe_bought_back.values())
 
-        message += "\nTotal buyback: {} $JOE worth ${}".format(readable(sum_, 2),
-                                                               readable(sum_ * joePrice,
-                                                                        2))
-        message += "\nLast 7 days buyback: {} $JOE worth ${}".format(
-            readable(joeBoughtBackLast7d + sum_, 2),
-            readable((joeBoughtBackLast7d + sum_) * joePrice, 2))
+        list_of_string.append("Total buyback: {} $JOE worth ${}".format(readable(sum_, 2),
+                                                                        readable(sum_ * joe_price, 2)))
+        list_of_string.append("Last 7 days buyback: {} $JOE worth ${}".format(
+            readable(joe_bought_back_last7d + sum_, 2),
+            readable((joe_bought_back_last7d + sum_) * joe_price, 2)))
 
-        message += "\nAvax Balance: {} (used {})".format(readable(avaxBalance, 2),
-                                                         readable(previousAvaxBalance - avaxBalance, 2))
+        list_of_string.append("Avax Balance: {} (used {})".format(readable(avax_balance, 2),
+                                                                  readable(previous_avax_balance - avax_balance, 2)))
 
-        await self.channels.get_channel(self.channels.BOT_FEED).send(message)
-        if len(errorOnPairs) > 0:
-            await self.channels.get_channel(self.channels.BOT_ERRORS).send("\n".join(errorOnPairs))
+        await self.send_message(list_of_string, self.channels.BOT_FEED)
+
+        if len(error_on_pairs) > 0:
+            await self.send_message(error_on_pairs, self.channels.BOT_ERRORS)
 
     async def joepic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile
@@ -145,3 +150,15 @@ class JoeBot:
                 await ctx.reply(embed=e)
             return
         raise error
+
+    async def send_message(self, list_of_strings, channel_id):
+        message, length = [], 0
+        channel = self.channels.get_channel(channel_id)
+        for string in list_of_strings:
+            length += len(string) + 2
+            if length > 1800:
+                await channel.send("\n".join(message))
+                message, length = [], len(string) + 2
+            message.append(string)
+        if message:
+            await channel.send("\n".join(message))

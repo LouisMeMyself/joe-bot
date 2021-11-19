@@ -243,5 +243,5 @@ if __name__ == "__main__":
     # print(getAbout())
     # print(getLendingAbout())
     # print(getJoeBuyBackLast7d())
-    print(getJoeMakerV2Postitions(100))
+    print(len(getJoeMakerV2Postitions(8000)[0]))
     print("Done")
