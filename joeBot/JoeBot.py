@@ -16,6 +16,8 @@ if not w3.isConnected():
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
 MIN_USD_VALUE = 10000
+ranToday = True
+scheduledToday = False
 
 
 class JoeBot:
@@ -36,8 +38,8 @@ class JoeBot:
 
     async def joeMakerTicker(self):
         """start JoeMakerTicker"""
+        global scheduledToday, ranToday
         print("JoeMaker Ticker is up")
-        ranToday = True
         while 1:
             try:
                 now = datetime.utcnow()
@@ -50,22 +52,24 @@ class JoeBot:
                     nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=0, minutes=random.randint(0, 59),
                                                                     seconds=random.randint(0, 59))
 
-                await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                    "Info: schedule of next buyback : [{}] .".format(nextAround8PMUTC_TS.strftime("%d/%m/%Y %H:%M:%S")))
-
-                if ranToday:
-                    await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
-                else:
+                if not scheduledToday:
+                    scheduledToday = True
                     await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                        "Error: JoeMaker didn't convert today, retrying in 60 seconds.")
-                    await asyncio.sleep(60)
+                        "Info: schedule of next buyback : [{}] .".format(nextAround8PMUTC_TS.strftime("%d/%m/%Y %H:%M:%S")))
+                    scheduledToday = False
 
-                await self.call_convert()
+                    if ranToday:
+                        await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
+                    else:
+                        await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                            "Error: JoeMaker didn't convert today, retrying in 60 seconds.")
+                        await asyncio.sleep(60)
 
-                ranToday = True
+                    await self.call_convert()
+                    ranToday = True
             except KeyboardInterrupt:
                 print(KeyboardInterrupt)
-                return
+                break
             except Exception as e:
                 await self.channels.get_channel(self.channels.BOT_ERRORS).send("Error: {}".format(repr(e)))
                 ranToday = False
