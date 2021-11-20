@@ -49,6 +49,7 @@ def callConvert(min_usd_value):
     errorOnPairs = []
 
     # get the tokens0 and tokens1 lists of JoeMakerV2's pair that are worth more than min_usd_value
+    pos = "getJoeMakerV2Postitions"
     tokens0, tokens1 = getJoeMakerV2Postitions(min_usd_value)
 
     for i in range(len(tokens0)):
@@ -59,11 +60,15 @@ def callConvert(min_usd_value):
         contract_func = joeMakerV2.functions.convert(token0, token1)
 
         try:
+            pos = "Call convert locally"
             contract_func.call()
 
+            pos = "Send transaction"
             tx_hash = exec_contract(acct, nonce, contract_func)
-            w3.eth.waitForTransactionReceipt(tx_hash, timeout=120)
+            pos = "Waits for transaction"
+            w3.eth.wait_for_transaction_receipt(tx_hash)
 
+            pos = "Gets pair address and tokens name"
             pairAddress = Web3.toChecksumAddress(
                 "0x{}".format((w3.eth.getTransactionReceipt(tx_hash)["logs"][0]["topics"][-2]).hex()[-40:]))
             amountJoe = int(w3.eth.getTransactionReceipt(tx_hash)["logs"][-1]["data"][-64:], 16) / 1e18
@@ -82,12 +87,12 @@ def callConvert(min_usd_value):
             else:
                 joeBoughtBack[pairName] = amountJoe
         except exceptions.SolidityError as e:
-            message = "[{}] Solidity Error: {}/{}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
-                                                              tokens0[i], tokens1[i], repr(e))
+            message = "[{}] Solidity Error at {}:\n{}/{}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                                                                     pos, tokens0[i], tokens1[i], repr(e))
             errorOnPairs.append(message)
         except Exception as e:
-            message = "[{}] Error: {}/{}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
-                                                     tokens0[i], tokens1[i], repr(e))
+            message = "[{}] Error at {}:\n{}/{}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                                                            pos, tokens0[i], tokens1[i], repr(e))
             errorOnPairs.append(message)
 
     return joeBoughtBack, errorOnPairs

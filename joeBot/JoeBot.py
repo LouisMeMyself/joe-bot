@@ -53,13 +53,13 @@ class JoeBot:
                                                                     seconds=random.randint(0, 59))
 
                 if not scheduledToday:
-                    scheduledToday = True
-                    await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                        "Info: schedule of next buyback : [{}] .".format(nextAround8PMUTC_TS.strftime("%d/%m/%Y %H:%M:%S")))
-                    scheduledToday = False
-
                     if ranToday:
+                        scheduledToday = True
+                        await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                            "Info: schedule of next buyback : [{}] .".format(nextAround8PMUTC_TS.strftime("%d/%m/%Y %H:%M:%S")))
+
                         await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
+                        scheduledToday = False
                     else:
                         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
                             "Error: JoeMaker didn't convert today, retrying in 60 seconds.")
