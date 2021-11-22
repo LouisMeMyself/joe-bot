@@ -23,13 +23,13 @@ async def on_ready():
     """starts joebot"""
     global joeBot
     joeBot = JoeBot(discord_bot)
-    await joeBot.on_ready()
+    await joeBot.onReady()
 
 
 @discord_bot.command()
 async def joepic(ctx):
     """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile picture"""
-    await joeBot.joepic(ctx)
+    await joeBot.joePic(ctx)
 
 
 @discord_bot.command()
@@ -42,19 +42,19 @@ async def about(ctx):
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def setmin(ctx):
     """Set the min USD valie."""
-    await joeBot.set_min_usd_value(ctx)
+    await joeBot.setMinUsdValueToConvert(ctx)
 
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def convert(ctx):
     """Calls convert on JoeMakerV2."""
-    await joeBot.call_convert()
+    await joeBot.callConvert()
 
 
 @discord_bot.event
 async def on_command_error(ctx, error):
-    await joeBot.on_command_error(ctx, error)
+    await joeBot.onCommandError(ctx, error)
 
 
 if __name__ == '__main__':

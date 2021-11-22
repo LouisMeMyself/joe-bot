@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from web3 import exceptions, Web3
 
 from joeBot import Constants, JoeSubGraph
+from joeBot.Constants import ZERO_ADDRESS_256
 from joeBot.JoeSubGraph import getJoeMakerV2Postitions
 from joeBot.beautify_string import readable
 
@@ -21,6 +22,9 @@ acct = w3.eth.account.privateKeyToAccount((os.getenv("PRIVATE_KEY")))
 # contracts
 joeMakerV2 = w3.eth.contract(address=Constants.JOEMAKERV2_ADDRESS, abi=Constants.JOEMAKERV2_ABI)
 
+# cache
+symbolOf = {}
+
 
 def exec_contract(acct_, nonce_, func_):
     """
@@ -32,75 +36,133 @@ def exec_contract(acct_, nonce_, func_):
     return tx_hash.hex()
 
 
-def callConvert(min_usd_value):
-    """
-    Call convert on all the pairs that meets the requirements (see getJoeMakerV2Positions for more help).
-    If one of the transaction revert because of "execution reverted: SafeERC20: Transfer failed", we
-    add it to the blacklist because it's a reflect token, and JoeMakerV2 convert function doesn't handle
-    that currently.
-    If one of the transaction revert because of another error, we print it with the 2 tokens of the
-    pair that was problematic. We don't add them to the blacklist because that could change (like if a
-    token is paused, it may change).
+def getSymbolOf(address):
+    global symbolOf
+    if address not in symbolOf:
+        symbolOf[address] = w3.eth.contract(address=address, abi=Constants.ERC20_ABI).functions.symbol().call()
+    return symbolOf[address]
 
-    :param min_usd_value: The min USD value to be actually converted.
-    """
 
-    joeBoughtBack = {}
-    errorOnPairs = []
+def getGroupsOf(tokens, size=25):
+    groups, temp = [], []
+    for i, data in enumerate(tokens):
+        temp.append(Web3.toChecksumAddress(data))
+        if (i + 1) % size == 0:
+            groups.append(temp)
+            temp = []
+    if temp:
+        groups.append(temp)
+    return groups
 
-    # get the tokens0 and tokens1 lists of JoeMakerV2's pair that are worth more than min_usd_value
-    pos = "getJoeMakerV2Postitions"
-    tokens0, tokens1 = getJoeMakerV2Postitions(min_usd_value)
 
-    for i in range(len(tokens0)):
-        token0 = Web3.toChecksumAddress(tokens0[i])
-        token1 = Web3.toChecksumAddress(tokens1[i])
+def decodeTransactionReceipt(tansaction_receipt, tokens0, tokens1, joe_bought_back, pairs):
+    logs = tansaction_receipt["logs"]
+    nb_tokens = 0
+    for i in range(len(logs)):
+        if len(logs[i]["topics"]) < 3:
+            continue
+        if logs[i]["topics"][2].hex() == ZERO_ADDRESS_256:
+            if logs[i - 1]["topics"][1].hex() == ZERO_ADDRESS_256:
+                shift = 1
+            else:
+                shift = 0
+            if i > 2:
+                joe_bought_back.append(int("0x" + logs[i - shift - 2]["data"][-64:], 16) / 1e18)
+            try:
+                pairs.append("{} - {}".format(getSymbolOf(tokens0[nb_tokens]), getSymbolOf(tokens1[nb_tokens])))
+            except IndexError:
+                pairs.append("0x" + logs[i - shift - 1]["topics"][-1].hex()[-40:])
+            nb_tokens += 1
 
+    joe_bought_back.append(int("0x" + logs[-1]["data"][-64:], 16) / 1e18)
+    return pairs, joe_bought_back
+
+
+def _callConvertLocally(tokens0, tokens1):
+    safe_tokens0, safe_tokens1, error_on_pairs = [], [], []
+    for token0, token1 in zip(map(Web3.toChecksumAddress, tokens0), map(Web3.toChecksumAddress, tokens1)):
+        try:
+            joeMakerV2.functions.convert(token0, token1).call()
+            safe_tokens0.append(token0)
+            safe_tokens1.append(token1)
+        except Exception as e:
+            error_on_pairs.append(
+                "[{}] Error at convert Locally:\n{} - {}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                                                                     token0, token1, e))
+    return safe_tokens0, safe_tokens1, error_on_pairs
+
+
+def _callConvertMultiple(groups_tokens0, groups_tokens1, error_on_pairs):
+    pairs, joe_bought_back, = [], []
+
+    pos = "Iterating through groups"
+    for group_tokens0, group_tokens1 in zip(groups_tokens0, groups_tokens1):
         nonce = w3.eth.getTransactionCount(acct.address)
-        contract_func = joeMakerV2.functions.convert(token0, token1)
+        call_convert_multiple = joeMakerV2.functions.convertMultiple(group_tokens0, group_tokens1)
 
         try:
-            pos = "Call convert locally"
-            contract_func.call()
+            pos = "Sends convertMultiple()"
+            tx_hash = exec_contract(acct, nonce, call_convert_multiple)
 
-            pos = "Send transaction"
-            tx_hash = exec_contract(acct, nonce, contract_func)
-            pos = "Waits for transaction"
-            w3.eth.wait_for_transaction_receipt(tx_hash)
+            pos = "Waits for convertMultiple()"
+            transaction_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
-            pos = "Gets pair address and tokens name"
-            pairAddress = Web3.toChecksumAddress(
-                "0x{}".format((w3.eth.getTransactionReceipt(tx_hash)["logs"][0]["topics"][-2]).hex()[-40:]))
-            amountJoe = int(w3.eth.getTransactionReceipt(tx_hash)["logs"][-1]["data"][-64:], 16) / 1e18
-
-            token0Contract = w3.eth.contract(address=token0, abi=Constants.ERC20_ABI)
-            token1Contract = w3.eth.contract(address=token1, abi=Constants.ERC20_ABI)
-
-            try:
-                pairName = "{} - {}".format(token0Contract.functions.symbol().call(),
-                                            token1Contract.functions.symbol().call())
-            except:
-                pairName = pairAddress
-
-            if pairName in joeBoughtBack:
-                joeBoughtBack[pairName + " " + pairAddress] = amountJoe
-            else:
-                joeBoughtBack[pairName] = amountJoe
-        except exceptions.SolidityError as e:
-            message = "[{}] Solidity Error at {}:\n{}/{}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
-                                                                     pos, tokens0[i], tokens1[i], repr(e))
-            errorOnPairs.append(message)
+            pos = "Decodes convertMultiple() receipt"
+            pairs, joe_bought_back = decodeTransactionReceipt(
+                transaction_receipt, group_tokens0, group_tokens1, pairs, joe_bought_back)
         except Exception as e:
-            message = "[{}] Error at {}:\n{}/{}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
-                                                            pos, tokens0[i], tokens1[i], repr(e))
-            errorOnPairs.append(message)
+            if e is exceptions.SolidityError:
+                error_on_pairs.append(
+                    "[{}] Solidity Error at {}:\n{}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"), pos, e))
+            error_on_pairs.append(
+                "[{}] Error on convertMultiple at {}:\n{}".format(
+                    datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"), pos, e))
+            _callConvert(group_tokens0, group_tokens1, pairs, joe_bought_back, error_on_pairs)
+    return pairs, joe_bought_back, error_on_pairs
 
-    return joeBoughtBack, errorOnPairs
+
+def _callConvert(tokens0, tokens1, pairs, joe_bought_back, error_on_pairs):
+    pos = "Iterating through tokens"
+    for token0, token1 in zip(tokens0, tokens1):
+        nonce = w3.eth.getTransactionCount(acct.address)
+        call_convert = joeMakerV2.functions.convert(token0, token1)
+
+        try:
+            pos = "Sends convert()"
+            tx_hash = exec_contract(acct, nonce, call_convert)
+
+            pos = "Waits for convert()"
+            transaction_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+            pos = "Decodes convert() receipt"
+            pairs, joe_bought_back = decodeTransactionReceipt(
+                transaction_receipt, token0, token1, pairs, joe_bought_back)
+        except Exception as e:
+            error_on_pairs.append(
+                "[{}] Error at {}:\n{} - {}: {}".format(datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                                                        pos, token0, token1, e))
+
+
+def callConvertMultiple(min_usd_value):
+    # Gets JoeMakerV2 position that are worth more than min_usd_value
+    tokens0, tokens1 = JoeSubGraph.getJoeMakerV2Postitions(min_usd_value)
+
+    # Gets the list of tokens that are safe to convert, those that doesn't revert locally
+    safe_tokens0, safe_tokens1, error_on_pairs = _callConvertLocally(tokens0, tokens1)
+
+    # Groups tokens by list of 25 to avoid reverting because there isn't enough gas
+    groups_tokens0, groups_tokens1 = getGroupsOf(safe_tokens0), getGroupsOf(safe_tokens1)
+
+    # calls ConvertMultiple with the previously grouped tokens
+    pairs, joe_bought_back, error_on_pairs = _callConvertMultiple(groups_tokens0, groups_tokens1, error_on_pairs)
+
+    return pairs, joe_bought_back, error_on_pairs
 
 
 # Only executed if you run main.py
 if __name__ == '__main__':
     print(JoeSubGraph.getAvaxBalance(acct.address))
     print(JoeSubGraph.getJoeMakerV2Postitions(10000))
-    print("\n".join(
-        ["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in callConvert(10000)[0].items()]))
+    # print(callConvertMultiple(10000))
+    # print(decodeTransactionReceipt( w3.eth.get_transaction_receipt(
+    # "0x0161a740d7548ec79f4d68ee68a01677ed4054bc06037e7ef4ffe2fe4fed6da6"), [], [], [], []))

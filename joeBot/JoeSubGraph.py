@@ -85,34 +85,41 @@ def getTokenCandles(token_address, period, nb):
     return data_df
 
 
-def getJoeMakerV2Postitions(min_usd_value):
+def getJoeMakerV2Postitions(min_usd_value, return_reserve_and_balance=False):
     """
     getJoeMakerPostitions return the position of JoeMaker that are worth more than min_usd_value
     and if he owns less than half the lp.
 
     :param min_usd_value: The min USD value to be actually returned.
+    :param return_reserve_and_balance: boolean value to return or not the reserves and balances (in usd).
     :return: 2 lists, the first one is the list of the token0 of the pairs that satisfied the requirements
     the second one is the same thing but for token1.
     """
-    skip, queryExchange = 0, {}
+    skip, query_exchange = 0, {}
     tokens0, tokens1 = [], []
-    while skip == 0 or len(queryExchange["data"]["liquidityPositions"]) == 1000:
-        queryExchange = genericQuery('{liquidityPositions(first: 1000, skip:' + str(skip) +
-                                     ' where: {user: "' + Constants.JOEMAKERV2_ADDRESS.lower() + '"}) '
-                                     '{liquidityTokenBalance, '
-                                     'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
-        for liquidityPosition in queryExchange["data"]["liquidityPositions"]:
-            pair = liquidityPosition["pair"]
+    pairs_reserve_usd, jm_balance_usd = [], []
+    while skip == 0 or len(query_exchange["data"]["liquidityPositions"]) == 1000:
+        query_exchange = genericQuery('{liquidityPositions(first: 1000, skip:' + str(skip) +
+                                      ' where: {user: "' + Constants.JOEMAKERV2_ADDRESS.lower() + '"}) '
+                                      '{liquidityTokenBalance, '
+                                      'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
+        for liquidity_position in query_exchange["data"]["liquidityPositions"]:
+            pair = liquidity_position["pair"]
 
-            joeMaker_balance = float(liquidityPosition["liquidityTokenBalance"])
+            joe_maker_balance = float(liquidity_position["liquidityTokenBalance"])
             pair_total_supply = float(pair["totalSupply"])
             pair_reserve_usd = float(pair["reserveUSD"])
+            joe_maker_balance_usd = joe_maker_balance / pair_total_supply * pair_reserve_usd
 
-            if joeMaker_balance / pair_total_supply * pair_reserve_usd > min_usd_value and \
-                    joeMaker_balance / pair_total_supply < 0.49:
+            if joe_maker_balance_usd > min_usd_value and \
+                    joe_maker_balance / pair_total_supply < 0.49:
                 tokens0.append(pair["token0"]["id"])
                 tokens1.append(pair["token1"]["id"])
+                pairs_reserve_usd.append(pair_reserve_usd)
+                jm_balance_usd.append(joe_maker_balance_usd)
         skip += 1000
+    if return_reserve_and_balance:
+        return tokens0, tokens1, pairs_reserve_usd, jm_balance_usd
     return tokens0, tokens1
 
 
@@ -123,6 +130,7 @@ def getAvaxPrice():
 
 def getAvaxBalance(address):
     return round(float(w3.eth.getBalance(w3.toChecksumAddress(address))) / 1e18, 3)
+
 
 # Using API
 def getJoePrice():

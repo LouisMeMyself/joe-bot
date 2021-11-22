@@ -30,7 +30,7 @@ class JoeBot:
         for server in self.discord_bot.guilds:
             self.channels = Constants.Channels(server.id, discord_bot)
 
-    async def on_ready(self):
+    async def onReady(self):
         """starts joebot"""
         print('joeBot have logged in as {0.user}'.format(self.discord_bot))
         self.discord_bot.loop.create_task(self.joeTicker())
@@ -56,7 +56,8 @@ class JoeBot:
                     if ranToday:
                         scheduledToday = True
                         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                            "Info: schedule of next buyback : [{}] .".format(nextAround8PMUTC_TS.strftime("%d/%m/%Y %H:%M:%S")))
+                            "Info: schedule of next buyback : [{}] .".format(
+                                nextAround8PMUTC_TS.strftime("%d/%m/%Y %H:%M:%S")))
 
                         await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
                         scheduledToday = False
@@ -65,13 +66,13 @@ class JoeBot:
                             "Error: JoeMaker didn't convert today, retrying in 60 seconds.")
                         await asyncio.sleep(60)
 
-                    await self.call_convert()
+                    await self.callConvert()
                     ranToday = True
             except KeyboardInterrupt:
                 print(KeyboardInterrupt)
                 break
             except Exception as e:
-                await self.channels.get_channel(self.channels.BOT_ERRORS).send("Error: {}".format(repr(e)))
+                await self.channels.get_channel(self.channels.BOT_ERRORS).send("Error: {}".format(e))
                 ranToday = False
 
     async def joeTicker(self):
@@ -94,7 +95,7 @@ class JoeBot:
         await ctx.send(about)
         return
 
-    async def set_min_usd_value(self, ctx):
+    async def setMinUsdValueToConvert(self, ctx):
         global MIN_USD_VALUE
         value = ctx.message.content.replace(Constants.SET_MIN_USD_COMMAND, "").rstrip().lstrip()
         try:
@@ -104,17 +105,17 @@ class JoeBot:
             await ctx.send("Min usd value is currently : ${}".format(readable(MIN_USD_VALUE, 2)))
         return
 
-    async def call_convert(self):
+    async def callConvert(self):
         previous_avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joe_bought_back_last7d = JoeSubGraph.getJoeBuyBackLast7d()
-        joe_bought_back, error_on_pairs = FeeCollector.callConvert(MIN_USD_VALUE)
+        pairs, joe_bought_back, error_on_pairs = FeeCollector.callConvertMultiple(MIN_USD_VALUE)
         avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joe_price = JoeSubGraph.getJoePrice()
 
-        list_of_string = ["From {} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
-                          joe_bought_back.items()]
+        list_of_string = ["{} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
+                          zip(pairs, joe_bought_back)]
 
-        sum_ = sum(joe_bought_back.values())
+        sum_ = sum(joe_bought_back)
 
         list_of_string.append("Total buyback: {} $JOE worth ${}".format(readable(sum_, 2),
                                                                         readable(sum_ * joe_price, 2)))
@@ -122,15 +123,16 @@ class JoeBot:
             readable(joe_bought_back_last7d + sum_, 2),
             readable((joe_bought_back_last7d + sum_) * joe_price, 2)))
 
-        list_of_string.append("Avax Balance: {} (used {})".format(readable(avax_balance, 2),
-                                                                  readable(previous_avax_balance - avax_balance, 2)))
+        await self.sendMessage(list_of_string, self.channels.BOT_FEED)
 
-        await self.send_message(list_of_string, self.channels.BOT_FEED)
+        await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+            "Avax Balance: {} (used {})".format(readable(avax_balance, 2),
+                                                readable(previous_avax_balance - avax_balance, 2)))
 
         if len(error_on_pairs) > 0:
-            await self.send_message(error_on_pairs, self.channels.BOT_ERRORS)
+            await self.sendMessage(error_on_pairs, self.channels.BOT_ERRORS)
 
-    async def joepic(self, ctx):
+    async def joePic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile
         picture """
         if ctx.message.channel.id == self.channels.JOEPIC_CHANNEL_ID:
@@ -145,7 +147,7 @@ class JoeBot:
                 await ctx.reply(embed=e)
         return
 
-    async def on_command_error(self, ctx, error):
+    async def onCommandError(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             if ctx.message.channel.id == self.channels.JOEPIC_CHANNEL_ID:
                 e = discord.Embed(title="Error on {} command !".format(Constants.PROFILE_PICTURE_COMMAND[1:]),
@@ -155,7 +157,7 @@ class JoeBot:
             return
         raise error
 
-    async def send_message(self, list_of_strings, channel_id):
+    async def sendMessage(self, list_of_strings, channel_id):
         message, length = [], 0
         channel = self.channels.get_channel(channel_id)
         for string in list_of_strings:
