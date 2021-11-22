@@ -76,19 +76,20 @@ class JoeBot:
                 ranToday = False
 
     async def joeTicker(self):
+        print("joeTicker is up")
         while 1:
-            print("joeTicker is up")
             try:
                 price = JoeSubGraph.getJoePrice()
                 activity = "JOE: ${}".format(round(price, 4))
                 await self.discord_bot.change_presence(
                     activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
-                await asyncio.sleep(60)
             except KeyboardInterrupt:
                 print(KeyboardInterrupt)
                 break
-            except:
+            except Exception as e:
+                print(e)
                 pass
+            await asyncio.sleep(60)
 
     async def about(self, ctx):
         about = JoeSubGraph.getAbout()
