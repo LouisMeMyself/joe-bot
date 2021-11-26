@@ -59,4 +59,4 @@ async def on_command_error(ctx, error):
 
 if __name__ == '__main__':
     # Discord
-    discord_bot.run(os.getenv("DISCORD_KEY"))
+    discord_bot.run(os.getenv("DISCORD_JOEBOT_KEY"))

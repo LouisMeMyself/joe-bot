@@ -20,7 +20,7 @@ joePic_ = JoePic.JoePic()
 logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
-bot = Bot(token=os.getenv("TELEGRAM_KEY"))
+bot = Bot(token=os.getenv("TELEGRAM_JOEBOT_KEY"))
 
 dp = Dispatcher(bot)
 

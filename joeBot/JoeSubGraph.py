@@ -5,6 +5,7 @@ import time
 import pandas as pd
 import requests
 from web3 import Web3
+from web3.middleware import geth_poa_middleware
 
 from joeBot import Constants
 from joeBot.Constants import E18
@@ -14,6 +15,8 @@ from joeBot.beautify_string import readable, smartRounding
 w3 = Web3(Web3.HTTPProvider(Constants.AVAX_RPC))
 if not w3.isConnected():
     print("Error web3 can't connect")
+
+w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
 
@@ -83,6 +86,13 @@ def getTokenCandles(token_address, period, nb):
         data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(
             lambda x: float(x))
     return data_df
+
+
+def getCurrentGasPrice():
+    number_of_block = 20
+    block_number = w3.eth.get_block_number()
+    totalGasPrice = sum([int(w3.eth.getBlock(block_number - n).baseFeePerGas, 16) for n in range(number_of_block)])
+    return totalGasPrice / number_of_block / 1e9
 
 
 def getJoeMakerV2Postitions(min_usd_value, return_reserve_and_balance=False):
