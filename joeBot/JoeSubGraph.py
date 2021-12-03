@@ -118,6 +118,8 @@ def getJoeMakerV2Postitions(min_usd_value, return_reserve_and_balance=False):
 
             joe_maker_balance = float(liquidity_position["liquidityTokenBalance"])
             pair_total_supply = float(pair["totalSupply"])
+            if pair_total_supply == 0:
+                continue
             pair_reserve_usd = float(pair["reserveUSD"])
             joe_maker_balance_usd = joe_maker_balance / pair_total_supply * pair_reserve_usd
 
@@ -261,5 +263,5 @@ if __name__ == "__main__":
     # print(getAbout())
     # print(getLendingAbout())
     # print(getJoeBuyBackLast7d())
-    print(getJoeMakerV2Postitions(10000))
+    print(getJoeMakerV2Postitions(1000))
     print("Done")
