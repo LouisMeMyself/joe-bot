@@ -1,13 +1,14 @@
 import asyncio
 import random
+import time
 from datetime import datetime, timedelta
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from web3 import Web3
 
-from joeBot import JoePic, JoeSubGraph, Constants, FeeCollector
-from joeBot.beautify_string import readable
+from joeBot import JoePic, JoeSubGraph, Constants, FeeCollector, Utils
+from joeBot.Utils import readable, Ticker
 
 # web3
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
@@ -17,13 +18,73 @@ joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Cons
 
 MIN_USD_VALUE = 10000
 ranToday = True
-scheduledToday = False
+
+
+class JoeMakerTicker(commands.Cog, Ticker):
+    def __init__(self, channels, callConvert):
+        self.ranToday = True
+        self.channels = channels
+        self.callConvert = callConvert
+
+    @tasks.loop(hours=24)
+    async def ticker(self):
+        print("ticker")
+        try:
+            if self.ranToday:
+                time_to_wait = random.randint(0, 3600)
+                await asyncio.sleep(time_to_wait)
+                # await self.callConvert()
+
+                self.ranToday = True
+
+                await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                    "Info: schedule of next buyback : [{}] .".format(self.ticker.next_iteration +
+                                                                     timedelta(seconds=time_to_wait)))
+            else:
+                await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                    "Error: JoeMaker didn't convert today, retrying in 60 seconds.")
+
+        except Exception as e:
+            await self.channels.get_channel(self.channels.BOT_ERRORS).send("Error: {}".format(e))
+            self.ranToday = False
+
+    @ticker.before_loop
+    async def before_ticker(self):
+        now = datetime.now()
+        timeBefore11PM30 = (now.replace(hour=23, minute=30) - now).total_seconds()
+
+        if timeBefore11PM30 < 0:
+            timeBefore11PM30 += timedelta(days=1)
+
+        await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+            "Info: schedule of next buyback : [{}] +- 30 min.".format(
+                datetime.fromtimestamp(now.replace(hour=0, minute=0).timestamp()).strftime(
+                                                                             "%D %H:%M")))
+
+        await asyncio.sleep(timeBefore11PM30)
+
+
+class JoeTicker(commands.Cog, Ticker):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @tasks.loop(seconds=60)
+    async def ticker(self):
+        try:
+            price = JoeSubGraph.getJoePrice()
+            activity = "JOE: ${}".format(round(price, 4))
+            await self.bot.change_presence(
+                activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
+        except Exception as e:
+            print(e)
+            pass
 
 
 class JoeBot:
     joePic_ = JoePic.JoePic()
     discord_bot = commands.Bot
     channels = Constants.Channels
+    taskManager = Utils.TaskManager
 
     def __init__(self, discord_bot):
         self.discord_bot = discord_bot
@@ -33,63 +94,13 @@ class JoeBot:
     async def onReady(self):
         """starts joebot"""
         print('joeBot have logged in as {0.user}'.format(self.discord_bot))
-        self.discord_bot.loop.create_task(self.joeTicker())
-        self.discord_bot.loop.create_task(self.joeMakerTicker())
-
-    async def joeMakerTicker(self):
-        """start JoeMakerTicker"""
-        global scheduledToday, ranToday
-        print("JoeMaker Ticker is up")
-        while 1:
-            try:
-                now = datetime.utcnow()
-                todayat8PMUTC = now.replace(hour=20, minute=0, second=0, microsecond=0)
-
-                if todayat8PMUTC < now:
-                    nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=1, minutes=random.randint(0, 59),
-                                                                    seconds=random.randint(0, 59))
-                else:
-                    nextAround8PMUTC_TS = todayat8PMUTC + timedelta(days=0, minutes=random.randint(0, 59),
-                                                                    seconds=random.randint(0, 59))
-
-                if not scheduledToday:
-                    if ranToday:
-                        scheduledToday = True
-                        await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                            "Info: schedule of next buyback : [{}] .".format(
-                                nextAround8PMUTC_TS.strftime("%d/%m/%Y %H:%M:%S")))
-
-                        await asyncio.sleep((nextAround8PMUTC_TS - now).total_seconds())
-                        scheduledToday = False
-                    else:
-                        await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                            "Error: JoeMaker didn't convert today, retrying in 60 seconds.")
-                        await asyncio.sleep(60)
-
-                    await self.callConvert()
-                    ranToday = True
-            except KeyboardInterrupt:
-                print(KeyboardInterrupt)
-                break
-            except Exception as e:
-                await self.channels.get_channel(self.channels.BOT_ERRORS).send("Error: {}".format(e))
-                ranToday = False
-
-    async def joeTicker(self):
-        print("joeTicker is up")
-        while 1:
-            try:
-                price = JoeSubGraph.getJoePrice()
-                activity = "JOE: ${}".format(round(price, 4))
-                await self.discord_bot.change_presence(
-                    activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
-            except KeyboardInterrupt:
-                print(KeyboardInterrupt)
-                break
-            except Exception as e:
-                print(e)
-                pass
-            await asyncio.sleep(60)
+        self.taskManager = Utils.TaskManager(
+            (
+                JoeTicker(self.discord_bot),
+                JoeMakerTicker(self.channels, self.callConvert)
+            )
+        )
+        await self.channels.get_channel(self.channels.BOT_ERRORS).send(self.taskManager.start())
 
     async def about(self, ctx):
         about = JoeSubGraph.getAbout()

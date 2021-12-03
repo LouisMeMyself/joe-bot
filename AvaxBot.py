@@ -5,6 +5,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 from joeBot import JoeSubGraph
+from joeBot.Utils import TaskManager
 
 load_dotenv()
 
@@ -18,10 +19,6 @@ class AvaxTicker(commands.Cog):
 
     def start(self):
         self.ticker.start()
-
-    def stop(self):
-        print("Stopping {}".format(type(self).__name__))
-        self.ticker.cancel()
 
     @tasks.loop(seconds=60)
     async def ticker(self):
@@ -41,38 +38,11 @@ class AvaxTicker(commands.Cog):
             pass
 
 
-class TaskManager(commands.Cog):
-    def __init__(self, tasks):
-        self.ticker.add_exception_type(KeyboardInterrupt)
-        self.ticker.start()
-        self.tasks = tasks
-
-    def start(self):
-        print("Starting tasks")
-        for task in self.tasks:
-            task.start()
-
-    @tasks.loop(seconds=1)
-    async def ticker(self):
-        pass
-
-    @ticker.after_loop
-    async def onStop(self):
-        for task in self.tasks:
-            task.stop()
-
-    async def getStoppedTask(self):
-        for task in self.tasks:
-            if not task.is_running():
-                print("{} is not running".format(type(task).__name__))
-
-
 @discord_bot.event
 async def on_ready():
     """starts AVAX ticker"""
     print('joeBot have logged in as {0.user}'.format(discord_bot))
-    taskManager = TaskManager((AvaxTicker(),))
-    taskManager.start()
+    TaskManager((AvaxTicker(),)).start()
 
 
 @discord_bot.event

@@ -9,7 +9,7 @@ from web3.middleware import geth_poa_middleware
 
 from joeBot import Constants
 from joeBot.Constants import E18
-from joeBot.beautify_string import readable, smartRounding
+from joeBot.Utils import readable, smartRounding
 
 # web3
 w3 = Web3(Web3.HTTPProvider(Constants.AVAX_RPC))

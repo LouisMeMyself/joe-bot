@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher, executor, types
 from web3 import Web3
 
 from joeBot import JoeSubGraph, JoePic, Constants, JoeChart
-from joeBot.beautify_string import smartRounding
+from joeBot.Utils import smartRounding
 from dotenv import load_dotenv
 
 # Env

@@ -7,7 +7,7 @@ from web3 import exceptions, Web3
 from joeBot import Constants, JoeSubGraph
 from joeBot.Constants import ZERO_ADDRESS_256
 from joeBot.JoeSubGraph import getJoeMakerV2Postitions
-from joeBot.beautify_string import readable
+from joeBot.Utils import readable
 
 load_dotenv()
 

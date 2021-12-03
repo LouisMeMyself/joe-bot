@@ -1,7 +1,8 @@
 import os
-from dotenv import load_dotenv
+
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 
 from joeBot import Constants
 from joeBot.JoeBot import JoeBot
@@ -43,6 +44,51 @@ async def about(ctx):
 async def setmin(ctx):
     """Set the min USD valie."""
     await joeBot.setMinUsdValueToConvert(ctx)
+
+
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
+async def start(ctx):
+    """Set the min USD valie."""
+    await ctx.reply(
+        joeBot.taskManager.startTask(ctx.message.content[6:].rstrip().lstrip())
+    )
+
+
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
+async def stop(ctx):
+    """Set the min USD valie."""
+    await ctx.reply(
+        joeBot.taskManager.stopTask(ctx.message.content[5:].rstrip().lstrip())
+    )
+
+
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
+async def stopped(ctx):
+    """Set the min USD valie."""
+    await ctx.reply(
+        joeBot.taskManager.getStoppedTasks()
+    )
+
+
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
+async def running(ctx):
+    """Set the min USD valie."""
+    await ctx.reply(
+        joeBot.taskManager.getRunningTasks()
+    )
+
+
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
+async def alltasks(ctx):
+    """Set the min USD valie."""
+    await ctx.reply(
+        joeBot.taskManager.getAllTasks()
+    )
 
 
 @discord_bot.command(pass_context=True)
