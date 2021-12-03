@@ -18,6 +18,7 @@ joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Cons
 
 MIN_USD_VALUE = 10000
 ranToday = True
+started = False
 
 
 class JoeMakerTicker(commands.Cog, Ticker):
@@ -90,17 +91,20 @@ class JoeBot:
         self.discord_bot = discord_bot
         for server in self.discord_bot.guilds:
             self.channels = Constants.Channels(server.id, discord_bot)
-
-    async def onReady(self):
-        """starts joebot"""
-        print('joeBot have logged in as {0.user}'.format(self.discord_bot))
         self.taskManager = Utils.TaskManager(
             (
                 JoeTicker(self.discord_bot),
                 JoeMakerTicker(self.channels, self.callConvert)
             )
         )
-        await self.channels.get_channel(self.channels.BOT_ERRORS).send(self.taskManager.start())
+
+    async def onReady(self):
+        """starts joebot"""
+        global started
+        print('joeBot have logged in as {0.user}'.format(self.discord_bot))
+        if not started:
+            await self.channels.get_channel(self.channels.BOT_ERRORS).send(self.taskManager.start())
+            started = True
 
     async def about(self, ctx):
         about = JoeSubGraph.getAbout()
