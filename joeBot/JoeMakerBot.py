@@ -39,7 +39,7 @@ class JoeMaker:
             raise ValueError
         return "Now using JoeMaker{}".format(version.upper())
 
-    def setBridges(self, tokens, bridges, ctx=None):
+    def setBridges(self, tokens, bridges):
         """
         set bridges.
         """
@@ -60,9 +60,7 @@ class JoeMaker:
                 errors.append("[{}] Error setting bridge locally:\n{} -> {}: {}".format(
                         datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
                         token, bridge, e))
-        if ctx is None:
-            print(errors)
-        ctx.reply("Errors:", "\n".join(errors))
+        return "Errors:", "\n".join(errors)
 
     def execContract(self, func_):
         """
