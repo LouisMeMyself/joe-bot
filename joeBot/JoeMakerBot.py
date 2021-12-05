@@ -146,7 +146,7 @@ class JoeMaker:
         pairs, joe_bought_back, error_on_pairs = self._callConvertMultiple(groups_tokens0, groups_tokens1, error_on_pairs)
 
         # return pairs, joe_bought_back, error_on_pairs
-        return safe_tokens0, safe_tokens1, error_on_pairs
+        return pairs, joe_bought_back, error_on_pairs
 
 
 def getGroupsOf(tokens, size=25):
@@ -196,6 +196,3 @@ if __name__ == '__main__':
     joeMaker = JoeMaker()
     joeMaker.changeToVersion("v1")
     # print(sum(JoeSubGraph.getJoeMakerPostitions(10000, joeMaker.joeMaker.address, True)[3]))
-    t,b = JoeSubGraph.getJoeMakerPostitions(10000, joeMaker.joeMaker.address)
-    joeMaker.setBridges(t, b)
-    # print(joeMaker.callConvertMultiple(10000))
