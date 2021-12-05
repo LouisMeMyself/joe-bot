@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands, tasks
 from web3 import Web3
 
-from joeBot import JoePic, JoeSubGraph, Constants, JoeMakerBot, Utils
+from joeBot import JoePic, JoeSubGraph, Constants, Utils
 from joeBot.JoeMakerBot import JoeMaker
 from joeBot.Utils import readable, Ticker
 
@@ -82,11 +82,11 @@ class JoeTicker(commands.Cog, Ticker):
 
 
 class JoeBot:
+    joeMaker = JoeMaker
     joePic_ = JoePic.JoePic()
     discord_bot = commands.Bot
     channels = Constants.Channels
     taskManager = Utils.TaskManager
-    joeMaker = JoeMaker
 
     def __init__(self, discord_bot):
         self.discord_bot = discord_bot
@@ -126,7 +126,7 @@ class JoeBot:
     async def callConvert(self):
         previous_avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joe_bought_back_last7d = JoeSubGraph.getJoeBuyBackLast7d()
-        pairs, joe_bought_back, error_on_pairs = JoeBot.joeMaker.callConvertMultiple(MIN_USD_VALUE)
+        pairs, joe_bought_back, error_on_pairs = self.joeMaker.callConvertMultiple(MIN_USD_VALUE)
         avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joe_price = JoeSubGraph.getJoePrice()
 
