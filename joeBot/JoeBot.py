@@ -175,7 +175,9 @@ class JoeBot:
             return
         raise error
 
-    async def sendMessage(self, list_of_strings, channel_id):
+    async def sendMessage(self, list_of_strings, channel_id=None):
+        if channel_id is None:
+            channel_id = self.channels.BOT_ERRORS
         message, length = [], 0
         channel = self.channels.get_channel(channel_id)
         for string in list_of_strings:

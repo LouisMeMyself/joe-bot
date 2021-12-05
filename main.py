@@ -109,7 +109,7 @@ async def setbridges(ctx):
         token, bridge = line.split(" - ")
         tokens.append(token)
         bridges.append(bridge)
-    await ctx.reply(
+    await joeBot.sendMessage(
         joeBot.joeMaker.setBridges(tokens, bridges)
     )
 

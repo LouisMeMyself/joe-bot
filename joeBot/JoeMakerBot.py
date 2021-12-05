@@ -60,7 +60,7 @@ class JoeMaker:
                 errors.append("[{}] Error setting bridge locally:\n{} -> {}: {}".format(
                         datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
                         token, bridge, e))
-        return "Errors:", "\n".join(errors)
+        return errors
 
     def execContract(self, func_):
         """
