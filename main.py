@@ -42,14 +42,14 @@ async def about(ctx):
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def setmin(ctx):
-    """Set the min USD valie."""
+    """Set the min USD value."""
     await joeBot.setMinUsdValueToConvert(ctx)
 
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def start(ctx):
-    """Set the min USD valie."""
+    """Start a task."""
     await ctx.reply(
         joeBot.taskManager.startTask(ctx.message.content[6:].rstrip().lstrip())
     )
@@ -58,7 +58,7 @@ async def start(ctx):
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def stop(ctx):
-    """Set the min USD valie."""
+    """Stop a task."""
     await ctx.reply(
         joeBot.taskManager.stopTask(ctx.message.content[5:].rstrip().lstrip())
     )
@@ -67,7 +67,7 @@ async def stop(ctx):
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def stopped(ctx):
-    """Set the min USD valie."""
+    """Return stopped tasks."""
     await ctx.reply(
         joeBot.taskManager.getStoppedTasks()
     )
@@ -76,7 +76,7 @@ async def stopped(ctx):
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def running(ctx):
-    """Set the min USD valie."""
+    """Return the running tasks."""
     await ctx.reply(
         joeBot.taskManager.getRunningTasks()
     )
@@ -85,9 +85,32 @@ async def running(ctx):
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def alltasks(ctx):
-    """Set the min USD valie."""
+    """Return all tasks name."""
     await ctx.reply(
         joeBot.taskManager.getAllTasks()
+    )
+
+
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
+async def changeversion(ctx):
+    """Change JoeMaker version used to convert."""
+    await ctx.reply(
+        joeBot.joeMaker.changeToVersion(ctx.message.content[15:].rstrip().lstrip())
+    )
+
+
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
+async def setbridges(ctx):
+    """SetBridges."""
+    tokens, bridges = [], []
+    for line in ctx.message.content[12:].split("\n"):
+        token, bridge = line.split(" - ")
+        tokens.append(token)
+        bridges.append(bridge)
+    await ctx.reply(
+        joeBot.joeMaker.setBridges(tokens, bridges)
     )
 
 

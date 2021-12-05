@@ -1,13 +1,13 @@
 import asyncio
 import random
-import time
 from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands, tasks
 from web3 import Web3
 
-from joeBot import JoePic, JoeSubGraph, Constants, FeeCollector, Utils
+from joeBot import JoePic, JoeSubGraph, Constants, JoeMakerBot, Utils
+from joeBot.JoeMakerBot import JoeMaker
 from joeBot.Utils import readable, Ticker
 
 # web3
@@ -34,7 +34,7 @@ class JoeMakerTicker(commands.Cog, Ticker):
             if self.ranToday:
                 time_to_wait = random.randint(0, 3600)
                 await asyncio.sleep(time_to_wait)
-                # await self.callConvert()
+                await self.callConvert()
 
                 self.ranToday = True
 
@@ -86,11 +86,13 @@ class JoeBot:
     discord_bot = commands.Bot
     channels = Constants.Channels
     taskManager = Utils.TaskManager
+    joeMaker = JoeMaker
 
     def __init__(self, discord_bot):
         self.discord_bot = discord_bot
         for server in self.discord_bot.guilds:
             self.channels = Constants.Channels(server.id, discord_bot)
+        self.joeMaker = JoeMaker()
         self.taskManager = Utils.TaskManager(
             (
                 JoeTicker(self.discord_bot),
@@ -124,7 +126,7 @@ class JoeBot:
     async def callConvert(self):
         previous_avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joe_bought_back_last7d = JoeSubGraph.getJoeBuyBackLast7d()
-        pairs, joe_bought_back, error_on_pairs = FeeCollector.callConvertMultiple(MIN_USD_VALUE)
+        pairs, joe_bought_back, error_on_pairs = JoeMakerBot.joeMaker.callConvertMultiple(MIN_USD_VALUE)
         avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joe_price = JoeSubGraph.getJoePrice()
 

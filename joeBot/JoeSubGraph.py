@@ -95,22 +95,28 @@ def getCurrentGasPrice():
     return totalGasPrice / number_of_block / 1e9
 
 
-def getJoeMakerV2Postitions(min_usd_value, return_reserve_and_balance=False):
+def getJoeMakerPostitions(min_usd_value, joe_maker_address=None, return_reserve_and_balance=False):
     """
     getJoeMakerPostitions return the position of JoeMaker that are worth more than min_usd_value
     and if he owns less than half the lp.
 
     :param min_usd_value: The min USD value to be actually returned.
-    :param return_reserve_and_balance: boolean value to return or not the reserves and balances (in usd).
+    :param joe_maker_address: address of JoeMaker, default: V3.
+    :param return_reserve_and_balance: boolean value to return or not the reserves and balances (in usd),
+                                       default: False.
     :return: 2 lists, the first one is the list of the token0 of the pairs that satisfied the requirements
     the second one is the same thing but for token1.
     """
     skip, query_exchange = 0, {}
     tokens0, tokens1 = [], []
     pairs_reserve_usd, jm_balance_usd = [], []
+    if joe_maker_address is None:
+        joe_maker_address = Constants.JOEMAKERV3_ADDRESS.lower()
+    else:
+        joe_maker_address = joe_maker_address.lower()
     while skip == 0 or len(query_exchange["data"]["liquidityPositions"]) == 1000:
         query_exchange = genericQuery('{liquidityPositions(first: 1000, skip:' + str(skip) +
-                                      ' where: {user: "' + Constants.JOEMAKERV2_ADDRESS.lower() + '"}) '
+                                      ' where: {user: "' + joe_maker_address + '"}) '
                                       '{liquidityTokenBalance, '
                                       'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
         for liquidity_position in query_exchange["data"]["liquidityPositions"]:
@@ -263,5 +269,5 @@ if __name__ == "__main__":
     # print(getAbout())
     # print(getLendingAbout())
     # print(getJoeBuyBackLast7d())
-    print(getJoeMakerV2Postitions(1000))
+    print(getJoeMakerPostitions(1000))
     print("Done")
