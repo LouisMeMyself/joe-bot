@@ -126,7 +126,7 @@ class JoeBot:
     async def callConvert(self):
         previous_avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joe_bought_back_last7d = JoeSubGraph.getJoeBuyBackLast7d()
-        pairs, joe_bought_back, error_on_pairs = JoeMakerBot.joeMaker.callConvertMultiple(MIN_USD_VALUE)
+        pairs, joe_bought_back, error_on_pairs = JoeBot.joeMaker.callConvertMultiple(MIN_USD_VALUE)
         avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
         joe_price = JoeSubGraph.getJoePrice()
 

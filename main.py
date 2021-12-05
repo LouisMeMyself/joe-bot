@@ -117,7 +117,7 @@ async def setbridges(ctx):
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def convert(ctx):
-    """Calls convert on JoeMakerV2."""
+    """Calls convert on JoeMaker."""
     await joeBot.callConvert()
 
 
