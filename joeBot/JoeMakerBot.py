@@ -76,7 +76,7 @@ class JoeMaker:
         safe_tokens0, safe_tokens1, error_on_pairs = [], [], []
         for token0, token1 in zip(map(Web3.toChecksumAddress, tokens0), map(Web3.toChecksumAddress, tokens1)):
             try:
-                self.joeMaker.functions.convert(token0, token1).call()
+                self.joeMaker.functions.convert(token0, token1).call({"from": self.account.address})
                 safe_tokens0.append(token0)
                 safe_tokens1.append(token1)
             except Exception as e:
@@ -192,5 +192,6 @@ def decodeTransactionReceipt(tansaction_receipt, tokens0, tokens1, joe_bought_ba
 # Only executed if you run main.py
 if __name__ == '__main__':
     joeMaker = JoeMaker()
-    joeMaker.changeToVersion("v1")
+    # joeMaker.changeToVersion("v1")
+    # print(joeMaker.callConvertMultiple(10000))
     # print(sum(JoeSubGraph.getJoeMakerPostitions(10000, joeMaker.joeMaker.address, True)[3]))
