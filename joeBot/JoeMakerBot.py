@@ -2,10 +2,11 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-from web3 import exceptions, Web3
+from web3 import Web3
 
 from joeBot import Constants, JoeSubGraph
 from joeBot.Constants import ZERO_ADDRESS_256
+from joeBot.Utils import readable
 
 load_dotenv()
 
@@ -54,12 +55,12 @@ class JoeMaker:
                     w3.eth.wait_for_transaction_receipt(tx_hash)
                 except Exception as e:
                     errors.append("[{}] Error setting bridge:\n{} -> {}: {}".format(
-                            datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
-                            token, bridge, e))
-            except Exception as e:
-                errors.append("[{}] Error setting bridge locally:\n{} -> {}: {}".format(
                         datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
                         token, bridge, e))
+            except Exception as e:
+                errors.append("[{}] Error setting bridge locally:\n{} -> {}: {}".format(
+                    datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
+                    token, bridge, e))
         return errors
 
     def execContract(self, func_):
@@ -141,7 +142,8 @@ class JoeMaker:
         groups_tokens0, groups_tokens1 = getGroupsOf(safe_tokens0), getGroupsOf(safe_tokens1)
 
         # calls ConvertMultiple with the previously grouped tokens
-        pairs, joe_bought_back, error_on_pairs = self._callConvertMultiple(groups_tokens0, groups_tokens1, error_on_pairs)
+        pairs, joe_bought_back, error_on_pairs = self._callConvertMultiple(groups_tokens0, groups_tokens1,
+                                                                           error_on_pairs)
 
         # return pairs, joe_bought_back, error_on_pairs
         return pairs, joe_bought_back, error_on_pairs
@@ -161,16 +163,27 @@ def getGroupsOf(tokens, size=25):
 
 # cache
 symbolOf = {}
+pairTokens = {}
 
-def getSymbolOf(address):
+
+def getSymbolOf(tokenAddress):
     global symbolOf
-    if address not in symbolOf:
-        symbolOf[address] = w3.eth.contract(address=address, abi=Constants.ERC20_ABI).functions.symbol().call()
-    return symbolOf[address]
+    if tokenAddress not in symbolOf:
+        symbolOf[tokenAddress] = w3.eth.contract(address=tokenAddress,
+                                                 abi=Constants.ERC20_ABI).functions.symbol().call()
+    return symbolOf[tokenAddress]
 
 
-def decodeTransactionReceipt(tansaction_receipt, tokens0, tokens1, joe_bought_back, pairs):
-    logs = tansaction_receipt["logs"]
+def getPairTokens(pairAddress):
+    global pairTokens
+    if pairAddress not in pairTokens:
+        pair_contract = w3.eth.contract(address=pairAddress, abi=Constants.PAIR_ABI)
+        pairTokens[pairAddress] = (pair_contract.functions.token0().call(), pair_contract.functions.token1().call())
+    return pairTokens[pairAddress]
+
+
+def decodeTransactionReceipt(transaction_receipt, tokens0, tokens1, joe_bought_back, pairs):
+    logs = transaction_receipt["logs"]
     nb_tokens = 0
     for i in range(len(logs)):
         if len(logs[i]["topics"]) > 2 and logs[i]["topics"][2].hex() == ZERO_ADDRESS_256:
@@ -189,9 +202,52 @@ def decodeTransactionReceipt(tansaction_receipt, tokens0, tokens1, joe_bought_ba
     joe_bought_back.append(int("0x" + logs[-1]["data"][-64:], 16) / 1e18)
     return pairs, joe_bought_back
 
+
+def decodeTxHash(tx_hash):
+    joe_bought_back_last7d = JoeSubGraph.getJoeBuyBackLast7d()
+    logs = w3.eth.wait_for_transaction_receipt(tx_hash)["logs"]
+    JMV3_256 = "0x000000000000000000000000db5b4cc0276389a943dba9eb07a97c10e8a475d3"
+    nb_tokens, joe_bought_back, pairs = 0, [], []
+    for i in range(len(logs)):
+        if len(logs[i]["topics"]) > 2:
+            if (logs[i]["topics"][1].hex() == JMV3_256
+                    and logs[i]["topics"][2].hex() == JMV3_256 and len(logs[i]["data"]) == 64 * 2 + 2):
+                pairTokens = [getSymbolOf(token) for token in getPairTokens(logs[i].address)]
+                pairs.append("{} - {}".format(pairTokens[0], pairTokens[1]))
+            if logs[i]["topics"][2].hex() == ZERO_ADDRESS_256:
+                if logs[i - 1]["topics"][1].hex() == ZERO_ADDRESS_256:
+                    shift = 1
+                else:
+                    shift = 0
+                if i > 2:
+                    joe_bought_back.append(int("0x" + logs[i - shift - 2]["data"][-64:], 16) / 1e18)
+                nb_tokens += 1
+
+    joe_bought_back.append(int("0x" + logs[-1]["data"][-64:], 16) / 1e18)
+
+    joe_price = JoeSubGraph.getJoePrice()
+    sum_ = sum(joe_bought_back)
+
+    message = ["{} : {} $JOE".format(pair, readable(amount, 2)) for pair, amount in
+               zip(pairs, joe_bought_back)]
+
+    message.append("Total buyback: {} $JOE worth ${}".format(readable(sum_, 2),
+                                                             readable(sum_ * joe_price, 2)))
+
+    message.append("Last 7 days buyback: {} $JOE worth ${}".format(
+        readable(joe_bought_back_last7d + sum_, 2),
+        readable((joe_bought_back_last7d + sum_) * joe_price, 2)))
+
+    if JoeSubGraph.getJoeBuyBackLast7d(True)[-1] == 0:
+        JoeSubGraph.addJoeBuyBackToLast7d(sum_, True)
+
+    return message
+
+
 # Only executed if you run main.py
 if __name__ == '__main__':
-    joeMaker = JoeMaker()
+    # joeMaker = JoeMaker()
+    print("\n".join(decodeTxHash("0x04e80ee7deda04fa770006c3b0c00360ec93562a3cf3ffcd60e2ee14b67e9a9f")))
     # joeMaker.changeToVersion("v1")
     # print(joeMaker.callConvertMultiple(10000))
     # print(sum(JoeSubGraph.getJoeMakerPostitions(10000, joeMaker.joeMaker.address, True)[3]))

@@ -135,6 +135,8 @@ class JoeBot:
 
         sum_ = sum(joe_bought_back)
 
+        JoeSubGraph.addJoeBuyBackToLast7d(sum_)
+
         list_of_string.append("Total buyback: {} $JOE worth ${}".format(readable(sum_, 2),
                                                                         readable(sum_ * joe_price, 2)))
         list_of_string.append("Last 7 days buyback: {} $JOE worth ${}".format(

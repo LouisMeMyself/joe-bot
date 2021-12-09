@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from joeBot import Constants
+from joeBot import Constants, JoeMakerBot
 from joeBot.JoeBot import JoeBot
 
 # Env
@@ -99,18 +99,28 @@ async def changeversion(ctx):
         joeBot.joeMaker.changeToVersion(ctx.message.content[15:].rstrip().lstrip())
     )
 
+# # JoeBot's wallet would need to be owner of the contract, so for now this can't be used
+# @discord_bot.command(pass_context=True)
+# @commands.has_role(Constants.ROLE_FOR_CMD)
+# async def setbridges(ctx):
+#     """SetBridges."""
+#     tokens, bridges = [], []
+#     for line in ctx.message.content[12:].split("\n"):
+#         token, bridge = line.split(" - ")
+#         tokens.append(token)
+#         bridges.append(bridge)
+#     await joeBot.sendMessage(
+#         joeBot.joeMaker.setBridges(tokens, bridges)
+#     )
+
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
-async def setbridges(ctx):
+async def decodetx(ctx):
     """SetBridges."""
-    tokens, bridges = [], []
-    for line in ctx.message.content[12:].split("\n"):
-        token, bridge = line.split(" - ")
-        tokens.append(token)
-        bridges.append(bridge)
+    tx_hash = ctx.message.content[10:].lstrip().rstrip()
     await joeBot.sendMessage(
-        joeBot.joeMaker.setBridges(tokens, bridges)
+        JoeMakerBot.decodeTxHash(tx_hash)
     )
 
 

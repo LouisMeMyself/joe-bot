@@ -211,16 +211,45 @@ def reloadAssets():
     Constants.NAME2ADDRESS = name2address
 
 
-def getJoeBuyBackLast7d():
-    now = datetime.datetime.utcnow()
-    lastweektimestamp = str(int((now - datetime.timedelta(days=6, hours=12)).timestamp()))
-    query = genericQuery('{servings(orderBy: timestamp, orderDirection: desc, first: 1000, where: {timestamp_gt: "' +
-                         lastweektimestamp + '"}) {joeServed}}', Constants.JOE_MAKERV2_SG_URL)
+def getJoeBuyBackLast7d(details=False):
+    # now = datetime.datetime.utcnow()
+    # lastweektimestamp = str(int((now - datetime.timedelta(days=6, hours=12)).timestamp()))
+    # query = genericQuery('{servings(orderBy: timestamp, orderDirection: desc, first: 1000, where: {timestamp_gt: "' +
+    #                      lastweektimestamp + '"}) {joeServed}}', Constants.JOE_MAKERV2_SG_URL)
+    #
+    # joeServed = 0
+    # for joeServ in query["data"]["servings"]:
+    #     joeServed += float(joeServ["joeServed"])
+    # return joeServed
+    try:
+        with open("content/last7daysbuyback.json", "r") as f:
+            last7d = json.load(f)
+    except FileNotFoundError:
+        with open("../content/last7daysbuyback.json", "r") as f:
+            last7d = json.load(f)
+    if details:
+        return [float(val) for val in last7d["last7days"]]
+    return sum([float(val) for val in last7d["last7days"]])
 
-    joeServed = 0
-    for joeServ in query["data"]["servings"]:
-        joeServed += float(joeServ["joeServed"])
-    return joeServed
+
+def addJoeBuyBackToLast7d(today_buyback, add_to_last=False):
+    try:
+        with open("content/last7daysbuyback.json", "r") as f:
+            last7d = json.load(f)
+    except FileNotFoundError:
+        with open("../content/last7daysbuyback.json", "r") as f:
+            last7d = json.load(f)
+    if add_to_last:
+        temp = [val for val in last7d["last7days"]][:-1]
+    else:
+        temp = [val for val in last7d["last7days"]][1:]
+    temp.append(str(today_buyback))
+    try:
+        with open("content/last7daysbuyback.json", "w") as f:
+            json.dump({"last7days": temp}, f)
+    except FileNotFoundError:
+        with open("../content/last7daysbuyback.json", "w") as f:
+            json.dump({"last7days": temp}, f)
 
 
 def getAbout():
@@ -268,6 +297,7 @@ def getLendingAbout():
 if __name__ == "__main__":
     # print(getAbout())
     # print(getLendingAbout())
-    # print(getJoeBuyBackLast7d())
-    print(getJoeMakerPostitions(1000))
-    print("Done")
+    print(getJoeBuyBackLast7d())
+    # print(addJoeBuyBackToLast7d(150))
+    # print(getJoeMakerPostitions(1000))
+    # print("Done")

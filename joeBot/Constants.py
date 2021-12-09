@@ -52,6 +52,13 @@ WAVAXUSDTE_ADDRESS = "0xeD8CBD9F0cE3C6986b22002F03c6475CEb7a6256"
 
 # ABI for web3
 try:
+    with open("content/abis/pairabi.json", "r") as f:
+        PAIR_ABI = json.load(f)
+except FileNotFoundError:
+    with open("../content/abis/pairabi.json", "r") as f:
+        PAIR_ABI = json.load(f)
+
+try:
     with open("content/abis/erc20tokenabi.json", "r") as f:
         ERC20_ABI = json.load(f)
 except FileNotFoundError:

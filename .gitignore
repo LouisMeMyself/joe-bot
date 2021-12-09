@@ -11,5 +11,8 @@ venv
 joe-logo.png
 chart.png
 
+# last 7 days
+content/last7daysbuyback.json
+
 # Env
 .env
