@@ -222,28 +222,35 @@ def getJoeBuyBackLast7d(details=False):
     #     joeServed += float(joeServ["joeServed"])
     # return joeServed
     try:
-        with open("content/last7daysbuyback.json", "r") as f:
-            last7d = json.load(f)
+        try:
+            with open("content/last7daysbuyback.json", "r") as f:
+                last7d = json.load(f)
+        except FileNotFoundError:
+            with open("../content/last7daysbuyback.json", "r") as f:
+                last7d = json.load(f)
+        if details:
+            return [float(val) for val in last7d["last7days"]]
+        return sum([float(val) for val in last7d["last7days"]])
     except FileNotFoundError:
-        with open("../content/last7daysbuyback.json", "r") as f:
-            last7d = json.load(f)
-    if details:
-        return [float(val) for val in last7d["last7days"]]
-    return sum([float(val) for val in last7d["last7days"]])
+        return 0
 
 
 def addJoeBuyBackToLast7d(today_buyback, add_to_last=False):
     try:
-        with open("content/last7daysbuyback.json", "r") as f:
-            last7d = json.load(f)
+        try:
+            with open("content/last7daysbuyback.json", "r") as f:
+                last7d = json.load(f)
+        except FileNotFoundError:
+            with open("../content/last7daysbuyback.json", "r") as f:
+                last7d = json.load(f)
+        if add_to_last:
+            temp = [val for val in last7d["last7days"]][:-1]
+        else:
+            temp = [val for val in last7d["last7days"]][1:]
     except FileNotFoundError:
-        with open("../content/last7daysbuyback.json", "r") as f:
-            last7d = json.load(f)
-    if add_to_last:
-        temp = [val for val in last7d["last7days"]][:-1]
-    else:
-        temp = [val for val in last7d["last7days"]][1:]
+        temp = ["0", "0", "0", "0", "0"]
     temp.append(str(today_buyback))
+
     try:
         with open("content/last7daysbuyback.json", "w") as f:
             json.dump({"last7days": temp}, f)
