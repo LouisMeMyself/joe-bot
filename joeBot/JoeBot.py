@@ -23,7 +23,7 @@ started = False
 
 class JoeMakerTicker(commands.Cog, Ticker):
     def __init__(self, channels, callConvert):
-        self.ranToday = True
+        self.time_to_wait = 0
         self.channels = channels
         self.callConvert = callConvert
 
@@ -31,36 +31,29 @@ class JoeMakerTicker(commands.Cog, Ticker):
     async def ticker(self):
         print("ticker")
         try:
-            if self.ranToday:
-                time_to_wait = random.randint(0, 3600)
-                await asyncio.sleep(time_to_wait)
-                await self.callConvert()
+            await asyncio.sleep(self.time_to_wait)
+            await self.callConvert()
 
-                self.ranToday = True
-
-                await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                    "Info: schedule of next buyback : [{}] .".format(self.ticker.next_iteration +
-                                                                     timedelta(seconds=time_to_wait)))
-            else:
-                await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                    "Error: JoeMaker didn't convert today, retrying in 60 seconds.")
+            self.time_to_wait = random.randint(0, 3600)
+            await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                "Info: schedule of next buyback : [{}] .".format(
+                    (self.ticker.next_iteration + timedelta(seconds=self.time_to_wait)).strftime("%d/%m/%Y %H:%M:%S")))
 
         except Exception as e:
-            await self.channels.get_channel(self.channels.BOT_ERRORS).send("Error: {}".format(e))
-            self.ranToday = False
+            await self.channels.get_channel(self.channels.BOT_ERRORS).send("Error on ticker: {}".format(e))
 
     @ticker.before_loop
     async def before_ticker(self):
         now = datetime.now()
-        timeBefore11PM30 = (now.replace(hour=23, minute=30) - now).total_seconds()
+        timeBefore11PM30 = (now.replace(hour=23, minute=30, second=0) - now).total_seconds()
 
         if timeBefore11PM30 < 0:
             timeBefore11PM30 += timedelta(days=1)
 
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-            "Info: schedule of next buyback : [{}] +- 30 min.".format(
-                datetime.fromtimestamp(now.replace(hour=0, minute=0).timestamp()).strftime(
-                                                                             "%D %H:%M")))
+            "Info: schedule of next buyback : [{}].".format(
+                datetime.fromtimestamp(now.replace(hour=23, minute=30, second=0).timestamp()).strftime(
+                    "%d/%m/%Y %H:%M:%S")))
 
         await asyncio.sleep(timeBefore11PM30)
 

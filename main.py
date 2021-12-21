@@ -120,7 +120,7 @@ async def decodetx(ctx):
     """SetBridges."""
     tx_hash = ctx.message.content[10:].lstrip().rstrip()
     await joeBot.sendMessage(
-        JoeMakerBot.decodeTxHash(tx_hash)
+        JoeMakerBot.joeMaker.decodeTxHash(tx_hash)
     )
 
 
