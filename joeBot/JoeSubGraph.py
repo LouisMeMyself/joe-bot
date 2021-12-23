@@ -18,7 +18,9 @@ if not w3.isConnected():
 
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
+joetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JOETOKEN_ADDRESS), abi=Constants.ERC20_ABI)
+jxjoetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JXJOETOKEN_ADDRESS),
+                                      abi=Constants.JCOLLATERAL_ABI)
 
 
 def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
@@ -107,18 +109,18 @@ def getJoeMakerPostitions(min_usd_value, joe_maker_address=None, return_reserve_
     :return: 2 lists, the first one is the list of the token0 of the pairs that satisfied the requirements
     the second one is the same thing but for token1.
     """
-    skip, query_exchange = 0, {}
+    last_id, query_exchange = "", {}
     tokens0, tokens1 = [], []
     pairs_reserve_usd, jm_balance_usd = [], []
     if joe_maker_address is None:
         joe_maker_address = Constants.JOEMAKERV3_ADDRESS.lower()
     else:
         joe_maker_address = joe_maker_address.lower()
-    while skip == 0 or len(query_exchange["data"]["liquidityPositions"]) == 1000:
-        query_exchange = genericQuery('{liquidityPositions(first: 1000, skip:' + str(skip) +
-                                      ' where: {user: "' + joe_maker_address + '"}) '
-                                      '{liquidityTokenBalance, '
-                                      'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
+    while last_id == "" or len(query_exchange["data"]["liquidityPositions"]) == 1000:
+        query_exchange = genericQuery('{liquidityPositions(first: 1000, where: {id_gt: "' + last_id +
+                                      '", user: "' + joe_maker_address + '"}) '
+                                                                               '{id, liquidityTokenBalance, '
+                                                                               'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
         for liquidity_position in query_exchange["data"]["liquidityPositions"]:
             pair = liquidity_position["pair"]
 
@@ -135,7 +137,7 @@ def getJoeMakerPostitions(min_usd_value, joe_maker_address=None, return_reserve_
                 tokens1.append(pair["token1"]["id"])
                 pairs_reserve_usd.append(pair_reserve_usd)
                 jm_balance_usd.append(joe_maker_balance_usd)
-        skip += 1000
+        last_id = query_exchange["data"]["liquidityPositions"][-1]["id"]
     if return_reserve_and_balance:
         return tokens0, tokens1, pairs_reserve_usd, jm_balance_usd
     return tokens0, tokens1
@@ -156,17 +158,18 @@ def getJoePrice():
 
 
 def getTVL():
+    JoeHeldInLending = float(w3.fromWei(jxjoetoken_contract.functions.getCash().call(), 'ether'))
     JoeHeldInJoeBar = float(w3.fromWei(joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(), 'ether'))
     joePrice = float(getJoePrice())
 
-    sum_ = JoeHeldInJoeBar * joePrice
+    sum_ = (JoeHeldInJoeBar - JoeHeldInLending) * joePrice
 
-    skip, queryExchange = 0, {}
-    while skip == 0 or len(queryExchange["data"]["pairs"]) == 1000:
-        queryExchange = genericQuery("{pairs(first: 1000, skip: " + str(skip) + "){reserveUSD}}")
+    last_id, queryExchange = "", {}
+    while last_id == "" or len(queryExchange["data"]["pairs"]) == 1000:
+        queryExchange = genericQuery('{pairs(first: 1000, where: {id_gt: "' + last_id + '"}){id, reserveUSD}}')
         for reserveUSD in queryExchange["data"]["pairs"]:
             sum_ += float(reserveUSD["reserveUSD"])
-        skip += 1000
+        last_id = str(queryExchange["data"]["pairs"][-1]["id"])
     return sum_
 
 
@@ -189,14 +192,14 @@ def getPricesOf(tokenAddress):
 
 
 def reloadAssets():
-    skip, queryExchange, tempdic = 0, {}, {}
-    while skip == 0 or len(queryExchange["data"]["tokens"]) == 1000:
+    last_id, queryExchange, tempdic = "", {}, {}
+    while last_id == "" or len(queryExchange["data"]["tokens"]) == 1000:
         queryExchange = genericQuery(
-            "{tokens(first: 1000, skip: " + str(skip) + "){id, symbol, liquidity, derivedAVAX}}")
+            '{tokens(first: 1000, where: {id_gt:"' + last_id + '"}){id, symbol, liquidity, derivedAVAX}}')
         for d in queryExchange["data"]["tokens"]:
             if float(d["liquidity"]) * float(d["derivedAVAX"]) >= 100:
                 tempdic[d["symbol"].lower().replace(" ", "")] = d["id"]
-        skip += 1000
+        last_id = str(queryExchange["data"]["tokens"][-1]["id"])
 
     name2address = {}
     for key, value in tempdic.items():
@@ -302,9 +305,10 @@ def getLendingAbout():
 
 
 if __name__ == "__main__":
-    # print(getAbout())
+    print(getAbout())
     # print(getLendingAbout())
-    print(getJoeBuyBackLast7d())
+    # print(getJoeBuyBackLast7d())
+    # reloadAssets()
     # print(addJoeBuyBackToLast7d(150))
-    # print(getJoeMakerPostitions(1000))
+    print(len(getJoeMakerPostitions(10000)[0]))
     # print("Done")

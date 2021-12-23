@@ -34,6 +34,7 @@ JOE_MAKERV2_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/make
 # address for web3
 AVAX_RPC = "https://api.avax.network/ext/bc/C/rpc"
 JOETOKEN_ADDRESS = "0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd"
+JXJOETOKEN_ADDRESS = "0xc146783a59807154f92084f9243eb139d58da696"
 WAVAX_ADDRESS = "0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
 USDTe_ADDRESS = "0xc7198437980c041c805A1EDcbA50c1Ce5db95118"
 USDCe_ADDRESS = "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664"
@@ -66,6 +67,13 @@ try:
 except FileNotFoundError:
     with open("../content/abis/erc20tokenabi.json", "r") as f:
         ERC20_ABI = json.load(f)
+
+try:
+    with open("content/abis/jcollateralcaperc20delegatorabi.json", "r") as f:
+        JCOLLATERAL_ABI = json.load(f)
+except FileNotFoundError:
+    with open("../content/abis/jcollateralcaperc20delegatorabi.json", "r") as f:
+        JCOLLATERAL_ABI = json.load(f)
 
 try:
     with open("content/abis/joefactoryabi.json", "r") as f:
