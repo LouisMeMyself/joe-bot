@@ -58,10 +58,10 @@ async def startTicker(message: types.Message):
     if not timer.canMessageOnChatId(message.chat.id):
         return
 
-    # member = await bot.get_chat_member(message.chat.id, message.from_user.id)
-    # if not member.is_chat_admin():
-    #     await bot.send_message(message.chat.id, "You're not admin, you can't use that command.")
-    #     return
+    member = await bot.get_chat_member(message.chat.id, message.from_user.id)
+    if not member.is_chat_admin():
+        await bot.send_message(message.chat.id, "You're not admin, you can't use that command.")
+        return
 
     if message.reply_to_message is not None and message.reply_to_message.from_user.id == bot.id:
         Constants.JOE_TICKER[message.chat.id] = message.reply_to_message.message_id
