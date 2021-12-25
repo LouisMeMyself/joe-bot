@@ -22,6 +22,27 @@ joetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JOETO
 jxjoetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JXJOETOKEN_ADDRESS),
                                       abi=Constants.JCOLLATERAL_ABI)
 
+tokens = {}
+pairs = {}
+
+class Token:
+    def __init__(self, _address, _symbol, _liquidity, _pair=None):
+        self.address = _address
+        self.symbol = _symbol
+        self.liquidity = _liquidity
+        self.pair = _pair
+
+
+class Pair:
+    def __init__(self, _address, _name, _token0, _token1, _reserve0, _reserve1, _reserveUSD):
+        self.address = _address
+        self.name = _name
+        self.token0 = _token0
+        self.token1 = _token1
+        self.reserve0 = _reserve0
+        self.reserve1 = _reserve1
+        self.reserveUSD = _reserveUSD
+
 
 def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
     r = requests.post(sg_url, json={'query': query})
@@ -177,7 +198,7 @@ def getTVL():
 def getPricesOf(tokenAddress):
     tokenAddress = tokenAddress.lower().replace(" ", "")
     try:
-        tokenAddress = Web3.toChecksumAddress(Constants.NAME2ADDRESS[tokenAddress])
+        tokenAddress = Web3.toChecksumAddress(Constants.tokens[tokenAddress].address)
     except:
         pass
 
@@ -192,26 +213,67 @@ def getPricesOf(tokenAddress):
 
 
 def reloadAssets():
-    last_id, queryExchange, tempdic = "", {}, {}
-    while last_id == "" or len(queryExchange["data"]["tokens"]) == 1000:
-        queryExchange = genericQuery(
-            '{tokens(first: 1000, where: {id_gt:"' + last_id + '"}){id, symbol, liquidity, derivedAVAX}}')
-        for d in queryExchange["data"]["tokens"]:
-            if float(d["liquidity"]) * float(d["derivedAVAX"]) >= 100:
-                tempdic[d["symbol"].lower().replace(" ", "")] = d["id"]
-        last_id = str(queryExchange["data"]["tokens"][-1]["id"])
+    global tokens
+    last_id_tokens, query_exchange_tokens, tempdic_tokens = "", {}, {}
+    while last_id_tokens == "" or len(query_exchange_tokens["data"]["tokens"]) == 1000:
+        query_exchange_tokens = genericQuery(
+            '{tokens(first: 1000, where: {id_gt:"' + last_id_tokens + '"}){id, symbol, liquidity, derivedAVAX}}')
+        for d in query_exchange_tokens["data"]["tokens"]:
+            avaxLiquity = float(d["liquidity"]) * float(d["derivedAVAX"])
+            if avaxLiquity >= 100:
+                symbol = d["symbol"].lower().replace(" ", "")
+                if symbol not in tempdic_tokens or tempdic_tokens[symbol].liquidity < avaxLiquity:
+                    tempdic_tokens[symbol] = Token(d["id"], d["symbol"], avaxLiquity)
+        last_id_tokens = str(query_exchange_tokens["data"]["tokens"][-1]["id"])
 
-    name2address = {}
-    for key, value in tempdic.items():
-        if key[0] == "w" and key[-2:] == ".e":
-            name2address[key[1:-2]] = value
-        elif key[-2:] == ".e":
-            name2address[key[:-2]] = value
-        elif key in name2address:
-            pass
-        else:
-            name2address[key] = value
-    Constants.NAME2ADDRESS = name2address
+    for symbol, token in tempdic_tokens.items():
+        symbol = cleanSymbol(symbol)
+        if symbol not in tokens or tokens[symbol].liquidity < token.liquidity:
+            tokens[symbol] = token
+
+    Constants.tokens = tokens
+
+
+def cleanSymbol(symbol):
+    symbol = symbol.lower()
+    if symbol[0] == "w" and symbol[-2:] == ".e":
+        symbol = symbol[1:-2]
+    elif symbol[-2:] == ".e":
+        symbol = symbol[:-2]
+    return symbol
+
+
+def getPairNameOrdered(token0: Token, token1: Token):
+    if token0.address < token1.address:
+        return "{}/{}".format(token0.symbol, token1.symbol)
+    return "{}/{}".format(token1.symbol, token0.symbol)
+
+
+def reloadPairs():
+    global pairs, tokens
+    last_id_pairs, query_exchange_pairs = "", {}
+    while last_id_pairs == "" or len(query_exchange_pairs["data"]["pairs"]) == 1000:
+        query_exchange_pairs = genericQuery(
+            '{pairs(first: 1000, where: {id_gt:"' + last_id_pairs + '"})\
+                {id, token0{id, symbol, liquidity}, token1{id, symbol, liquidity}, reserve0, reserve1, reserveUSD}}')
+        for pair in query_exchange_pairs["data"]["pairs"]:
+            reserve0, reserve1, reserveUSD = float(pair["reserve0"]), float(pair["reserve1"]), float(pair["reserveUSD"])
+            if reserve0 * reserve1 > 0:
+                t0, t1 = pair["token0"], pair["token1"]
+
+                if not t0["id"] in tokens:
+                    tokens[t0["id"]] = Token(t0["id"], cleanSymbol(t0["symbol"]), t0["liquidity"])
+                if not t1["id"] in tokens:
+                    tokens[t1["id"]] = Token(t1["id"], cleanSymbol(t1["symbol"]), t1["liquidity"])
+
+                token0, token1 = tokens[t0["id"]], tokens[t1["id"]]
+
+                name = getPairNameOrdered(token0, token1)
+
+                if name not in pairs:
+                    pairs[name] = Pair(pair["id"], name, token0, token1, reserve0, reserve1, reserveUSD)
+        last_id_pairs = str(query_exchange_pairs["data"]["pairs"][-1]["id"])
+    print(len(pairs), len(tokens))
 
 
 def getJoeBuyBackLast7d(details=False):
@@ -305,10 +367,11 @@ def getLendingAbout():
 
 
 if __name__ == "__main__":
-    print(getAbout())
+    # print(getAbout())
     # print(getLendingAbout())
     # print(getJoeBuyBackLast7d())
     # reloadAssets()
+    reloadPairs()
     # print(addJoeBuyBackToLast7d(150))
-    print(len(getJoeMakerPostitions(10000)[0]))
+    # print(len(getJoeMakerPostitions(10000)[0]))
     # print("Done")

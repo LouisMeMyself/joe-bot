@@ -85,21 +85,21 @@ class JoeBot:
         self.discord_bot = discord_bot
         for server in self.discord_bot.guilds:
             self.channels = Constants.Channels(server.id, discord_bot)
-        self.joeMaker = JoeMaker()
-        self.taskManager = Utils.TaskManager(
-            (
-                JoeTicker(self.discord_bot),
-                JoeMakerTicker(self.channels, self.callConvert)
-            )
-        )
+        # self.joeMaker = JoeMaker()
+        # self.taskManager = Utils.TaskManager(
+        #     (
+        #         JoeTicker(self.discord_bot),
+        #         JoeMakerTicker(self.channels, self.callConvert)
+        #     )
+        # )
 
     async def onReady(self):
         """starts joebot"""
         global started
         print('joeBot have logged in as {0.user}'.format(self.discord_bot))
-        if not started:
-            await self.channels.get_channel(self.channels.BOT_ERRORS).send(self.taskManager.start())
-            started = True
+        # if not started:
+        #     await self.channels.get_channel(self.channels.BOT_ERRORS).send(self.taskManager.start())
+        #     started = True
 
     async def about(self, ctx):
         about = JoeSubGraph.getAbout()
@@ -183,3 +183,44 @@ class JoeBot:
             message.append(string)
         if message:
             await channel.send("\n".join(message))
+
+    async def ban_def_filter_by_name_and_date(self, ctx):
+        """Mass bans members with an optional delete_days parameter, send a message joined_after banning people to be sure it's not a mistake"""
+
+        msg = ctx.message.content.replace(Constants.BAN_COMMAND, "").rstrip().lstrip()
+        name, joined_after, joined_before = msg.split(",")
+        name = name.replace(" ", "").lower()
+        joined_after = datetime.strptime(joined_after, "%d/%m/%Y %H:%M")
+        joined_before = datetime.strptime(joined_before, "%d/%m/%Y %H:%M")
+
+        members_to_ban = []
+        for member in ctx.guild.members:
+            if name in member.name.lower() and joined_after <= member.joined_at <= joined_before:
+                members_to_ban.append(member)
+
+        if members_to_ban:
+            accept_decline = await ctx.send(
+                "Do you really want to ban {}".format(" ".join([member.mention for member in members_to_ban])))
+            await accept_decline.add_reaction(Constants.CHECK)
+            await accept_decline.add_reaction(Constants.CROSS)
+
+            def check(reaction, user):
+                return user == ctx.message.author and accept_decline == reaction.message and (
+                        str(reaction.emoji) == Constants.CHECK or str(reaction.emoji) == Constants.CROSS)
+
+            try:
+                reaction, user = await self.discord_bot.wait_for('reaction_add', timeout=60.0, check=check)
+            except asyncio.TimeoutError:
+                await accept_decline.delete()
+                await ctx.send('Timed out')
+            else:
+                await accept_decline.delete()
+                if reaction.emoji == Constants.CHECK:
+                    for member in members_to_ban:
+                        await member.ban()
+                    await ctx.send("Banned {}".format(" ".join([member.mention for member in members_to_ban])))
+                else:
+                    await ctx.send("Bans canceled")
+        else:
+            await ctx.send("No users found with those filters:\ncontains: {}, joined_after: {}, joined_before: {}"
+                           .format(name, joined_before, joined_after))

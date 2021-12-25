@@ -131,6 +131,12 @@ async def convert(ctx):
     await joeBot.callConvert()
 
 
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
+async def ban_filtered(ctx):
+    await joeBot.ban_def_filter_by_name_and_date(ctx)
+
+
 @discord_bot.event
 async def on_command_error(ctx, error):
     await joeBot.onCommandError(ctx, error)

@@ -26,7 +26,7 @@ def getChart(token_symbol, period):
         if token_symbol == 'avax':
             token_address = Constants.WAVAX_ADDRESS
         else:
-            token_address = Constants.NAME2ADDRESS[token_symbol]
+            token_address = Constants.tokens[token_symbol].address
     except KeyError:
         raise KeyError
 

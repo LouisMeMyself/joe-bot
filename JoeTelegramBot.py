@@ -174,8 +174,8 @@ async def address(message: types.Message):
         if msg == "avax":
             await bot.send_message(message.chat.id, "$WAVAX: 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7")
             return
-        if msg in Constants.NAME2ADDRESS:
-            await bot.send_message(message.chat.id, "${}: {}".format(msg.upper(), Constants.NAME2ADDRESS[msg]))
+        if msg in Constants.tokens:
+            await bot.send_message(message.chat.id, "${}: {}".format(msg.upper(), Constants.tokens[msg].address))
         else:
             await bot.send_message(message.chat.id, "Unknown token symbol, use /pricelist to know which token can be "
                                                     "tracked with JoeBot")
@@ -235,7 +235,7 @@ async def pricelist(message: types.Message):
     '''Returns the list of tokens for which you can request their price from joebot with !price.'''
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    addresses = list(Constants.NAME2ADDRESS.keys())
+    addresses = list(Constants.tokens.keys())
     addresses.sort()
     tokens = [i.upper() for i in addresses]
     await bot.send_message(message.chat.id,

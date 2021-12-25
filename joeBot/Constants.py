@@ -19,6 +19,9 @@ COMMAND_BEARD = "beard"
 PROFILE_PICTURE_COMMAND = "!joepic"
 SET_MIN_USD_COMMAND = "!setmin"
 CONVERT_COMMAND = "!convert"
+BAN_COMMAND = "!ban_filtered"
+CHECK = "✅"
+CROSS = "❌"
 
 # Roles
 ROLE_FOR_CMD = "Bot Master"
@@ -104,7 +107,7 @@ except FileNotFoundError:
         JOEMAKERV3_ABI = json.load(f)
 
 # assets address
-NAME2ADDRESS = {}
+tokens = {}
 
 # joe ticker
 JOE_TICKER = {}
