@@ -25,12 +25,32 @@ jxjoetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JXJ
 tokens = {}
 pairs = {}
 
-class Token:
-    def __init__(self, _address, _symbol, _liquidity, _pair=None):
-        self.address = _address
-        self.symbol = _symbol
-        self.liquidity = _liquidity
-        self.pair = _pair
+
+class Pairs:
+    allPairs = {}
+    tokensToPairs = {}
+
+    def addPair(self, address, name, token0, token1, reserve0, reserve1, reserveUSD):
+        pair = Pair(address, name, token0, token1, reserve0, reserve1, reserveUSD)
+        self.allPairs[address] = pair
+
+        if token0.address in self.tokensToPairs:
+            self.tokensToPairs[token0.address].append(pair)
+        else:
+            self.tokensToPairs[token0.address] = [pair]
+
+        if token1.address in self.tokensToPairs:
+            self.tokensToPairs[token1.address].append(pair)
+        else:
+            self.tokensToPairs[token1.address] = [pair]
+
+    def getPair(self, token0, token1):
+        if token0.address > token1.address:
+            token0, token1 = token1, token0
+        return self.allPairs["{}/{}".format(token0, token1)]
+
+    def getPairsFromToken(self, token):
+        return self.tokensToPairs[token.address]
 
 
 class Pair:
@@ -42,6 +62,21 @@ class Pair:
         self.reserve0 = _reserve0
         self.reserve1 = _reserve1
         self.reserveUSD = _reserveUSD
+
+
+class Token:
+    def __init__(self, _address, _symbol, _liquidity):
+        self.address = _address
+        self.symbol = _symbol
+        self.liquidity = _liquidity
+        self.pairs = []
+
+    def addPair(self, pair: Pair):
+        self.pairs.append(pair)
+
+    def getPairs(self):
+        return self.pairs
+
 
 
 def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
@@ -140,8 +175,8 @@ def getJoeMakerPostitions(min_usd_value, joe_maker_address=None, return_reserve_
     while last_id == "" or len(query_exchange["data"]["liquidityPositions"]) == 1000:
         query_exchange = genericQuery('{liquidityPositions(first: 1000, where: {id_gt: "' + last_id +
                                       '", user: "' + joe_maker_address + '"}) '
-                                                                               '{id, liquidityTokenBalance, '
-                                                                               'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
+                                                                         '{id, liquidityTokenBalance, '
+                                                                         'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
         for liquidity_position in query_exchange["data"]["liquidityPositions"]:
             pair = liquidity_position["pair"]
 
@@ -243,36 +278,33 @@ def cleanSymbol(symbol):
     return symbol
 
 
-def getPairNameOrdered(token0: Token, token1: Token):
-    if token0.address < token1.address:
-        return "{}/{}".format(token0.symbol, token1.symbol)
-    return "{}/{}".format(token1.symbol, token0.symbol)
-
-
 def reloadPairs():
     global pairs, tokens
-    last_id_pairs, query_exchange_pairs = "", {}
+    last_id_pairs, query_exchange_pairs, reserveUSD = "", {}, 0
     while last_id_pairs == "" or len(query_exchange_pairs["data"]["pairs"]) == 1000:
         query_exchange_pairs = genericQuery(
-            '{pairs(first: 1000, where: {id_gt:"' + last_id_pairs + '"})\
+            '{pairs(first: 1000, orderBy: reserveUSD, orderDirection: desc, where: {id_gt:"' + last_id_pairs + '"})\
                 {id, token0{id, symbol, liquidity}, token1{id, symbol, liquidity}, reserve0, reserve1, reserveUSD}}')
         for pair in query_exchange_pairs["data"]["pairs"]:
             reserve0, reserve1, reserveUSD = float(pair["reserve0"]), float(pair["reserve1"]), float(pair["reserveUSD"])
-            if reserve0 * reserve1 > 0:
-                t0, t1 = pair["token0"], pair["token1"]
+            if reserveUSD == 0:
+                break
+            t0, t1 = pair["token0"], pair["token1"]
 
-                if not t0["id"] in tokens:
-                    tokens[t0["id"]] = Token(t0["id"], cleanSymbol(t0["symbol"]), t0["liquidity"])
-                if not t1["id"] in tokens:
-                    tokens[t1["id"]] = Token(t1["id"], cleanSymbol(t1["symbol"]), t1["liquidity"])
+            if not t0["id"] in tokens:
+                tokens[t0["id"]] = Token(t0["id"], cleanSymbol(t0["symbol"]), t0["liquidity"])
+            if not t1["id"] in tokens:
+                tokens[t1["id"]] = Token(t1["id"], cleanSymbol(t1["symbol"]), t1["liquidity"])
 
-                token0, token1 = tokens[t0["id"]], tokens[t1["id"]]
+            token0, token1 = tokens[t0["id"]], tokens[t1["id"]]
 
-                name = getPairNameOrdered(token0, token1)
+            address = pair["id"]
 
-                if name not in pairs:
-                    pairs[name] = Pair(pair["id"], name, token0, token1, reserve0, reserve1, reserveUSD)
+            if address not in pairs:
+                pairs[address] = Pair(pair["id"], address, token0, token1, reserve0, reserve1, reserveUSD)
         last_id_pairs = str(query_exchange_pairs["data"]["pairs"][-1]["id"])
+        if reserveUSD == 0:
+            break
     print(len(pairs), len(tokens))
 
 
