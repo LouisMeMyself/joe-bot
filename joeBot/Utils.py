@@ -64,6 +64,8 @@ class TaskManager(commands.Cog):
         return self.getStoppedTasks()
 
     def startTask(self, task_name):
+        if task_name in self.tasks:
+            self.stopTask(task_name)
         if self.tasks[task_name].start():
             return "Starting {}".format(task_name)
         return "{} already running".format(task_name)
