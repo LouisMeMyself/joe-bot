@@ -53,7 +53,8 @@ class JoeMakerTicker(commands.Cog, Ticker):
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
             "Info: schedule of next buyback : [{}].".format(
                 datetime.fromtimestamp(now.replace(hour=23, minute=30, second=0).timestamp()).strftime(
-                    "%d/%m/%Y %H:%M:%S")))
+                    "%d/%m/%Y %H:%M:%S")
+            ))
 
         await asyncio.sleep(timeBefore11PM30)
 
@@ -135,6 +136,8 @@ class JoeBot:
         list_of_string.append("Last 7 days buyback: {} $JOE worth ${}".format(
             readable(joe_bought_back_last7d + sum_, 2),
             readable((joe_bought_back_last7d + sum_) * joe_price, 2)))
+
+        list_of_string.append("1 $XJOE = {} $JOE".format(JoeSubGraph.getRatio()))
 
         await self.sendMessage(list_of_string, self.channels.BOT_FEED)
 

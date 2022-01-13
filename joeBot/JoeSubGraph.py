@@ -1,6 +1,5 @@
 import datetime
 import json
-import time
 
 import pandas as pd
 import requests
@@ -19,6 +18,7 @@ if not w3.isConnected():
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 joetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JOETOKEN_ADDRESS), abi=Constants.ERC20_ABI)
+xjoetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JOEBAR_ADDRESS), abi=Constants.ERC20_ABI)
 jxjoetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JXJOETOKEN_ADDRESS),
                                       abi=Constants.JCOLLATERAL_ABI)
 
@@ -76,7 +76,6 @@ class Token:
 
     def getPairs(self):
         return self.pairs
-
 
 
 def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
@@ -211,6 +210,12 @@ def getAvaxBalance(address):
 # Using API
 def getJoePrice():
     return getPriceOf(Constants.JOETOKEN_ADDRESS) / E18
+
+
+def getRatio():
+    total_supply = float(w3.fromWei(xjoetoken_contract.functions.totalSupply().call(), 'ether'))
+    joe_balance = float(w3.fromWei(joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(), 'ether'))
+    return round(joe_balance / total_supply, 5)
 
 
 def getTVL():
@@ -370,9 +375,10 @@ def getAbout():
            "Circ. Supply: {}\n" \
            "Farm TVL: ${}\n" \
            "Lending TVL: ${}\n" \
-           "Total TVL: ${}\n".format(readable(joePrice, 4), smartRounding(avaxPrice), smartRounding(mktcap),
-                                     smartRounding(csupply), smartRounding(farm_tvl), smartRounding(lending_tvl),
-                                     smartRounding(lending_tvl + farm_tvl))
+           "Total TVL: ${}\n" \
+           "1 $XJOE = {} $JOE".format(readable(joePrice, 4), smartRounding(avaxPrice), smartRounding(mktcap),
+                     smartRounding(csupply), smartRounding(farm_tvl), smartRounding(lending_tvl),
+                     smartRounding(lending_tvl + farm_tvl), getRatio())
 
 
 def avg7d(timestamp):
@@ -399,11 +405,12 @@ def getLendingAbout():
 
 
 if __name__ == "__main__":
+    print(getRatio())
     # print(getAbout())
     # print(getLendingAbout())
     # print(getJoeBuyBackLast7d())
     # reloadAssets()
-    reloadPairs()
+    # reloadPairs()
     # print(addJoeBuyBackToLast7d(150))
     # print(len(getJoeMakerPostitions(10000)[0]))
     # print("Done")
