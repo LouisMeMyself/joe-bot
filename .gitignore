@@ -2,10 +2,11 @@
 *__pycache__*
 
 # Virtual Environment
-venv
+*venv
 
-# PyCharm Files
+# IDE
 .idea
+.vscode
 
 # Bots generated images
 joe-logo.png
