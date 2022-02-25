@@ -10,7 +10,7 @@ from joeBot.Utils import TaskManager
 load_dotenv()
 
 # Discord
-discord_bot = commands.Bot(command_prefix='./.')
+discord_bot = commands.Bot(command_prefix="./.")
 
 
 class AvaxTicker(commands.Cog):
@@ -32,7 +32,10 @@ class AvaxTicker(commands.Cog):
                 activity = "GAS PRICE: {}".format(round(gasPrice))
                 self.carousel = True
             await discord_bot.change_presence(
-                activity=discord.Activity(type=discord.ActivityType.watching, name=activity))
+                activity=discord.Activity(
+                    type=discord.ActivityType.watching, name=activity
+                )
+            )
         except Exception as e:
             print(e)
             pass
@@ -41,7 +44,7 @@ class AvaxTicker(commands.Cog):
 @discord_bot.event
 async def on_ready():
     """starts AVAX ticker"""
-    print('joeBot have logged in as {0.user}'.format(discord_bot))
+    print("joeBot have logged in as {0.user}".format(discord_bot))
     TaskManager((AvaxTicker(),)).start()
 
 
@@ -50,6 +53,6 @@ async def on_command_error(ctx, error):
     return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Discord
     discord_bot.run(os.getenv("DISCORD_AVAXBOT_KEY"))

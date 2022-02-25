@@ -14,7 +14,7 @@ load_dotenv()
 intents = discord.Intents.all()
 intents.members = True
 
-discord_bot = commands.Bot(command_prefix='!', intents=intents)
+discord_bot = commands.Bot(command_prefix="!", intents=intents)
 
 joeBot = JoeBot
 
@@ -68,27 +68,21 @@ async def stop(ctx):
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def stopped(ctx):
     """Return stopped tasks."""
-    await ctx.reply(
-        joeBot.taskManager.getStoppedTasks()
-    )
+    await ctx.reply(joeBot.taskManager.getStoppedTasks())
 
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def running(ctx):
     """Return the running tasks."""
-    await ctx.reply(
-        joeBot.taskManager.getRunningTasks()
-    )
+    await ctx.reply(joeBot.taskManager.getRunningTasks())
 
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def alltasks(ctx):
     """Return all tasks name."""
-    await ctx.reply(
-        joeBot.taskManager.getAllTasks()
-    )
+    await ctx.reply(joeBot.taskManager.getAllTasks())
 
 
 @discord_bot.command(pass_context=True)
@@ -98,6 +92,7 @@ async def changeversion(ctx):
     await ctx.reply(
         joeBot.joeMaker.changeToVersion(ctx.message.content[15:].rstrip().lstrip())
     )
+
 
 # # JoeBot's wallet would need to be owner of the contract, so for now this can't be used
 # @discord_bot.command(pass_context=True)
@@ -119,9 +114,7 @@ async def changeversion(ctx):
 async def decodetx(ctx):
     """SetBridges."""
     tx_hash = ctx.message.content[10:].lstrip().rstrip()
-    await joeBot.sendMessage(
-        JoeMakerBot.joeMaker.decodeTxHash(tx_hash)
-    )
+    await joeBot.sendMessage(JoeMakerBot.joeMaker.decodeTxHash(tx_hash))
 
 
 @discord_bot.command(pass_context=True)
@@ -136,6 +129,6 @@ async def on_command_error(ctx, error):
     await joeBot.onCommandError(ctx, error)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Discord
     discord_bot.run(os.getenv("DISCORD_JOEBOT_KEY"))

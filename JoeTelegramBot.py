@@ -29,10 +29,13 @@ dp = Dispatcher(bot)
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
     print("Error web3 can't connect")
-joetoken_contract = w3.eth.contract(address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI)
+joetoken_contract = w3.eth.contract(
+    address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI
+)
 
 
 # safeguard to not spam
+
 
 class Timer:
     def __init__(self):
@@ -53,7 +56,7 @@ time_between_updates = 60
 last_reload = None
 
 
-@dp.message_handler(commands='startticker')
+@dp.message_handler(commands="startticker")
 async def startTicker(message: types.Message):
     """start joeticker"""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -61,22 +64,29 @@ async def startTicker(message: types.Message):
 
     member = await bot.get_chat_member(message.chat.id, message.from_user.id)
     if not member.is_chat_admin():
-        await bot.send_message(message.chat.id, "You're not admin, you can't use that command.")
+        await bot.send_message(
+            message.chat.id, "You're not admin, you can't use that command."
+        )
         return
 
-    if message.reply_to_message is not None and message.reply_to_message.from_user.id == bot.id:
+    if (
+        message.reply_to_message is not None
+        and message.reply_to_message.from_user.id == bot.id
+    ):
         Constants.JOE_TICKER[message.chat.id] = message.reply_to_message.message_id
         await joeTicker(message.chat.id, message.reply_to_message.message_id)
         await bot.pin_chat_message(message.chat.id, message.reply_to_message.message_id)
 
     else:
-        mess_id = (await bot.send_message(message.chat.id, "JOE price is $X")).message_id
+        mess_id = (
+            await bot.send_message(message.chat.id, "JOE price is $X")
+        ).message_id
         Constants.JOE_TICKER[message.chat.id] = mess_id
         await bot.pin_chat_message(message.chat.id, mess_id)
         await joeTicker(message.chat.id, mess_id)
 
 
-@dp.message_handler(commands='stopticker')
+@dp.message_handler(commands="stopticker")
 async def stopTicker(message: types.Message):
     """stop joeTicker"""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -90,7 +100,10 @@ async def stopTicker(message: types.Message):
         await bot.delete_message(chat_id, Constants.JOE_TICKER[chat_id])
         Constants.JOE_TICKER.pop(chat_id)
 
-    elif message.reply_to_message is not None and message.reply_to_message.from_user.id == bot.id:
+    elif (
+        message.reply_to_message is not None
+        and message.reply_to_message.from_user.id == bot.id
+    ):
         mid = message.reply_to_message.message_id
         try:
             await bot.send_message(chat_id, "JoeTicker stopped.")
@@ -107,12 +120,18 @@ async def joeTicker(chat_id, mess_id):
     while chat_id in Constants.JOE_TICKER and Constants.JOE_TICKER[chat_id] == mess_id:
         try:
             print("joeTicker is up")
-            while chat_id in Constants.JOE_TICKER and Constants.JOE_TICKER[chat_id] == mess_id:
+            while (
+                chat_id in Constants.JOE_TICKER
+                and Constants.JOE_TICKER[chat_id] == mess_id
+            ):
                 price = JoeSubGraph.getJoePrice()
-                new_mess = "JOE price is ${} (updated at {} UTC)".format(round(price, 4),
-                                                                         datetime.datetime.utcnow().strftime(
-                                                                             "%H:%M:%S"))
-                if last_reload is None or (datetime.datetime.utcnow() - last_reload).total_seconds() < 3600:
+                new_mess = "JOE price is ${} (updated at {} UTC)".format(
+                    round(price, 4), datetime.datetime.utcnow().strftime("%H:%M:%S")
+                )
+                if (
+                    last_reload is None
+                    or (datetime.datetime.utcnow() - last_reload).total_seconds() < 3600
+                ):
                     JoeSubGraph.reloadAssets()
                     last_reload = datetime.datetime.utcnow()
 
@@ -134,7 +153,7 @@ async def joeTicker(chat_id, mess_id):
     return
 
 
-@dp.message_handler(commands='price')
+@dp.message_handler(commands="price")
 async def price(message: types.Message):
     """return the current price of $Joe"""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -143,17 +162,28 @@ async def price(message: types.Message):
     if msg != "" and msg != "joe":
         if msg == "avax":
             avaxp = JoeSubGraph.getAvaxPrice()
-            await bot.send_message(message.chat.id, "${} : ${}".format(msg.upper(), smartRounding(avaxp)))
+            await bot.send_message(
+                message.chat.id, "${} : ${}".format(msg.upper(), smartRounding(avaxp))
+            )
             return
         prices = JoeSubGraph.getPricesOf(msg)
         if len(prices) != 2:
-            await bot.send_message(message.chat.id, prices + "\nUse /pricelist to know which token can be "
-                                                             "tracked with JoeBot")
+            await bot.send_message(
+                message.chat.id,
+                prices + "\nUse /pricelist to know which token can be "
+                "tracked with JoeBot",
+            )
             return
         derivedPrice, priceInDollar = prices
-        await bot.send_message(message.chat.id,
-                               "${}: ${}\n{} ${}/$AVAX".format(msg.upper(), smartRounding(priceInDollar),
-                                                               smartRounding(1 / derivedPrice), msg.upper()))
+        await bot.send_message(
+            message.chat.id,
+            "${}: ${}\n{} ${}/$AVAX".format(
+                msg.upper(),
+                smartRounding(priceInDollar),
+                smartRounding(1 / derivedPrice),
+                msg.upper(),
+            ),
+        )
         return
 
     prices = JoeSubGraph.getPricesOf(Constants.JOETOKEN_ADDRESS)
@@ -162,12 +192,15 @@ async def price(message: types.Message):
         await bot.send_message(message.chat.id, prices)
         return
     dprice, price = prices
-    await bot.send_message(message.chat.id,
-                           "$JOE: ${}\n{} $JOE/$AVAX\n1 $XJOE = {} $JOE".format(round(price, 4), round(1 / dprice, 4),
-                                                                              JoeSubGraph.getRatio()))
+    await bot.send_message(
+        message.chat.id,
+        "$JOE: ${}\n{} $JOE/$AVAX\n1 $XJOE = {} $JOE".format(
+            round(price, 4), round(1 / dprice, 4), JoeSubGraph.getRatio()
+        ),
+    )
 
 
-@dp.message_handler(commands='address')
+@dp.message_handler(commands="address")
 async def address(message: types.Message):
     """return the address of a token (not working for all the tokens)"""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -175,16 +208,24 @@ async def address(message: types.Message):
     msg = message.text.lower().replace("/address", "").replace(" ", "")
     if msg != "":
         if msg == "avax":
-            await bot.send_message(message.chat.id, "$WAVAX: 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7")
+            await bot.send_message(
+                message.chat.id, "$WAVAX: 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7"
+            )
             return
         if msg in Constants.NAME2ADDRESS:
-            await bot.send_message(message.chat.id, "${}: {}".format(msg.upper(), Constants.NAME2ADDRESS[msg]))
+            await bot.send_message(
+                message.chat.id,
+                "${}: {}".format(msg.upper(), Constants.NAME2ADDRESS[msg]),
+            )
         else:
-            await bot.send_message(message.chat.id, "Unknown token symbol, use /pricelist to know which token can be "
-                                                    "tracked with JoeBot")
+            await bot.send_message(
+                message.chat.id,
+                "Unknown token symbol, use /pricelist to know which token can be "
+                "tracked with JoeBot",
+            )
 
 
-@dp.message_handler(commands='about')
+@dp.message_handler(commands="about")
 async def about(message: types.Message):
     """return the current price of $JOE and $AVAX, the market cap, the circulating supply and the TVL."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -193,7 +234,7 @@ async def about(message: types.Message):
     await bot.send_message(message.chat.id, about)
 
 
-@dp.message_handler(commands='lending')
+@dp.message_handler(commands="lending")
 async def lending(message: types.Message):
     """return the current Lending Total Supply of Banker Joe."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -202,20 +243,20 @@ async def lending(message: types.Message):
     await bot.send_message(message.chat.id, lendingAbout)
 
 
-@dp.message_handler(commands='joepic')
+@dp.message_handler(commands="joepic")
 async def joepic(message: types.Message):
     """return a personnalised 3D Joe, (for more help, type /joepic)."""
     if not timer.canMessageOnChatId(message.chat.id):
         return
     try:
         answer = joePic_.do_profile_picture(message.text[8:], "Telegram")
-        await bot.send_photo(chat_id=message.chat.id, photo=open(answer, 'rb'))
+        await bot.send_photo(chat_id=message.chat.id, photo=open(answer, "rb"))
     except ValueError:
         await bot.send_message(message.chat.id, Constants.ERROR_ON_PROFILE_PICTURE_TG)
         return
 
 
-@dp.message_handler(commands='avg7d')
+@dp.message_handler(commands="avg7d")
 async def avg7d(message: types.Message):
     """return the average price on the last 42 4hours close data (7-day averaged)."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -226,14 +267,19 @@ async def avg7d(message: types.Message):
         if answer == -1:
             await bot.send_message(message.chat.id, "Not enough data.")
             return
-        await bot.send_message(message.chat.id, "7day average $JOE: ${}".format(smartRounding(answer)))
+        await bot.send_message(
+            message.chat.id, "7day average $JOE: ${}".format(smartRounding(answer))
+        )
     except:
-        await bot.send_message(message.chat.id, "An error occured, please use `/avg7d [timestamp]` to get the "
-                                                "7 day average $JOE price")
+        await bot.send_message(
+            message.chat.id,
+            "An error occured, please use `/avg7d [timestamp]` to get the "
+            "7 day average $JOE price",
+        )
     return
 
 
-@dp.message_handler(commands='pricelist')
+@dp.message_handler(commands="pricelist")
 async def pricelist(message: types.Message):
     """Returns the list of tokens for which you can request their price from joebot with !price."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -241,11 +287,13 @@ async def pricelist(message: types.Message):
     addresses = list(Constants.NAME2ADDRESS.keys())
     addresses.sort()
     tokens = [i.upper() for i in addresses]
-    await bot.send_message(message.chat.id,
-                           "Tokens that can get their price from TJ are :\nAVAX, " + ", ".join(tokens))
+    await bot.send_message(
+        message.chat.id,
+        "Tokens that can get their price from TJ are :\nAVAX, " + ", ".join(tokens),
+    )
 
 
-@dp.message_handler(commands='chart')
+@dp.message_handler(commands="chart")
 async def chart(message: types.Message):
     """return the chart of a token (not working for all the tokens)."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -260,56 +308,70 @@ async def chart(message: types.Message):
         await JoeChart.getChart("joe", period)
     else:
         await JoeChart.getChart(msgs[0], period)
-    await bot.send_photo(chat_id=message.chat.id, photo=open("content/images/chart.png", 'rb'))
+    await bot.send_photo(
+        chat_id=message.chat.id, photo=open("content/images/chart.png", "rb")
+    )
     return
 
 
-@dp.message_handler(commands='lambo')
+@dp.message_handler(commands="lambo")
 async def lambo(message: types.Message):
     """return a cool joe car."""
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    await bot.send_video(chat_id=message.chat.id, video=open("content/videos/joelambo.mp4", 'rb'),
-                         supports_streaming=True)
+    await bot.send_video(
+        chat_id=message.chat.id,
+        video=open("content/videos/joelambo.mp4", "rb"),
+        supports_streaming=True,
+    )
     return
 
 
-@dp.message_handler(commands='rain')
+@dp.message_handler(commands="rain")
 async def rain(message: types.Message):
     """return a cool joe rain."""
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    await bot.send_video(chat_id=message.chat.id, video=open("content/videos/joerain.mp4", 'rb'),
-                         supports_streaming=True)
+    await bot.send_video(
+        chat_id=message.chat.id,
+        video=open("content/videos/joerain.mp4", "rb"),
+        supports_streaming=True,
+    )
     return
 
 
-@dp.message_handler(commands='comfy')
+@dp.message_handler(commands="comfy")
 async def comfy(message: types.Message):
     """return a cool joe comfy."""
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    await bot.send_photo(chat_id=message.chat.id, photo=open("content/images/joecomfy.png", 'rb'))
+    await bot.send_photo(
+        chat_id=message.chat.id, photo=open("content/images/joecomfy.png", "rb")
+    )
     return
 
 
-@dp.message_handler(commands='tokenomics')
+@dp.message_handler(commands="tokenomics")
 async def tokenomics(message: types.Message):
     """return TraderJoe's tokenomics page."""
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com/en/tokenomics")
+    await bot.send_message(
+        message.chat.id, "https://docs.traderjoexyz.com/en/tokenomics"
+    )
 
 
-@dp.message_handler(commands='contracts')
+@dp.message_handler(commands="contracts")
 async def contracts(message: types.Message):
     """return TraderJoe's contracts page."""
     if not timer.canMessageOnChatId(message.chat.id):
         return
-    await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com/en/contracts")
+    await bot.send_message(
+        message.chat.id, "https://docs.traderjoexyz.com/en/contracts"
+    )
 
 
-@dp.message_handler(commands='docs')
+@dp.message_handler(commands="docs")
 async def docs(message: types.Message):
     """return TraderJoe's docs page."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -317,7 +379,7 @@ async def docs(message: types.Message):
     await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com")
 
 
-@dp.message_handler(commands='discord')
+@dp.message_handler(commands="discord")
 async def discord(message: types.Message):
     """return TraderJoe's discord."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -325,7 +387,7 @@ async def discord(message: types.Message):
     await bot.send_message(message.chat.id, "https://discord.com/invite/GHZceZhbZU")
 
 
-@dp.message_handler(commands='twitter')
+@dp.message_handler(commands="twitter")
 async def twitter(message: types.Message):
     """return TraderJoe's twitter."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -333,7 +395,7 @@ async def twitter(message: types.Message):
     await bot.send_message(message.chat.id, "https://twitter.com/traderjoe_xyz")
 
 
-@dp.message_handler(commands='website')
+@dp.message_handler(commands="website")
 async def website(message: types.Message):
     """return TraderJoe's website."""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -341,7 +403,7 @@ async def website(message: types.Message):
     await bot.send_message(message.chat.id, "https://www.traderjoexyz.com")
 
 
-@dp.message_handler(commands='help')
+@dp.message_handler(commands="help")
 async def help(message: types.Message):
     """print Constants.HELP_TG"""
     if not timer.canMessageOnChatId(message.chat.id):
@@ -349,7 +411,7 @@ async def help(message: types.Message):
     await bot.send_message(message.chat.id, Constants.HELP_TG)
 
 
-@dp.message_handler(commands='reloadassets')
+@dp.message_handler(commands="reloadassets")
 async def reloadAssets(message: types.Message):
     """reload assets"""
     if not timer.canMessageOnChatId(message.chat.id):

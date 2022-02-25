@@ -17,45 +17,51 @@ if not w3.isConnected():
 
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
-joetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JOETOKEN_ADDRESS), abi=Constants.ERC20_ABI)
-xjoetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JOEBAR_ADDRESS), abi=Constants.ERC20_ABI)
-jxjoetoken_contract = w3.eth.contract(address=w3.toChecksumAddress(Constants.JXJOETOKEN_ADDRESS),
-                                      abi=Constants.JCOLLATERAL_ABI)
+joetoken_contract = w3.eth.contract(
+    address=w3.toChecksumAddress(Constants.JOETOKEN_ADDRESS), abi=Constants.ERC20_ABI
+)
+xjoetoken_contract = w3.eth.contract(
+    address=w3.toChecksumAddress(Constants.JOEBAR_ADDRESS), abi=Constants.ERC20_ABI
+)
+jxjoetoken_contract = w3.eth.contract(
+    address=w3.toChecksumAddress(Constants.JXJOETOKEN_ADDRESS),
+    abi=Constants.JCOLLATERAL_ABI,
+)
 
 
 def genericQuery(query, sg_url=Constants.JOE_EXCHANGE_SG_URL):
-    r = requests.post(sg_url, json={'query': query})
-    assert (r.status_code == 200)
+    r = requests.post(sg_url, json={"query": query})
+    assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getPriceOf(tokenAddress):
     r = requests.get("https://api.traderjoexyz.com/priceusd/{}".format(tokenAddress))
-    assert (r.status_code == 200)
+    assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getDerivedPriceOf(tokenAddress):
     r = requests.get("https://api.traderjoexyz.com/priceavax/{}".format(tokenAddress))
-    assert (r.status_code == 200)
+    assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getCirculatingSupply():
     r = requests.get("https://api.traderjoexyz.com/supply/circulating")
-    assert (r.status_code == 200)
+    assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getLendingTotalSupply():
     r = requests.get("https://api.traderjoexyz.com/lending/supply")
-    assert (r.status_code == 200)
+    assert r.status_code == 200
     return json.loads(r.text)
 
 
 def getLendingTotalBorrow():
     r = requests.get("https://api.traderjoexyz.com/lending/borrow")
-    assert (r.status_code == 200)
+    assert r.status_code == 200
     return json.loads(r.text)
 
 
@@ -71,33 +77,55 @@ def getTokenCandles(token_address, period, nb):
         token0, token1 = Constants.WAVAX_ADDRESS, Constants.USDTe_ADDRESS
         isTokenPerAvax = False
 
-    query = genericQuery('{candles(first:' + nb + ', orderBy: time, orderDirection: desc, \
-    where: {token0: "' + token0 + '", token1: "' + token1 + '",\
-      period: ' + period + '}) {time, open, high, low, close}}', Constants.JOE_DEXCANDLES_SG_URL)
+    query = genericQuery(
+        "{candles(first:"
+        + nb
+        + ', orderBy: time, orderDirection: desc, \
+    where: {token0: "'
+        + token0
+        + '", token1: "'
+        + token1
+        + '",\
+      period: '
+        + period
+        + "}) {time, open, high, low, close}}",
+        Constants.JOE_DEXCANDLES_SG_URL,
+    )
     query["isTokenPerAvax"] = token0 == Constants.WAVAX_ADDRESS
 
     data_df = pd.DataFrame(query["data"]["candles"])
 
-    data_df["date"] = data_df["time"].apply(lambda x: datetime.datetime.utcfromtimestamp(x))
-    data_df = data_df.set_index('date')
+    data_df["date"] = data_df["time"].apply(
+        lambda x: datetime.datetime.utcfromtimestamp(x)
+    )
+    data_df = data_df.set_index("date")
 
     if not isTokenPerAvax:
-        data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(
-            lambda x: 1 / float(x))
+        data_df[["open", "close", "high", "low"]] = data_df[
+            ["open", "close", "high", "low"]
+        ].applymap(lambda x: 1 / float(x))
     else:
-        data_df[["open", "close", "high", "low"]] = data_df[["open", "close", "high", "low"]].applymap(
-            lambda x: float(x))
+        data_df[["open", "close", "high", "low"]] = data_df[
+            ["open", "close", "high", "low"]
+        ].applymap(lambda x: float(x))
     return data_df
 
 
 def getCurrentGasPrice():
     number_of_block = 20
     block_number = w3.eth.get_block_number()
-    totalGasPrice = sum([int(w3.eth.getBlock(block_number - n).baseFeePerGas, 16) for n in range(number_of_block)])
+    totalGasPrice = sum(
+        [
+            int(w3.eth.getBlock(block_number - n).baseFeePerGas, 16)
+            for n in range(number_of_block)
+        ]
+    )
     return totalGasPrice / number_of_block / 1e9
 
 
-def getJoeMakerPostitions(min_usd_value, joe_maker_address=None, return_reserve_and_balance=False):
+def getJoeMakerPostitions(
+    min_usd_value, joe_maker_address=None, return_reserve_and_balance=False
+):
     """
     getJoeMakerPostitions return the position of JoeMaker that are worth more than min_usd_value
     and if he owns less than half the lp.
@@ -117,10 +145,15 @@ def getJoeMakerPostitions(min_usd_value, joe_maker_address=None, return_reserve_
     else:
         joe_maker_address = joe_maker_address.lower()
     while last_id == "" or len(query_exchange["data"]["liquidityPositions"]) == 1000:
-        query_exchange = genericQuery('{liquidityPositions(first: 1000, where: {id_gt: "' + last_id +
-                                      '", user: "' + joe_maker_address + '"}) '
-                                                                               '{id, liquidityTokenBalance, '
-                                                                               'pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}')
+        query_exchange = genericQuery(
+            '{liquidityPositions(first: 1000, where: {id_gt: "'
+            + last_id
+            + '", user: "'
+            + joe_maker_address
+            + '"}) '
+            "{id, liquidityTokenBalance, "
+            "pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}"
+        )
         for liquidity_position in query_exchange["data"]["liquidityPositions"]:
             pair = liquidity_position["pair"]
 
@@ -129,10 +162,14 @@ def getJoeMakerPostitions(min_usd_value, joe_maker_address=None, return_reserve_
             if pair_total_supply == 0:
                 continue
             pair_reserve_usd = float(pair["reserveUSD"])
-            joe_maker_balance_usd = joe_maker_balance / pair_total_supply * pair_reserve_usd
+            joe_maker_balance_usd = (
+                joe_maker_balance / pair_total_supply * pair_reserve_usd
+            )
 
-            if joe_maker_balance_usd > min_usd_value and \
-                    joe_maker_balance / pair_total_supply < 0.49:
+            if (
+                joe_maker_balance_usd > min_usd_value
+                and joe_maker_balance / pair_total_supply < 0.49
+            ):
                 tokens0.append(pair["token0"]["id"])
                 tokens1.append(pair["token1"]["id"])
                 pairs_reserve_usd.append(pair_reserve_usd)
@@ -158,21 +195,37 @@ def getJoePrice():
 
 
 def getRatio():
-    total_supply = float(w3.fromWei(xjoetoken_contract.functions.totalSupply().call(), 'ether'))
-    joe_balance = float(w3.fromWei(joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(), 'ether'))
+    total_supply = float(
+        w3.fromWei(xjoetoken_contract.functions.totalSupply().call(), "ether")
+    )
+    joe_balance = float(
+        w3.fromWei(
+            joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(),
+            "ether",
+        )
+    )
     return round(joe_balance / total_supply, 5)
 
 
 def getTVL():
-    JoeHeldInLending = float(w3.fromWei(jxjoetoken_contract.functions.getCash().call(), 'ether'))
-    JoeHeldInJoeBar = float(w3.fromWei(joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(), 'ether'))
+    JoeHeldInLending = float(
+        w3.fromWei(jxjoetoken_contract.functions.getCash().call(), "ether")
+    )
+    JoeHeldInJoeBar = float(
+        w3.fromWei(
+            joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(),
+            "ether",
+        )
+    )
     joePrice = float(getJoePrice())
 
     sum_ = (JoeHeldInJoeBar - JoeHeldInLending) * joePrice
 
     last_id, queryExchange = "", {}
     while last_id == "" or len(queryExchange["data"]["pairs"]) == 1000:
-        queryExchange = genericQuery('{pairs(first: 1000, where: {id_gt: "' + last_id + '"}){id, reserveUSD}}')
+        queryExchange = genericQuery(
+            '{pairs(first: 1000, where: {id_gt: "' + last_id + '"}){id, reserveUSD}}'
+        )
         for reserveUSD in queryExchange["data"]["pairs"]:
             sum_ += float(reserveUSD["reserveUSD"])
         last_id = str(queryExchange["data"]["pairs"][-1]["id"])
@@ -190,7 +243,11 @@ def getPricesOf(tokenAddress):
     try:
         derivedPrice = getDerivedPriceOf(tokenAddress)
     except:
-        return "Error: Given address " + tokenAddress + " is not a valid Ethereum address or a valid symbol."
+        return (
+            "Error: Given address "
+            + tokenAddress
+            + " is not a valid Ethereum address or a valid symbol."
+        )
 
     dPrice = int(derivedPrice) / E18
     avaxPrice = getAvaxPrice()
@@ -201,7 +258,10 @@ def reloadAssets():
     last_id, queryExchange, tempdic = "", {}, {}
     while last_id == "" or len(queryExchange["data"]["tokens"]) == 1000:
         queryExchange = genericQuery(
-            '{tokens(first: 1000, where: {id_gt:"' + last_id + '"}){id, symbol, liquidity, derivedAVAX}}')
+            '{tokens(first: 1000, where: {id_gt:"'
+            + last_id
+            + '"}){id, symbol, liquidity, derivedAVAX}}'
+        )
         for d in queryExchange["data"]["tokens"]:
             if float(d["liquidity"]) * float(d["derivedAVAX"]) >= 100:
                 tempdic[d["symbol"].lower().replace(" ", "")] = d["id"]
@@ -276,25 +336,39 @@ def getAbout():
     farm_tvl = getTVL()
     lending_tvl = float(getLendingTotalSupply() / E18)
 
-    return "$JOE: ${}\n" \
-           "$AVAX: ${}\n" \
-           "Market Cap: ${}\n" \
-           "Circ. Supply: {}\n" \
-           "Farm TVL: ${}\n" \
-           "Lending TVL: ${}\n" \
-           "Total TVL: ${}\n" \
-           "1 $XJOE = {} $JOE".format(readable(joePrice, 4), smartRounding(avaxPrice), smartRounding(mktcap),
-                     smartRounding(csupply), smartRounding(farm_tvl), smartRounding(lending_tvl),
-                     smartRounding(lending_tvl + farm_tvl), getRatio())
+    return (
+        "$JOE: ${}\n"
+        "$AVAX: ${}\n"
+        "Market Cap: ${}\n"
+        "Circ. Supply: {}\n"
+        "Farm TVL: ${}\n"
+        "Lending TVL: ${}\n"
+        "Total TVL: ${}\n"
+        "1 $XJOE = {} $JOE".format(
+            readable(joePrice, 4),
+            smartRounding(avaxPrice),
+            smartRounding(mktcap),
+            smartRounding(csupply),
+            smartRounding(farm_tvl),
+            smartRounding(lending_tvl),
+            smartRounding(lending_tvl + farm_tvl),
+            getRatio(),
+        )
+    )
 
 
 def avg7d(timestamp):
-    query = genericQuery('{candles(where: {\
+    query = genericQuery(
+        '{candles(where: {\
       token0: "0x6e84a6216ea6dacc71ee8e6b0a5b7322eebc0fdd",\
       token1: "0xc7198437980c041c805a1edcba50c1ce5db95118",\
       period: 14400,\
-      time_lte: ' + timestamp + '},orderBy: time,orderDirection: desc,first: 42) \
-      {close, time}}', Constants.JOE_DEXCANDLES_SG_URL)
+      time_lte: '
+        + timestamp
+        + "},orderBy: time,orderDirection: desc,first: 42) \
+      {close, time}}",
+        Constants.JOE_DEXCANDLES_SG_URL,
+    )
     closes = query["data"]["candles"]
     if len(closes) == 0:
         return -1
@@ -306,9 +380,13 @@ def getLendingAbout():
     lending_tvl = float(getLendingTotalSupply() / E18)
     totalBorrow = float(getLendingTotalBorrow() / E18)
 
-    return "Lending informations:\n" \
-           "Total Deposited: ${}\n" \
-           "Total Borrowed: ${}\n".format(smartRounding(lending_tvl), smartRounding(totalBorrow))
+    return (
+        "Lending informations:\n"
+        "Total Deposited: ${}\n"
+        "Total Borrowed: ${}\n".format(
+            smartRounding(lending_tvl), smartRounding(totalBorrow)
+        )
+    )
 
 
 if __name__ == "__main__":

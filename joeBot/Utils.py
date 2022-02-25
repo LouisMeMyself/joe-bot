@@ -7,9 +7,9 @@ from abc import abstractmethod
 
 def readable(nb, n_decimals=0):
     if n_decimals == 0:
-        return '{:,}'.format(int(nb))
+        return "{:,}".format(int(nb))
     else:
-        return '{:,}'.format(round(nb, n_decimals))
+        return "{:,}".format(round(nb, n_decimals))
 
 
 def humanFormat(nb, n_decimals):
@@ -18,7 +18,7 @@ def humanFormat(nb, n_decimals):
         magnitude += 1
         nb /= 1000.0
     # add more suffixes if you need them
-    return '%.{}f%s'.format(n_decimals) % (nb, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
+    return "%.{}f%s".format(n_decimals) % (nb, ["", "K", "M", "G", "T", "P"][magnitude])
 
 
 def smartRounding(nb, n_decimals=2):
@@ -39,7 +39,7 @@ def roundScientific(nb, decimals=-1):
     if decimals == -1:
         return "{}e{}".format(nb, exp)
     else:
-        return "{}e{}".format(nb[:decimals + 2], exp)
+        return "{}e{}".format(nb[: decimals + 2], exp)
 
 
 class TaskManager(commands.Cog):

@@ -11,8 +11,8 @@ def getTokenCandlesPerAvax(token_address, period, nb):
 
     avax_candle = getTokenCandles(Constants.WAVAX_ADDRESS, period, nb)
 
-    avax_candle = avax_candle[:len(token_candle)]
-    token_candle = token_candle[:len(avax_candle)]
+    avax_candle = avax_candle[: len(token_candle)]
+    token_candle = token_candle[: len(avax_candle)]
 
     data_df = token_candle.mul(avax_candle)
     data_df = data_df.iloc[::-1]
@@ -23,7 +23,7 @@ def getTokenCandlesPerAvax(token_address, period, nb):
 def getChart(token_symbol, period):
     token_symbol = token_symbol.lower().replace(" ", "")
     try:
-        if token_symbol == 'avax':
+        if token_symbol == "avax":
             token_address = Constants.WAVAX_ADDRESS
         else:
             token_address = Constants.NAME2ADDRESS[token_symbol]
@@ -39,17 +39,28 @@ def getChart(token_symbol, period):
 
     data_pd = getTokenCandlesPerAvax(token_address, p, nb)
     try:
-        fplt.plot(data_pd, type='candle',
-                  title='${} Price for the last {} {}.'.format(token_symbol.upper(),
-                                                               len(data_pd), t),
-                  ylabel='price ($)', style='charles', savefig="content/images/chart.png")
+        fplt.plot(
+            data_pd,
+            type="candle",
+            title="${} Price for the last {} {}.".format(
+                token_symbol.upper(), len(data_pd), t
+            ),
+            ylabel="price ($)",
+            style="charles",
+            savefig="content/images/chart.png",
+        )
     except FileNotFoundError:
-        fplt.plot(data_pd, type='candle',
-                  title='${} Price for the last {} {}.'.format(token_symbol.upper(),
-                                                               len(data_pd), t),
-                  ylabel='price ($)', style='charles')
+        fplt.plot(
+            data_pd,
+            type="candle",
+            title="${} Price for the last {} {}.".format(
+                token_symbol.upper(), len(data_pd), t
+            ),
+            ylabel="price ($)",
+            style="charles",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     JoeSubGraph.reloadAssets()
     getChart("elk", "day")

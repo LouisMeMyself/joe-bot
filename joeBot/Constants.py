@@ -10,7 +10,7 @@ EMOJI_CROSS = "❌"
 EMOJI_ACCEPT_GUIDELINES = "✅"
 
 # utils
-E18 = 10 ** 18
+E18 = 10**18
 MAX_GAS_PER_BLOCK = 8_000_000
 PREMIUM_PER_TRANSACTION = 0.1
 
@@ -27,7 +27,9 @@ VERIFIED_USER_ROLE = "Joe"
 # SubGraph links
 JOE_EXCHANGE_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/exchange"
 JOE_BAR_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/bar"
-JOE_DEXCANDLES_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/dexcandles"
+JOE_DEXCANDLES_SG_URL = (
+    "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/dexcandles"
+)
 JOE_MAKER_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/maker"
 JOE_MAKERV2_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/makerv2"
 
@@ -153,11 +155,18 @@ class Channels:
                 for channel in server.channels:
                     self.__channel[channel.id] = channel
 
-        self.JOEPIC_CHANNEL_ID = (852663823982788678, 852632612451123221)[server_nb]  # "👨🏻-profile-pictures"
-        self.SUGGESTION_CHANNEL_ID = (843655526906593380, 852632695522459709)[server_nb]  # "👨🏻-profile-pictures"
+        self.JOEPIC_CHANNEL_ID = (852663823982788678, 852632612451123221)[
+            server_nb
+        ]  # "👨🏻-profile-pictures"
+        self.SUGGESTION_CHANNEL_ID = (843655526906593380, 852632695522459709)[
+            server_nb
+        ]  # "👨🏻-profile-pictures"
         self.GUIDELINES_CHANNEL_ID = (830990443910529047, 852636664869158912)[
-            server_nb]  # "📚-guidelines-and-resources"
-        self.COMMAND_CHANNEL_ID = (852658830987100190, 853397123713204244)[server_nb]  # "🤖-bot-commands"
+            server_nb
+        ]  # "📚-guidelines-and-resources"
+        self.COMMAND_CHANNEL_ID = (852658830987100190, 853397123713204244)[
+            server_nb
+        ]  # "🤖-bot-commands"
         self.GUIDELINES_MSG_ID = (843668142764589076, 852636768788021288)[server_nb]
         self.BOT_FEED = (898964756508065852, 853397123713204244)[server_nb]
         self.BOT_ERRORS = (909093515634561106, 853397123713204244)[server_nb]
