@@ -11,7 +11,6 @@ EMOJI_ACCEPT_GUIDELINES = "✅"
 
 # utils
 E18 = 10**18
-MAX_GAS_PER_BLOCK = 8_000_000
 PREMIUM_PER_TRANSACTION = 0.1
 
 # Commands
@@ -30,8 +29,6 @@ JOE_BAR_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/bar"
 JOE_DEXCANDLES_SG_URL = (
     "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/dexcandles"
 )
-JOE_MAKER_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/maker"
-JOE_MAKERV2_SG_URL = "https://api.thegraph.com/subgraphs/name/traderjoe-xyz/makerv2"
 
 # address for web3
 AVAX_RPC = "https://api.avax.network/ext/bc/C/rpc"
@@ -43,12 +40,11 @@ USDCe_ADDRESS = "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664"
 ZERO_ADDRESS_256 = "0x0000000000000000000000000000000000000000000000000000000000000000"
 
 JOEBAR_ADDRESS = "0x57319d41F71E81F3c65F2a47CA4e001EbAFd4F33"
+RJOE_ADDRESS = "0x102D195C3eE8BF8A9A89d63FB3659432d3174d81"
+STABLEJOESTAKING_ADDRESS = "0x1a731B2299E22FbAC282E7094EdA41046343Cb51"
 JOEFACTORY_ADDRESS = "0x9Ad6C38BE94206cA50bb0d90783181662f0Cfa10"
-JOEMAKER_ADDRESS = "0x861726BFE27931A4E22a7277bDe6cb8432b65856"
-JOEMAKERV1_ADDRESS = "0x861726BFE27931A4E22a7277bDe6cb8432b65856"
-JOEMAKERV2_ADDRESS = "0xC98C3C547DDbcc0029F38E0383C645C202aD663d"
-JOEMAKERV3_ADDRESS = "0xdb5B4cc0276389a943DbA9Eb07A97C10e8a475d3"
-JOEMAKER_CALLER_ADDRESS = "0x65a8cbbf9bc23bcb1c9d1d3039b5bbd9101e6b7a"
+MONEYMAKER_ADDRESS = "0x63C0CF90aE12190B388F9914531369aC1e4e4e47"
+MONEYMAKER_CALLER_ADDRESS = "0x65a8cbbf9bc23bcb1c9d1d3039b5bbd9101e6b7a"
 
 JOEUSDTE_ADDRESS = "0x1643de2efB8e35374D796297a9f95f64C082a8ce"
 JOEWAVAX_ADDRESS = "0x454E67025631C065d3cFAD6d71E6892f74487a15"
@@ -85,25 +81,11 @@ except FileNotFoundError:
         JOEFACTORY_ABI = json.load(f)
 
 try:
-    with open("content/abis/joemakerv1abi.json", "r") as f:
-        JOEMAKERV1_ABI = json.load(f)
+    with open("content/abis/moneymakerabi.json", "r") as f:
+        MONEYMAKER_ABI = json.load(f)
 except FileNotFoundError:
-    with open("../content/abis/joemakerv1abi.json", "r") as f:
-        JOEMAKERV1_ABI = json.load(f)
-
-try:
-    with open("content/abis/joemakerv2abi.json", "r") as f:
-        JOEMAKERV2_ABI = json.load(f)
-except FileNotFoundError:
-    with open("../content/abis/joemakerv2abi.json", "r") as f:
-        JOEMAKERV2_ABI = json.load(f)
-
-try:
-    with open("content/abis/joemakerv3abi.json", "r") as f:
-        JOEMAKERV3_ABI = json.load(f)
-except FileNotFoundError:
-    with open("../content/abis/joemakerv3abi.json", "r") as f:
-        JOEMAKERV3_ABI = json.load(f)
+    with open("../content/abis/moneymakerabi.json", "r") as f:
+        MONEYMAKER_ABI = json.load(f)
 
 # assets address
 NAME2ADDRESS = {}

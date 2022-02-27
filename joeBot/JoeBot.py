@@ -7,7 +7,7 @@ from discord.ext import commands, tasks
 from web3 import Web3
 
 from joeBot import JoePic, JoeSubGraph, Constants, Utils
-from joeBot.JoeMakerBot import JoeMaker
+from joeBot.MoneyMakerBot import MoneyMaker
 from joeBot.Utils import readable, Ticker
 
 # web3
@@ -23,7 +23,7 @@ ranToday = True
 started = False
 
 
-class JoeMakerTicker(commands.Cog, Ticker):
+class MoneyMakerTicker(commands.Cog, Ticker):
     def __init__(self, channels, callConvert):
         self.time_to_wait = 0
         self.channels = channels
@@ -92,7 +92,7 @@ class JoeTicker(commands.Cog, Ticker):
 
 
 class JoeBot:
-    joeMaker = JoeMaker
+    moneyMaker = MoneyMaker
     joePic_ = JoePic.JoePic()
     discord_bot = commands.Bot
     channels = Constants.Channels
@@ -102,23 +102,20 @@ class JoeBot:
         self.discord_bot = discord_bot
         for server in self.discord_bot.guilds:
             self.channels = Constants.Channels(server.id, discord_bot)
-        self.joeMaker = JoeMaker()
+        self.moneyMaker = MoneyMaker()
         self.taskManager = Utils.TaskManager(
             (
                 JoeTicker(self.discord_bot),
-                JoeMakerTicker(self.channels, self.callConvert),
+                MoneyMakerTicker(self.channels, self.callConvert),
             )
         )
 
     async def onReady(self):
         """starts joebot"""
-        global started
         print("joeBot have logged in as {0.user}".format(self.discord_bot))
-        if not started:
-            await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-                self.taskManager.start()
-            )
-            started = True
+        await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+            self.taskManager.start()
+        )
 
     async def about(self, ctx):
         about = JoeSubGraph.getAbout()
@@ -127,11 +124,7 @@ class JoeBot:
 
     async def setMinUsdValueToConvert(self, ctx):
         global MIN_USD_VALUE
-        value = (
-            ctx.message.content.replace(Constants.SET_MIN_USD_COMMAND, "")
-            .rstrip()
-            .lstrip()
-        )
+        value = ctx.message.content.replace(Constants.SET_MIN_USD_COMMAND, "").strip()
         try:
             MIN_USD_VALUE = float(value)
             await ctx.send(
@@ -145,39 +138,16 @@ class JoeBot:
 
     async def callConvert(self):
         previous_avax_balance = JoeSubGraph.getAvaxBalance(
-            Constants.JOEMAKER_CALLER_ADDRESS
+            Constants.MONEYMAKER_CALLER_ADDRESS
         )
-        joe_bought_back_last7d = JoeSubGraph.getJoeBuyBackLast7d()
-        pairs, joe_bought_back, error_on_pairs = self.joeMaker.callConvertMultiple(
+        pairs, joe_bought_back, error_on_pairs = self.moneyMaker.callConvertMultiple(
             MIN_USD_VALUE
         )
-        avax_balance = JoeSubGraph.getAvaxBalance(Constants.JOEMAKER_CALLER_ADDRESS)
-        joe_price = JoeSubGraph.getJoePrice()
+        avax_balance = JoeSubGraph.getAvaxBalance(Constants.MONEYMAKER_CALLER_ADDRESS)
+        
+        list_of_strings = MoneyMaker.getDailyInfo()
 
-        list_of_string = [
-            "{} : {} $JOE".format(pair, readable(amount, 2))
-            for pair, amount in zip(pairs, joe_bought_back)
-        ]
-
-        sum_ = sum(joe_bought_back)
-
-        JoeSubGraph.addJoeBuyBackToLast7d(sum_)
-
-        list_of_string.append(
-            "Total buyback: {} $JOE worth ${}".format(
-                readable(sum_, 2), readable(sum_ * joe_price, 2)
-            )
-        )
-        list_of_string.append(
-            "Last 7 days buyback: {} $JOE worth ${}".format(
-                readable(joe_bought_back_last7d + sum_, 2),
-                readable((joe_bought_back_last7d + sum_) * joe_price, 2),
-            )
-        )
-
-        list_of_string.append("1 $XJOE = {} $JOE".format(JoeSubGraph.getRatio()))
-
-        await self.sendMessage(list_of_string, self.channels.BOT_FEED)
+        await self.sendMessage(list_of_strings, self.channels.BOT_FEED)
 
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
             "Avax Balance: {} (used {})".format(

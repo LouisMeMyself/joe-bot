@@ -194,8 +194,8 @@ async def price(message: types.Message):
     dprice, price = prices
     await bot.send_message(
         message.chat.id,
-        "$JOE: ${}\n{} $JOE/$AVAX\n1 $XJOE = {} $JOE".format(
-            round(price, 4), round(1 / dprice, 4), JoeSubGraph.getRatio()
+        "$JOE: ${}\n{} $JOE/$AVAX".format(
+            round(price, 4), round(1 / dprice, 4)
         ),
     )
 

@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from joeBot import Constants, JoeMakerBot
+from joeBot import Constants, MoneyMakerBot
 from joeBot.JoeBot import JoeBot
 
 # Env
@@ -51,7 +51,7 @@ async def setmin(ctx):
 async def start(ctx):
     """Start a task."""
     await ctx.reply(
-        joeBot.taskManager.startTask(ctx.message.content[6:].rstrip().lstrip())
+        joeBot.taskManager.startTask(ctx.message.content[6:].strip())
     )
 
 
@@ -60,7 +60,7 @@ async def start(ctx):
 async def stop(ctx):
     """Stop a task."""
     await ctx.reply(
-        joeBot.taskManager.stopTask(ctx.message.content[5:].rstrip().lstrip())
+        joeBot.taskManager.stopTask(ctx.message.content[5:].strip())
     )
 
 
@@ -88,9 +88,9 @@ async def alltasks(ctx):
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def changeversion(ctx):
-    """Change JoeMaker version used to convert."""
+    """Change MoneyMaker version used to convert."""
     await ctx.reply(
-        joeBot.joeMaker.changeToVersion(ctx.message.content[15:].rstrip().lstrip())
+        joeBot.moneyMaker.changeToVersion(ctx.message.content[15:].strip())
     )
 
 
@@ -105,7 +105,7 @@ async def changeversion(ctx):
 #         tokens.append(token)
 #         bridges.append(bridge)
 #     await joeBot.sendMessage(
-#         joeBot.joeMaker.setBridges(tokens, bridges)
+#         joeBot.moneyMaker.setBridges(tokens, bridges)
 #     )
 
 
@@ -113,14 +113,14 @@ async def changeversion(ctx):
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def decodetx(ctx):
     """SetBridges."""
-    tx_hash = ctx.message.content[10:].lstrip().rstrip()
-    await joeBot.sendMessage(JoeMakerBot.joeMaker.decodeTxHash(tx_hash))
+    tx_hash = ctx.message.content[10:].strip()
+    await joeBot.sendMessage(MoneyMakerBot.moneyMaker.decodeTxHash(tx_hash))
 
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def convert(ctx):
-    """Calls convert on JoeMaker."""
+    """Calls convert on MoneyMaker."""
     await joeBot.callConvert()
 
 

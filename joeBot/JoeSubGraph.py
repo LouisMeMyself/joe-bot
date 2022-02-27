@@ -1,5 +1,6 @@
 import datetime
 import json
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -14,14 +15,10 @@ from joeBot.Utils import readable, smartRounding
 w3 = Web3(Web3.HTTPProvider(Constants.AVAX_RPC))
 if not w3.isConnected():
     print("Error web3 can't connect")
-
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 joetoken_contract = w3.eth.contract(
     address=w3.toChecksumAddress(Constants.JOETOKEN_ADDRESS), abi=Constants.ERC20_ABI
-)
-xjoetoken_contract = w3.eth.contract(
-    address=w3.toChecksumAddress(Constants.JOEBAR_ADDRESS), abi=Constants.ERC20_ABI
 )
 jxjoetoken_contract = w3.eth.contract(
     address=w3.toChecksumAddress(Constants.JXJOETOKEN_ADDRESS),
@@ -112,26 +109,30 @@ def getTokenCandles(token_address, period, nb):
 
 
 def getCurrentGasPrice():
-    number_of_block = 20
+    """
+    get current gas price, weighted by most recents one
+    """
+    nb = 50
     block_number = w3.eth.get_block_number()
-    totalGasPrice = sum(
+    weighted_sum = sum(
         [
-            int(w3.eth.getBlock(block_number - n).baseFeePerGas, 16)
-            for n in range(number_of_block)
+            w3.eth.getBlock(n).baseFeePerGas * (n + nb - block_number)
+            for n in range(block_number, block_number - nb, -1)
         ]
     )
-    return totalGasPrice / number_of_block / 1e9
+    # sum([60, 59, ... , 1]) == 61 * 60 / 2
+    return int(weighted_sum / (nb * (nb - 1) / 2))
 
 
-def getJoeMakerPostitions(
-    min_usd_value, joe_maker_address=None, return_reserve_and_balance=False
+def getMoneyMakerPostitions(
+    min_usd_value, money_maker_address=None, return_reserve_and_balance=False
 ):
     """
-    getJoeMakerPostitions return the position of JoeMaker that are worth more than min_usd_value
+    getMoneyMakerPostitions return the position of MoneyMaker that are worth more than min_usd_value
     and if he owns less than half the lp.
 
     :param min_usd_value: The min USD value to be actually returned.
-    :param joe_maker_address: address of JoeMaker, default: V3.
+    :param money_maker_address: address of MoneyMaker, default: V3.
     :param return_reserve_and_balance: boolean value to return or not the reserves and balances (in usd),
                                        default: False.
     :return: 2 lists, the first one is the list of the token0 of the pairs that satisfied the requirements
@@ -139,17 +140,17 @@ def getJoeMakerPostitions(
     """
     last_id, query_exchange = "", {}
     tokens0, tokens1 = [], []
-    pairs_reserve_usd, jm_balance_usd = [], []
-    if joe_maker_address is None:
-        joe_maker_address = Constants.JOEMAKERV3_ADDRESS.lower()
+    pairs_reserve_usd, mm_balance_usd = [], []
+    if money_maker_address is None:
+        money_maker_address = Constants.MONEYMAKER_ADDRESS.lower()
     else:
-        joe_maker_address = joe_maker_address.lower()
+        money_maker_address = money_maker_address.lower()
     while last_id == "" or len(query_exchange["data"]["liquidityPositions"]) == 1000:
         query_exchange = genericQuery(
             '{liquidityPositions(first: 1000, where: {id_gt: "'
             + last_id
             + '", user: "'
-            + joe_maker_address
+            + money_maker_address
             + '"}) '
             "{id, liquidityTokenBalance, "
             "pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}"
@@ -157,26 +158,26 @@ def getJoeMakerPostitions(
         for liquidity_position in query_exchange["data"]["liquidityPositions"]:
             pair = liquidity_position["pair"]
 
-            joe_maker_balance = float(liquidity_position["liquidityTokenBalance"])
+            money_maker_balance = float(liquidity_position["liquidityTokenBalance"])
             pair_total_supply = float(pair["totalSupply"])
             if pair_total_supply == 0:
                 continue
             pair_reserve_usd = float(pair["reserveUSD"])
-            joe_maker_balance_usd = (
-                joe_maker_balance / pair_total_supply * pair_reserve_usd
+            money_maker_balance_usd = (
+                money_maker_balance / pair_total_supply * pair_reserve_usd
             )
 
             if (
-                joe_maker_balance_usd > min_usd_value
-                and joe_maker_balance / pair_total_supply < 0.49
+                money_maker_balance_usd > min_usd_value
+                and money_maker_balance / pair_total_supply < 0.49
             ):
                 tokens0.append(pair["token0"]["id"])
                 tokens1.append(pair["token1"]["id"])
                 pairs_reserve_usd.append(pair_reserve_usd)
-                jm_balance_usd.append(joe_maker_balance_usd)
+                mm_balance_usd.append(money_maker_balance_usd)
         last_id = query_exchange["data"]["liquidityPositions"][-1]["id"]
     if return_reserve_and_balance:
-        return tokens0, tokens1, pairs_reserve_usd, jm_balance_usd
+        return tokens0, tokens1, pairs_reserve_usd, mm_balance_usd
     return tokens0, tokens1
 
 
@@ -194,20 +195,7 @@ def getJoePrice():
     return getPriceOf(Constants.JOETOKEN_ADDRESS) / E18
 
 
-def getRatio():
-    total_supply = float(
-        w3.fromWei(xjoetoken_contract.functions.totalSupply().call(), "ether")
-    )
-    joe_balance = float(
-        w3.fromWei(
-            joetoken_contract.functions.balanceOf(Constants.JOEBAR_ADDRESS).call(),
-            "ether",
-        )
-    )
-    return round(joe_balance / total_supply, 5)
-
-
-def getTVL():
+def getTraderJoeTVL():
     JoeHeldInLending = float(
         w3.fromWei(jxjoetoken_contract.functions.getCash().call(), "ether")
     )
@@ -217,17 +205,38 @@ def getTVL():
             "ether",
         )
     )
+    JoeStakedInRJoe = float(
+        w3.fromWei(
+            joetoken_contract.functions.balanceOf(Constants.RJOE_ADDRESS).call(),
+            "ether",
+        )
+    )
+    JoeStakedInStableJoe = float(
+        w3.fromWei(
+            joetoken_contract.functions.balanceOf(
+                Constants.STABLEJOESTAKING_ADDRESS
+            ).call(),
+            "ether",
+        )
+    )
     joePrice = float(getJoePrice())
 
-    sum_ = (JoeHeldInJoeBar - JoeHeldInLending) * joePrice
+    sum_ = (
+        JoeHeldInJoeBar - JoeHeldInLending + JoeStakedInRJoe + JoeStakedInStableJoe
+    ) * joePrice
 
     last_id, queryExchange = "", {}
     while last_id == "" or len(queryExchange["data"]["pairs"]) == 1000:
         queryExchange = genericQuery(
-            '{pairs(first: 1000, where: {id_gt: "' + last_id + '"}){id, reserveUSD}}'
+            '{pairs(first: 1000, where: {id_gt: "'
+            + last_id
+            + '"}){id, reserveUSD, volumeUSD}}'
         )
-        for reserveUSD in queryExchange["data"]["pairs"]:
-            sum_ += float(reserveUSD["reserveUSD"])
+        for pair in queryExchange["data"]["pairs"]:
+            reserveUSD = float(pair["reserveUSD"])
+            # We try to avoid fake pool with huge liquidity thanks to that check
+            if float(pair["volumeUSD"]) > reserveUSD / 100:
+                sum_ += reserveUSD
         last_id = str(queryExchange["data"]["pairs"][-1]["id"])
     return sum_
 
@@ -280,16 +289,7 @@ def reloadAssets():
     Constants.NAME2ADDRESS = name2address
 
 
-def getJoeBuyBackLast7d(details=False):
-    # now = datetime.datetime.utcnow()
-    # lastweektimestamp = str(int((now - datetime.timedelta(days=6, hours=12)).timestamp()))
-    # query = genericQuery('{servings(orderBy: timestamp, orderDirection: desc, first: 1000, where: {timestamp_gt: "' +
-    #                      lastweektimestamp + '"}) {joeServed}}', Constants.JOE_MAKERV2_SG_URL)
-    #
-    # joeServed = 0
-    # for joeServ in query["data"]["servings"]:
-    #     joeServed += float(joeServ["joeServed"])
-    # return joeServed
+def getBuyBackLast7d(details=False):
     try:
         try:
             with open("content/last7daysbuyback.json", "r") as f:
@@ -304,7 +304,7 @@ def getJoeBuyBackLast7d(details=False):
         return 0
 
 
-def addJoeBuyBackToLast7d(today_buyback, add_to_last=False):
+def addBuyBackLast7d(today_buyback, add_to_last=False):
     try:
         try:
             with open("content/last7daysbuyback.json", "r") as f:
@@ -316,16 +316,16 @@ def addJoeBuyBackToLast7d(today_buyback, add_to_last=False):
             temp = [val for val in last7d["last7days"]][:-1]
         else:
             temp = [val for val in last7d["last7days"]][1:]
+        temp.append(str(today_buyback))
+
+        try:
+            with open("content/last7daysbuyback.json", "w") as f:
+                json.dump({"last7days": temp}, f)
+        except FileNotFoundError:
+            with open("../content/last7daysbuyback.json", "w") as f:
+                json.dump({"last7days": temp}, f)
     except FileNotFoundError:
         temp = ["0", "0", "0", "0", "0"]
-    temp.append(str(today_buyback))
-
-    try:
-        with open("content/last7daysbuyback.json", "w") as f:
-            json.dump({"last7days": temp}, f)
-    except FileNotFoundError:
-        with open("../content/last7daysbuyback.json", "w") as f:
-            json.dump({"last7days": temp}, f)
 
 
 def getAbout():
@@ -333,7 +333,7 @@ def getAbout():
     avaxPrice = getAvaxPrice()
     csupply = float(getCirculatingSupply() / E18)
     mktcap = joePrice * csupply
-    farm_tvl = getTVL()
+    farm_tvl = getTraderJoeTVL()
     lending_tvl = float(getLendingTotalSupply() / E18)
 
     return (
@@ -343,8 +343,7 @@ def getAbout():
         "Circ. Supply: {}\n"
         "Farm TVL: ${}\n"
         "Lending TVL: ${}\n"
-        "Total TVL: ${}\n"
-        "1 $XJOE = {} $JOE".format(
+        "Total TVL: ${}".format(
             readable(joePrice, 4),
             smartRounding(avaxPrice),
             smartRounding(mktcap),
@@ -352,7 +351,6 @@ def getAbout():
             smartRounding(farm_tvl),
             smartRounding(lending_tvl),
             smartRounding(lending_tvl + farm_tvl),
-            getRatio(),
         )
     )
 
@@ -390,11 +388,10 @@ def getLendingAbout():
 
 
 if __name__ == "__main__":
-    print(getRatio())
-    # print(getAbout())
+    print(readable(getTraderJoeTVL()))
     # print(getLendingAbout())
-    # print(getJoeBuyBackLast7d())
+    # print(getBuyBackLast7d())
     # reloadAssets()
-    # print(addJoeBuyBackToLast7d(150))
-    # print(len(getJoeMakerPostitions(10000)[0]))
+    # print(addBuyBackLast7d(150))
+    # print(len(getMoneyMakerPostitions(10000)[0]))
     # print("Done")
