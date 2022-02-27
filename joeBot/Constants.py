@@ -110,15 +110,13 @@ ERROR_ON_PROFILE_PICTURE_TG = """How to use /joepic for profile pictures:
 
 # help
 HELP_TG = """JoeBot commands:
-/price : return the current price of $Joe.
-/about : return the current price of $Joe, the market cap, the circulating supply and the total value locked.
+/price <token> : return the current price of token, can be an address or its symbol. default: JOE.
+/chart <token> : return the current chart of token, can be an address or its symbol. default: JOE.
+/address <token> : return the address of token symbol.
+/about : return info about TraderJoe ecosystem.
+/leding : return info aobut BankerJoe.
 /joepic : return a personnalised 3D Joe, (for more help, type /joepic).
-/tokenomics : return TraderJoe's tokenomics page.
-/contracts : return TraderJoe's contracts page.
-/docs : return TraderJoe's docs page.
-/discord : return TraderJoe's discord.
-/twitter : return TraderJoe's twitter.
-/website : return TraderJoe's website.
+/pricelist : returns the list of tokens that JoeBot can interact with.
 """
 
 

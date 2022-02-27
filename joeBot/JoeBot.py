@@ -140,11 +140,9 @@ class JoeBot:
         previous_avax_balance = JoeSubGraph.getAvaxBalance(
             Constants.MONEYMAKER_CALLER_ADDRESS
         )
-        pairs, joe_bought_back, error_on_pairs = self.moneyMaker.callConvertMultiple(
-            MIN_USD_VALUE
-        )
+        error_on_pairs = self.moneyMaker.callConvertMultiple(MIN_USD_VALUE)
         avax_balance = JoeSubGraph.getAvaxBalance(Constants.MONEYMAKER_CALLER_ADDRESS)
-        
+
         list_of_strings = MoneyMaker.getDailyInfo()
 
         await self.sendMessage(list_of_strings, self.channels.BOT_FEED)

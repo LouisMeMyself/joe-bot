@@ -128,6 +128,10 @@ async def joeTicker(chat_id, mess_id):
                 new_mess = "JOE price is ${} (updated at {} UTC)".format(
                     round(price, 4), datetime.datetime.utcnow().strftime("%H:%M:%S")
                 )
+                if new_mess != mess:
+                    mess = new_mess
+                    await bot.edit_message_text(mess, chat_id, mess_id)
+
                 if (
                     last_reload is None
                     or (datetime.datetime.utcnow() - last_reload).total_seconds() < 3600
@@ -135,10 +139,6 @@ async def joeTicker(chat_id, mess_id):
                     JoeSubGraph.reloadAssets()
                     last_reload = datetime.datetime.utcnow()
 
-                if new_mess != mess:
-                    JoeSubGraph.reloadAssets()
-                    mess = new_mess
-                    await bot.edit_message_text(mess, chat_id, mess_id)
                 await asyncio.sleep(time_between_updates)
         except ConnectionError:
             print("Connection error, retrying in 60 seconds...")
@@ -194,9 +194,7 @@ async def price(message: types.Message):
     dprice, price = prices
     await bot.send_message(
         message.chat.id,
-        "$JOE: ${}\n{} $JOE/$AVAX".format(
-            round(price, 4), round(1 / dprice, 4)
-        ),
+        "$JOE: ${}\n{} $JOE/$AVAX\n".format(round(price, 4), round(1 / dprice, 4)),
     )
 
 
@@ -300,17 +298,35 @@ async def chart(message: types.Message):
         return
 
     msgs = message.text[7:].split(" ")
-    if msgs[-1] == "d" or msgs[-1] == "days":
-        period = "day"
-    else:
+    if msgs[-1] == "m" or msgs[-1] == "month":
         period = "month"
-    if msgs[0] == "":
-        await JoeChart.getChart("joe", period)
     else:
-        await JoeChart.getChart(msgs[0], period)
-    await bot.send_photo(
-        chat_id=message.chat.id, photo=open("content/images/chart.png", "rb")
-    )
+        period = "day"
+    try:
+        if msgs[0] == "":
+            token = "joe"
+        else:
+            token = msgs[0]
+        JoeChart.getChart(token, period)
+    except KeyError:
+        await bot.send_message(
+            message.chat.id,
+            "Token {} does not seem to exist".format(token.upper()),
+            reply_to_message_id=message.message_id,
+        )
+    except:
+        await bot.send_message(
+            message.chat.id,
+            "Error: can't fetch candlesticks from subgraph",
+            reply_to_message_id=message.message_id,
+        )
+    else:
+        await bot.send_photo(
+            chat_id=message.chat.id,
+            reply_to_message_id=message.message_id,
+            photo=open("content/images/chart.png", "rb"),
+        )
+
     return
 
 
@@ -351,61 +367,9 @@ async def comfy(message: types.Message):
     return
 
 
-@dp.message_handler(commands="tokenomics")
-async def tokenomics(message: types.Message):
-    """return TraderJoe's tokenomics page."""
-    if not timer.canMessageOnChatId(message.chat.id):
-        return
-    await bot.send_message(
-        message.chat.id, "https://docs.traderjoexyz.com/en/tokenomics"
-    )
-
-
-@dp.message_handler(commands="contracts")
-async def contracts(message: types.Message):
-    """return TraderJoe's contracts page."""
-    if not timer.canMessageOnChatId(message.chat.id):
-        return
-    await bot.send_message(
-        message.chat.id, "https://docs.traderjoexyz.com/en/contracts"
-    )
-
-
-@dp.message_handler(commands="docs")
-async def docs(message: types.Message):
-    """return TraderJoe's docs page."""
-    if not timer.canMessageOnChatId(message.chat.id):
-        return
-    await bot.send_message(message.chat.id, "https://docs.traderjoexyz.com")
-
-
-@dp.message_handler(commands="discord")
-async def discord(message: types.Message):
-    """return TraderJoe's discord."""
-    if not timer.canMessageOnChatId(message.chat.id):
-        return
-    await bot.send_message(message.chat.id, "https://discord.com/invite/GHZceZhbZU")
-
-
-@dp.message_handler(commands="twitter")
-async def twitter(message: types.Message):
-    """return TraderJoe's twitter."""
-    if not timer.canMessageOnChatId(message.chat.id):
-        return
-    await bot.send_message(message.chat.id, "https://twitter.com/traderjoe_xyz")
-
-
-@dp.message_handler(commands="website")
-async def website(message: types.Message):
-    """return TraderJoe's website."""
-    if not timer.canMessageOnChatId(message.chat.id):
-        return
-    await bot.send_message(message.chat.id, "https://www.traderjoexyz.com")
-
-
 @dp.message_handler(commands="help")
 async def help(message: types.Message):
-    """print Constants.HELP_TG"""
+    """return Constants.HELP_TG"""
     if not timer.canMessageOnChatId(message.chat.id):
         return
     await bot.send_message(message.chat.id, Constants.HELP_TG)

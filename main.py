@@ -50,18 +50,14 @@ async def setmin(ctx):
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def start(ctx):
     """Start a task."""
-    await ctx.reply(
-        joeBot.taskManager.startTask(ctx.message.content[6:].strip())
-    )
+    await ctx.reply(joeBot.taskManager.startTask(ctx.message.content[6:].strip()))
 
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def stop(ctx):
     """Stop a task."""
-    await ctx.reply(
-        joeBot.taskManager.stopTask(ctx.message.content[5:].strip())
-    )
+    await ctx.reply(joeBot.taskManager.stopTask(ctx.message.content[5:].strip()))
 
 
 @discord_bot.command(pass_context=True)
@@ -85,28 +81,17 @@ async def alltasks(ctx):
     await ctx.reply(joeBot.taskManager.getAllTasks())
 
 
+# Todo Make this better using most liquid pair
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
-async def changeversion(ctx):
-    """Change MoneyMaker version used to convert."""
-    await ctx.reply(
-        joeBot.moneyMaker.changeToVersion(ctx.message.content[15:].strip())
-    )
-
-
-# # JoeBot's wallet would need to be owner of the contract, so for now this can't be used
-# @discord_bot.command(pass_context=True)
-# @commands.has_role(Constants.ROLE_FOR_CMD)
-# async def setbridges(ctx):
-#     """SetBridges."""
-#     tokens, bridges = [], []
-#     for line in ctx.message.content[12:].split("\n"):
-#         token, bridge = line.split(" - ")
-#         tokens.append(token)
-#         bridges.append(bridge)
-#     await joeBot.sendMessage(
-#         joeBot.moneyMaker.setBridges(tokens, bridges)
-#     )
+async def setbridges(ctx):
+    """SetBridges."""
+    tokens, bridges = [], []
+    for line in ctx.message.content[12:].split("\n"):
+        token, bridge = line.split(" - ")
+        tokens.append(token)
+        bridges.append(bridge)
+    await joeBot.sendMessage(joeBot.moneyMaker.setBridges(tokens, bridges))
 
 
 @discord_bot.command(pass_context=True)

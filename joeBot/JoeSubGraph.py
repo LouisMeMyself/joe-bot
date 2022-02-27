@@ -370,7 +370,6 @@ def avg7d(timestamp):
     closes = query["data"]["candles"]
     if len(closes) == 0:
         return -1
-    print(query)
     return sum([1 / float(i["close"]) for i in closes]) / len(closes)
 
 
@@ -388,10 +387,10 @@ def getLendingAbout():
 
 
 if __name__ == "__main__":
-    print(readable(getTraderJoeTVL()))
+    # print(readable(getTraderJoeTVL()))
     # print(getLendingAbout())
     # print(getBuyBackLast7d())
     # reloadAssets()
     # print(addBuyBackLast7d(150))
     # print(len(getMoneyMakerPostitions(10000)[0]))
-    # print("Done")
+    print("Done")
