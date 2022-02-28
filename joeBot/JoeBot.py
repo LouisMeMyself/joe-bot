@@ -54,23 +54,23 @@ class MoneyMakerTicker(commands.Cog, Ticker):
     @ticker.before_loop
     async def before_ticker(self):
         now = datetime.now()
-        todayAt21 = now.replace(hour=20, minute=59, second=59)
-        timeBefore11PM30 = (todayAt21 - now).total_seconds()
+        todayAt9 = now.replace(hour=20, minute=59, second=59)
+        timeBefore9PM = (todayAt9 - now).total_seconds()
 
-        if timeBefore11PM30 < 0:
-            timeBefore11PM30 += timedelta(days=1).total_seconds()
+        if timeBefore9PM < 0:
+            timeBefore9PM += timedelta(days=1).total_seconds()
 
         self.time_to_wait = random.randint(0, time_window)
         print(self.time_to_wait, time_window)
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
             "Info: schedule of next buyback : [{}].".format(
                 datetime.fromtimestamp(
-                    (todayAt21 + timedelta(seconds=self.time_to_wait)).timestamp()
+                    (todayAt9 + timedelta(seconds=self.time_to_wait)).timestamp()
                 ).strftime("%d/%m/%Y %H:%M:%S")
             )
         )
 
-        await asyncio.sleep(timeBefore11PM30)
+        await asyncio.sleep(timeBefore9PM)
 
 
 class JoeTicker(commands.Cog, Ticker):
