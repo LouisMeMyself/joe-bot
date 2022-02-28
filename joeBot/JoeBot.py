@@ -19,6 +19,7 @@ joetoken_contract = w3.eth.contract(
 )
 
 MIN_USD_VALUE = 10000
+SLIPPAGE = 100
 time_window = 3 * 3600
 ranToday = True
 started = False
@@ -137,11 +138,24 @@ class JoeBot:
             )
         return
 
+    async def setSlippageToConvert(self, ctx):
+        global SLIPPAGE
+        value = ctx.message.content.replace(Constants.SET_SLIPPAGE, "").strip()
+        try:
+            SLIPPAGE = float(value)
+            await ctx.send("Slippage is now set to : ${}".format(readable(SLIPPAGE, 2)))
+        except:
+            await ctx.send("Slippage is currently : ${}".format(readable(SLIPPAGE, 2)))
+        return
+
     async def callConvert(self):
+        global MIN_USD_VALUE, SLIPPAGE
         previous_avax_balance = JoeSubGraph.getAvaxBalance(
             Constants.MONEYMAKER_CALLER_ADDRESS
         )
-        error_on_pairs = self.moneyMaker.callConvertMultiple(MIN_USD_VALUE)
+        error_on_pairs = self.moneyMaker.callConvertMultiple(
+            min_usd_value=MIN_USD_VALUE, slippage=SLIPPAGE
+        )
         avax_balance = JoeSubGraph.getAvaxBalance(Constants.MONEYMAKER_CALLER_ADDRESS)
 
         list_of_strings = MoneyMaker.getDailyInfo()

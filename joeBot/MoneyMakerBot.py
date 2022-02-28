@@ -3,12 +3,10 @@ from datetime import datetime
 from time import time
 
 from dotenv import load_dotenv
-from numpy import number
 from web3 import Web3
 from web3.middleware import geth_poa_middleware
 
 from joeBot import Constants, JoeSubGraph
-from joeBot.Constants import ZERO_ADDRESS_256
 from joeBot.Utils import readable
 
 load_dotenv()
@@ -282,7 +280,6 @@ def binary_search(from_block, to_block, timestamp):
             from_block = mid
         else:
             to_block = mid
-    print(w3.eth.get_block(mid).timestamp)
     return from_block
 
 
@@ -290,6 +287,7 @@ def binary_search(from_block, to_block, timestamp):
 if __name__ == "__main__":
     moneyMaker = MoneyMaker()
     print(moneyMaker.getDailyInfo())
+    print(JoeSubGraph.getMoneyMakerPostitions(10_000, return_reserve_and_balance=True))
     # print(moneyMaker.getMoneyMakerMessage(11385055, 11385055))
     # print(
     #     moneyMaker.decodeTxHash(
