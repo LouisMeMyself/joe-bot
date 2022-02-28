@@ -19,6 +19,7 @@ joetoken_contract = w3.eth.contract(
 )
 
 MIN_USD_VALUE = 10000
+time_window = 3 * 3600
 ranToday = True
 started = False
 
@@ -31,12 +32,11 @@ class MoneyMakerTicker(commands.Cog, Ticker):
 
     @tasks.loop(hours=24)
     async def ticker(self):
-        print("ticker")
+        await asyncio.sleep(self.time_to_wait)
         try:
-            await asyncio.sleep(self.time_to_wait)
             await self.callConvert()
 
-            self.time_to_wait = random.randint(0, 3600)
+            self.time_to_wait = random.randint(0, time_window)
             await self.channels.get_channel(self.channels.BOT_ERRORS).send(
                 "Info: schedule of next buyback : [{}] .".format(
                     (
@@ -54,17 +54,18 @@ class MoneyMakerTicker(commands.Cog, Ticker):
     @ticker.before_loop
     async def before_ticker(self):
         now = datetime.now()
-        timeBefore11PM30 = (
-            now.replace(hour=23, minute=30, second=0) - now
-        ).total_seconds()
+        todayAt21 = now.replace(hour=20, minute=59, second=59)
+        timeBefore11PM30 = (todayAt21 - now).total_seconds()
 
         if timeBefore11PM30 < 0:
-            timeBefore11PM30 += timedelta(days=1)
+            timeBefore11PM30 += timedelta(days=1).total_seconds()
 
+        self.time_to_wait = random.randint(0, time_window)
+        print(self.time_to_wait, time_window)
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
             "Info: schedule of next buyback : [{}].".format(
                 datetime.fromtimestamp(
-                    now.replace(hour=23, minute=30, second=0).timestamp()
+                    (todayAt21 + timedelta(seconds=self.time_to_wait)).timestamp()
                 ).strftime("%d/%m/%Y %H:%M:%S")
             )
         )

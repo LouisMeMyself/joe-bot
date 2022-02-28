@@ -96,10 +96,9 @@ async def setbridges(ctx):
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
-async def decodetx(ctx):
-    """SetBridges."""
-    tx_hash = ctx.message.content[10:].strip()
-    await joeBot.sendMessage(MoneyMakerBot.moneyMaker.decodeTxHash(tx_hash))
+async def info(ctx):
+    """return daily informations."""
+    await joeBot.sendMessage(MoneyMakerBot.moneyMaker.getDailyInfo())
 
 
 @discord_bot.command(pass_context=True)
