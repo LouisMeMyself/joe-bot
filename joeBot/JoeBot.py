@@ -18,9 +18,9 @@ joetoken_contract = w3.eth.contract(
     address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI
 )
 
-MIN_USD_VALUE = 10000
+MIN_USD_VALUE = 5_000
 SLIPPAGE = 100
-time_window = 3 * 3600
+time_window = 3 * 3_600
 ranToday = True
 started = False
 
@@ -128,7 +128,7 @@ class JoeBot:
         global MIN_USD_VALUE
         value = ctx.message.content.replace(Constants.SET_MIN_USD_COMMAND, "").strip()
         try:
-            MIN_USD_VALUE = float(value)
+            MIN_USD_VALUE = int(value)
             await ctx.send(
                 "Min usd value is now set to : ${}".format(readable(MIN_USD_VALUE, 2))
             )
@@ -142,35 +142,46 @@ class JoeBot:
         global SLIPPAGE
         value = ctx.message.content.replace(Constants.SET_SLIPPAGE, "").strip()
         try:
-            SLIPPAGE = float(value)
-            await ctx.send("Slippage is now set to : ${}".format(readable(SLIPPAGE, 2)))
+            SLIPPAGE = int(value)
+            await ctx.send(
+                "Slippage is now set to : {}%".format(readable(SLIPPAGE / 100, 2))
+            )
         except:
-            await ctx.send("Slippage is currently : ${}".format(readable(SLIPPAGE, 2)))
+            await ctx.send(
+                "Slippage is currently : {}%".format(readable(SLIPPAGE / 100, 2))
+            )
         return
 
     async def callConvert(self):
         global MIN_USD_VALUE, SLIPPAGE
-        previous_avax_balance = JoeSubGraph.getAvaxBalance(
-            Constants.MONEYMAKER_CALLER_ADDRESS
-        )
-        error_on_pairs = self.moneyMaker.callConvertMultiple(
-            min_usd_value=MIN_USD_VALUE, slippage=SLIPPAGE
-        )
-        avax_balance = JoeSubGraph.getAvaxBalance(Constants.MONEYMAKER_CALLER_ADDRESS)
-
-        list_of_strings = MoneyMaker.getDailyInfo()
-
-        await self.sendMessage(list_of_strings, self.channels.BOT_FEED)
-
-        await self.channels.get_channel(self.channels.BOT_ERRORS).send(
-            "Avax Balance: {} (used {})".format(
-                readable(avax_balance, 2),
-                readable(previous_avax_balance - avax_balance, 2),
+        try:
+            previous_avax_balance = JoeSubGraph.getAvaxBalance(
+                Constants.MONEYMAKER_CALLER_ADDRESS
             )
-        )
+            tx_hashs, error_on_pairs = self.moneyMaker.callConvertMultiple(
+                min_usd_value=MIN_USD_VALUE, slippage=SLIPPAGE
+            )
+            avax_balance = JoeSubGraph.getAvaxBalance(Constants.MONEYMAKER_CALLER_ADDRESS)
 
-        if len(error_on_pairs) > 0:
-            await self.sendMessage(error_on_pairs, self.channels.BOT_ERRORS)
+            list_of_strings = MoneyMaker.getDailyInfo()
+
+            if list_of_strings:
+                await self.sendMessage(list_of_strings, self.channels.BOT_FEED)
+
+            await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                "Convert() tx_hashs: "
+                + " ".join(tx_hashs)
+                + "\nAvax Balance: {} (used {})".format(
+                    readable(avax_balance, 2),
+                    readable(previous_avax_balance - avax_balance, 2),
+                )
+            )
+
+            if error_on_pairs:
+                await self.sendMessage(error_on_pairs, self.channels.BOT_ERRORS)
+        except Exception as e:
+            await self.sendMessage(e.args, self.channels.BOT_ERRORS)
+
 
     async def joePic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile

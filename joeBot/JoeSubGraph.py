@@ -390,6 +390,7 @@ if __name__ == "__main__":
     # print(getLendingAbout())
     # print(getBuyBackLast7d())
     print(getCurrentGasPrice())
+    print(getMoneyMakerPostitions(5_000, return_reserve_and_balance=True)[3])
     # reloadAssets()
     # print(addBuyBackLast7d(150))
     # print(len(getMoneyMakerPostitions(10000)[0]))

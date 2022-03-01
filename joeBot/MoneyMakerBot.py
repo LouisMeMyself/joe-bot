@@ -71,9 +71,16 @@ class MoneyMaker:
         call contract transactional function func
         """
         nonce = w3.eth.get_transaction_count(self.account.address)
+        gasPrice = JoeSubGraph.getCurrentGasPrice()
         construct_txn = func_.buildTransaction(
-            {"from": self.account.address, "nonce": nonce}
+            {
+                "from": self.account.address,
+                "nonce": nonce,
+                "maxFeePerGas": int(gasPrice * 1.5),
+                "maxPriorityFeePerGas": 2 * 10**9 + 1,
+            }
         )
+        construct_txn.pop("gasPrice")
         signed = self.account.signTransaction(construct_txn)
         tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
         return tx_hash.hex()
@@ -93,7 +100,6 @@ class MoneyMaker:
                 safe_tokens0.append(token0)
                 safe_tokens1.append(token1)
             except Exception as e:
-                print(e)
                 error_on_pairs.append(
                     "[{}] Error at convert locally:\n{} - {}: {}".format(
                         datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
@@ -110,6 +116,7 @@ class MoneyMaker:
         """
         call convert on a group of token
         """
+        tx_hashs = []
         for group_tokens0, group_tokens1 in zip(groups_tokens0, groups_tokens1):
             call_convert_multiple = self.moneyMaker.functions.convertMultiple(
                 group_tokens0, group_tokens1, slippage
@@ -117,18 +124,17 @@ class MoneyMaker:
             try:
                 pos = "Sends convertMultiple()"
                 tx_hash = self.execContract(call_convert_multiple)
+                tx_hashs.append(tx_hash)
 
                 pos = "Waits for convertMultiple()"
-                transaction_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
-
-                block_number = transaction_receipt["blockNumber"]
+                w3.eth.wait_for_transaction_receipt(tx_hash, timeout=600)
             except Exception as e:
                 error_on_pairs.append(
                     "[{}] Error at {}:\n{}".format(
                         datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"), pos, e
                     )
                 )
-        return error_on_pairs
+        return tx_hashs, error_on_pairs
 
     def callConvertMultiple(self, min_usd_value, slippage):
         """
@@ -144,20 +150,19 @@ class MoneyMaker:
             tokens0, tokens1, slippage
         )
 
-        # Groups tokens by list of 25 to avoid reverting because there isn't enough gas
+        # Groups tokens by list of 20 to avoid reverting because there isn't enough gas
         groups_tokens0, groups_tokens1 = (
             getGroupsOf(safe_tokens0),
             getGroupsOf(safe_tokens1),
         )
 
-        # return 0, 0, 0
         # calls ConvertMultiple with the previously grouped tokens
-        error_on_pairs = self._callConvertMultiple(
+        tx_hashs, error_on_pairs = self._callConvertMultiple(
             groups_tokens0, groups_tokens1, slippage, error_on_pairs
         )
 
         # return from_block, to_block, error_on_pairs
-        return error_on_pairs
+        return tx_hashs, error_on_pairs
 
     def getDailyData(self):
         """
@@ -287,7 +292,6 @@ def binary_search(from_block, to_block, timestamp):
 if __name__ == "__main__":
     moneyMaker = MoneyMaker()
     print(moneyMaker.getDailyInfo())
-    print(JoeSubGraph.getMoneyMakerPostitions(10_000, return_reserve_and_balance=True))
     # print(moneyMaker.getMoneyMakerMessage(11385055, 11385055))
     # print(
     #     moneyMaker.decodeTxHash(
