@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from joeBot import Constants, MoneyMakerBot
+from joeBot import Constants
 from joeBot.JoeBot import JoeBot
 
 # Env
@@ -98,7 +98,11 @@ async def setbridges(ctx):
 @commands.has_role(Constants.ROLE_FOR_CMD)
 async def info(ctx):
     """return daily informations."""
-    await joeBot.sendMessage(MoneyMakerBot.moneyMaker.getDailyInfo())
+    info = joeBot.moneyMaker.getDailyInfo()
+    if ctx.message.content.strip().endswith("msg"):
+        await joeBot.sendMessage(info, joeBot.channels.BOT_FEED)
+    else:
+        await joeBot.sendMessage(info)
 
 
 @discord_bot.command(pass_context=True)

@@ -55,19 +55,19 @@ class MoneyMakerTicker(commands.Cog, Ticker):
     @ticker.before_loop
     async def before_ticker(self):
         now = datetime.now()
-        todayAt9 = now.replace(hour=20, minute=59, second=59)
-        timeBefore9PM = (todayAt9 - now).total_seconds()
+        nextRedistribution = now.replace(hour=20, minute=59, second=59)
+        timeBefore9PM = (nextRedistribution - now).total_seconds()
 
         if timeBefore9PM < 0:
-            timeBefore9PM += timedelta(days=1).total_seconds()
+            timeBefore9PM += 86_400
+            nextRedistribution += timedelta(days=1)
 
         self.time_to_wait = random.randint(0, time_window)
-        print(self.time_to_wait, time_window)
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
             "Info: schedule of next buyback : [{}].".format(
-                datetime.fromtimestamp(
-                    (todayAt9 + timedelta(seconds=self.time_to_wait)).timestamp()
-                ).strftime("%d/%m/%Y %H:%M:%S")
+                (nextRedistribution + timedelta(seconds=self.time_to_wait)).strftime(
+                    "%d/%m/%Y %H:%M:%S"
+                )
             )
         )
 
@@ -161,9 +161,11 @@ class JoeBot:
             tx_hashs, error_on_pairs = self.moneyMaker.callConvertMultiple(
                 min_usd_value=MIN_USD_VALUE, slippage=SLIPPAGE
             )
-            avax_balance = JoeSubGraph.getAvaxBalance(Constants.MONEYMAKER_CALLER_ADDRESS)
+            avax_balance = JoeSubGraph.getAvaxBalance(
+                Constants.MONEYMAKER_CALLER_ADDRESS
+            )
 
-            list_of_strings = MoneyMaker.getDailyInfo()
+            list_of_strings = self.moneyMaker.getDailyInfo()
 
             if list_of_strings:
                 await self.sendMessage(list_of_strings, self.channels.BOT_FEED)
@@ -181,7 +183,6 @@ class JoeBot:
                 await self.sendMessage(error_on_pairs, self.channels.BOT_ERRORS)
         except Exception as e:
             await self.sendMessage(e.args, self.channels.BOT_ERRORS)
-
 
     async def joePic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile

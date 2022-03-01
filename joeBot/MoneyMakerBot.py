@@ -80,7 +80,7 @@ class MoneyMaker:
                 "maxPriorityFeePerGas": 2 * 10**9 + 1,
             }
         )
-        construct_txn.pop("gasPrice")
+        print(construct_txn)
         signed = self.account.signTransaction(construct_txn)
         tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
         return tx_hash.hex()
@@ -223,7 +223,7 @@ class MoneyMaker:
             )
         )
 
-        JoeSubGraph.addBuyBackLast7d(sum_, True)
+        JoeSubGraph.addBuyBackLast7d(sum_)
 
         return message
 

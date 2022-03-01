@@ -303,7 +303,7 @@ def getBuyBackLast7d(details=False):
         return 0
 
 
-def addBuyBackLast7d(today_buyback, add_to_last=False):
+def addBuyBackLast7d(today_buyback, replace_last=False):
     try:
         try:
             with open("content/last7daysbuyback.json", "r") as f:
@@ -311,7 +311,7 @@ def addBuyBackLast7d(today_buyback, add_to_last=False):
         except FileNotFoundError:
             with open("../content/last7daysbuyback.json", "r") as f:
                 last7d = json.load(f)
-        if add_to_last:
+        if replace_last:
             temp = [val for val in last7d["last7days"]][:-1]
         else:
             temp = [val for val in last7d["last7days"]][1:]
@@ -389,8 +389,8 @@ if __name__ == "__main__":
     # print(readable(getTraderJoeTVL()))
     # print(getLendingAbout())
     # print(getBuyBackLast7d())
-    print(getCurrentGasPrice())
-    print(getMoneyMakerPostitions(5_000, return_reserve_and_balance=True)[3])
+    print(getCurrentGasPrice()/10**9)
+    # print(getMoneyMakerPostitions(5_000, return_reserve_and_balance=True)[3])
     # reloadAssets()
     # print(addBuyBackLast7d(150))
     # print(len(getMoneyMakerPostitions(10000)[0]))
