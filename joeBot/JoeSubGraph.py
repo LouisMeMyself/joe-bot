@@ -108,11 +108,10 @@ def getTokenCandles(token_address, period, nb):
     return data_df
 
 
-def getCurrentGasPrice():
+def getCurrentGasPrice(nb=50):
     """
     get current gas price, weighted by most recents one
     """
-    nb = 50
     block_number = w3.eth.get_block_number()
     weighted_sum = sum(
         [
@@ -390,6 +389,7 @@ if __name__ == "__main__":
     # print(readable(getTraderJoeTVL()))
     # print(getLendingAbout())
     # print(getBuyBackLast7d())
+    print(getCurrentGasPrice())
     # reloadAssets()
     # print(addBuyBackLast7d(150))
     # print(len(getMoneyMakerPostitions(10000)[0]))

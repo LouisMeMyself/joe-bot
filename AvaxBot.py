@@ -5,7 +5,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 from joeBot import JoeSubGraph
-from joeBot.Utils import TaskManager
+from joeBot.Utils import TaskManager, Ticker
 
 load_dotenv()
 
@@ -13,7 +13,7 @@ load_dotenv()
 discord_bot = commands.Bot(command_prefix="./.")
 
 
-class AvaxTicker(commands.Cog):
+class AvaxTicker(commands.Cog, Ticker):
     def __init__(self):
         self.carousel = True
 
@@ -29,7 +29,7 @@ class AvaxTicker(commands.Cog):
                 self.carousel = False
             else:
                 gasPrice = JoeSubGraph.getCurrentGasPrice()
-                activity = "GAS PRICE: {}".format(round(gasPrice))
+                activity = "GAS PRICE: {}".format(round(gasPrice / 10**9))
                 self.carousel = True
             await discord_bot.change_presence(
                 activity=discord.Activity(
