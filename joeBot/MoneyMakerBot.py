@@ -206,24 +206,25 @@ class MoneyMaker:
         """
         pairs, amounts, symbol = self.getDailyData()
 
-        token_sent_last_7_days = JoeSubGraph.getBuyBackLast7d()
-        sum_ = sum(amounts)
+        token_sent_last_7_days = JoeSubGraph.getBuyBackLast7d(details=True)
+        today_info = sum(amounts)
 
         message = [
             "{} : {} ${}".format(pair, readable(amount, 2), symbol)
             for pair, amount in zip(pairs, amounts)
         ]
 
-        message.append("Total: {} ${}".format(readable(sum_, 2), symbol))
+        message.append("Total: {} ${}".format(readable(today_info, 2), symbol))
 
         message.append(
             "Last 7 days: {} ${} ".format(
-                readable(token_sent_last_7_days + sum_, 2),
+                readable(sum(token_sent_last_7_days) + today_info, 2),
                 symbol,
             )
         )
 
-        JoeSubGraph.addBuyBackLast7d(sum_)
+        if token_sent_last_7_days[-1] != today_info:
+            JoeSubGraph.addBuyBackLast7d(today_info)
 
         return message
 

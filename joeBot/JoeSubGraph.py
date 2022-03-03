@@ -323,8 +323,8 @@ def addBuyBackLast7d(today_buyback, replace_last=False):
         except FileNotFoundError:
             with open("../content/last7daysbuyback.json", "w") as f:
                 json.dump({"last7days": temp}, f)
-    except FileNotFoundError:
-        temp = ["0", "0", "0", "0", "0"]
+    except Exception as e:
+        raise e
 
 
 def getAbout():
