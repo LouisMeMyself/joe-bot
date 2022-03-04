@@ -41,7 +41,7 @@ class MoneyMaker:
         ):
             set_bridge = self.moneyMaker.functions.setBridge(token, bridge)
             try:
-                set_bridge.call()
+                set_bridge.call({"from": self.account.address})
                 try:
                     tx_hash = self.execContract(set_bridge)
 
