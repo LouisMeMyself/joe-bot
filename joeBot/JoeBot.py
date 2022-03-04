@@ -1,6 +1,7 @@
 import asyncio
 import random
 from datetime import datetime, timedelta
+from time import sleep
 
 import discord
 from discord.ext import commands, tasks
@@ -165,6 +166,7 @@ class JoeBot:
                 Constants.MONEYMAKER_CALLER_ADDRESS
             )
 
+            sleep(10)  # wait 10s to be sure block is confirmed
             list_of_strings = self.moneyMaker.getDailyInfo()
 
             if list_of_strings:

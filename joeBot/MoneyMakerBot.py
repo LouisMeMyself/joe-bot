@@ -81,7 +81,6 @@ class MoneyMaker:
                 "maxPriorityFeePerGas": 2 * 10**9 + 1,
             }
         )
-        print(construct_txn)
         signed = self.account.signTransaction(construct_txn)
         tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
         return tx_hash.hex()
@@ -224,7 +223,9 @@ class MoneyMaker:
             )
         )
 
-        if token_sent_last_7_days[-1] != today_info:
+        if token_sent_last_7_days[-1] == 0:
+            JoeSubGraph.addBuyBackLast7d(today_info, replace_last=True)
+        elif token_sent_last_7_days[-1] != today_info:
             JoeSubGraph.addBuyBackLast7d(today_info)
 
         return message
