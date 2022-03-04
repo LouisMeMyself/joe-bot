@@ -28,7 +28,7 @@ def getChart(token_symbol, period):
             if token_symbol == "avax":
                 token_address = Constants.WAVAX_ADDRESS
             else:
-                token_address = Constants.NAME2ADDRESS[token_symbol]
+                token_address = Constants.symbol_to_address[token_symbol]
         except:
             token_address = JoeSubGraph.w3.toChecksumAddress(token_symbol)
     except:
@@ -51,13 +51,15 @@ def getChart(token_symbol, period):
         )
         # Exclude fake highs that ruins the chart
         candlesticks_pd["high"] = np.where(
-            candlesticks_pd["high"] > candlesticks_pd[["open", "close"]].values.max(1) * 10,
+            candlesticks_pd["high"]
+            > candlesticks_pd[["open", "close"]].values.max(1) * 10,
             candlesticks_pd[["open", "close"]].values.max(1),
             candlesticks_pd["high"],
         )
         # Exclude fake lows that ruins the chart
         candlesticks_pd["low"] = np.where(
-            candlesticks_pd["low"] < candlesticks_pd[["open", "close"]].values.min(1) / 10,
+            candlesticks_pd["low"]
+            < candlesticks_pd[["open", "close"]].values.min(1) / 10,
             candlesticks_pd[["open", "close"]].values.min(1),
             candlesticks_pd["low"],
         )

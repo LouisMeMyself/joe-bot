@@ -89,7 +89,7 @@ except FileNotFoundError:
         MONEYMAKER_ABI = json.load(f)
 
 # assets address
-NAME2ADDRESS = {}
+symbol_to_address = {}
 
 # joe ticker
 JOE_TICKER = {}

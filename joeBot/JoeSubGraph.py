@@ -244,7 +244,7 @@ def getTraderJoeTVL():
 def getPricesOf(tokenAddress):
     tokenAddress = tokenAddress.lower().replace(" ", "")
     try:
-        tokenAddress = Web3.toChecksumAddress(Constants.NAME2ADDRESS[tokenAddress])
+        tokenAddress = Web3.toChecksumAddress(Constants.symbol_to_address[tokenAddress])
     except:
         pass
 
@@ -263,29 +263,37 @@ def getPricesOf(tokenAddress):
 
 
 def reloadAssets():
-    last_id, queryExchange, tempdic = "", {}, {}
+    last_id, queryExchange, tokens = "", {}, {}
+    avaxPrice = getAvaxPrice()
     while last_id == "" or len(queryExchange["data"]["tokens"]) == 1000:
         queryExchange = genericQuery(
             '{tokens(first: 1000, where: {id_gt:"'
             + last_id
-            + '"}){id, symbol, liquidity, derivedAVAX}}'
+            + '"}){id, symbol, liquidity, derivedAVAX, volumeUSD}}'
         )
-        for d in queryExchange["data"]["tokens"]:
-            if float(d["liquidity"]) * float(d["derivedAVAX"]) >= 100:
-                tempdic[d["symbol"].lower().replace(" ", "")] = d["id"]
+        for token in queryExchange["data"]["tokens"]:
+            derivedLiq = float(token["liquidity"]) * float(token["derivedAVAX"])
+            if (
+                float(token["volumeUSD"]) >= derivedLiq * avaxPrice / 100
+                and derivedLiq > 100
+            ):
+                tokens[token["id"]] = {
+                    "symbol": token["symbol"].lower().strip(),
+                    "liquidity": derivedLiq,
+                }
         last_id = str(queryExchange["data"]["tokens"][-1]["id"])
 
-    name2address = {}
-    for key, value in tempdic.items():
-        if key[0] == "w" and key[-2:] == ".e":
-            name2address[key[1:-2]] = value
-        elif key[-2:] == ".e":
-            name2address[key[:-2]] = value
-        elif key in name2address:
-            pass
-        else:
-            name2address[key] = value
-    Constants.NAME2ADDRESS = name2address
+    tokens = {
+        k: v
+        for k, v in reversed(
+            sorted(tokens.items(), key=lambda item: item[1]["liquidity"])
+        )
+    }
+    s2a = {}
+    for address, token in tokens.items():
+        if token["symbol"] not in s2a:
+            s2a[token["symbol"]] = address
+    Constants.symbol_to_address = s2a
 
 
 def getBuyBackLast7d(details=False):
@@ -389,9 +397,10 @@ if __name__ == "__main__":
     # print(readable(getTraderJoeTVL()))
     # print(getLendingAbout())
     # print(getBuyBackLast7d())
-    print(getCurrentGasPrice()/10**9)
+    print(getCurrentGasPrice() / 10**9)
     # print(getMoneyMakerPostitions(5_000, return_reserve_and_balance=True)[3])
-    # reloadAssets()
+    reloadAssets()
+    print(Constants.symbol_to_address)
     # print(addBuyBackLast7d(150))
     # print(len(getMoneyMakerPostitions(10000)[0]))
     print("Done")
