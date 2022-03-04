@@ -23,8 +23,9 @@ joeBot = JoeBot
 async def on_ready():
     """starts joebot"""
     global joeBot
-    joeBot = JoeBot(discord_bot)
-    await joeBot.onReady()
+    if not isinstance(joeBot, JoeBot):
+        joeBot = JoeBot(discord_bot)
+        await joeBot.onReady()
 
 
 @discord_bot.command()
