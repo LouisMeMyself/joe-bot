@@ -49,6 +49,13 @@ async def setmin(ctx):
 
 @discord_bot.command(pass_context=True)
 @commands.has_role(Constants.ROLE_FOR_CMD)
+async def setslippage(ctx):
+    """Set the slippage."""
+    await joeBot.setSlippageToConvert(ctx)
+
+
+@discord_bot.command(pass_context=True)
+@commands.has_role(Constants.ROLE_FOR_CMD)
 async def start(ctx):
     """Start a task."""
     await ctx.reply(joeBot.taskManager.startTask(ctx.message.content[6:].strip()))

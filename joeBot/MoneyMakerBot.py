@@ -35,7 +35,7 @@ class MoneyMaker:
         """
         set bridges
         """
-        errors = []
+        success, errors = [], []
         for token, bridge in zip(
             map(w3.toChecksumAddress, tokens), map(w3.toChecksumAddress, bridges)
         ):
@@ -45,7 +45,8 @@ class MoneyMaker:
                 try:
                     tx_hash = self.execContract(set_bridge)
 
-                    w3.eth.wait_for_transaction_receipt(tx_hash)
+                    w3.eth.wait_for_transaction_receipt(tx_hash, timeout=600)
+                    success.append("{} -> {} set succesfuly".format(token, bridge))
                 except Exception as e:
                     errors.append(
                         "[{}] Error setting bridge:\n{} -> {}: {}".format(
@@ -64,7 +65,7 @@ class MoneyMaker:
                         e,
                     )
                 )
-        return errors
+        return success + errors
 
     def execContract(self, func_):
         """
