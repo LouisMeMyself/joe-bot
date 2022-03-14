@@ -178,20 +178,22 @@ class MoneyMaker:
         to_block = w3.eth.get_block_number()
         from_block = binary_search(9_000_000, to_block, timestamp)
 
-        events = self.getLogConvertEvents(from_block, to_block)
         token = self.getERC20(self.moneyMaker.functions.tokenTo().call())
         precision = 10 ** int(token.functions.decimals().call())
         tokenSymbol = token.functions.symbol().call()
-
         pairs, amountsSent = [], []
-        for event in events:
-            args = event["args"]
-            pairs.append(
-                "{} - {}".format(
-                    getSymbolOf(args["token0"]), getSymbolOf(args["token1"])
+        for i in range((to_block - from_block) // 2048 + 1):
+            _to_block = min(from_block + (i + 1) * 2048 - 1, to_block)
+            events = self.getLogConvertEvents(from_block + i * 2048, _to_block)
+
+            for event in events:
+                args = event["args"]
+                pairs.append(
+                    "{} - {}".format(
+                        getSymbolOf(args["token0"]), getSymbolOf(args["token1"])
+                    )
                 )
-            )
-            amountsSent.append(int(args["amountTOKEN"]) / precision)
+                amountsSent.append(int(args["amountTOKEN"]) / precision)
         return pairs, amountsSent, tokenSymbol
 
     def getERC20(self, address):
