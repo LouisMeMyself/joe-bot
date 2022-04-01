@@ -169,8 +169,12 @@ class JoeBot:
             sleep(10)  # wait 10s to be sure block is confirmed
             list_of_strings = self.moneyMaker.getDailyInfo()
 
-            if list_of_strings:
+            if list_of_strings[0][:10] != "Total: 0 $":
                 await self.sendMessage(list_of_strings, self.channels.BOT_FEED)
+            else:
+                await self.channels.get_channel(self.channels.BOT_ERRORS).send(
+                    "<@198828350473502720> ERROR convert doesn't seem to have occured"
+                )
 
             await self.channels.get_channel(self.channels.BOT_ERRORS).send(
                 "Convert() tx_hashs: "
@@ -182,7 +186,27 @@ class JoeBot:
             )
 
             if error_on_pairs:
-                await self.sendMessage(error_on_pairs, self.channels.BOT_ERRORS)
+                err = []
+
+                if len(error_on_pairs.keys()) > 1:
+                    err.append("<@198828350473502720>")
+                for k in error_on_pairs.keys():
+                    if k == "local":
+                        for e, v in error_on_pairs[k].items():
+                            err.append("**({}) {}:**".format(k, e))
+                            for info in v:
+                                pair, tok0, tok1, sym0, sym1 = info
+                                err.append(
+                                    "> **{}: {} - {}**\n> *{} - {}*".format(
+                                        pair, sym0, sym1, tok0, tok1
+                                    )
+                                )
+                    else:
+                        err.append("**{}:**".format(k))
+                        for v in error_on_pairs[k].values():
+                            err.append("> {}".format(v))
+
+                await self.sendMessage(err, self.channels.BOT_ERRORS)
         except Exception as e:
             await self.sendMessage(e.args, self.channels.BOT_ERRORS)
 

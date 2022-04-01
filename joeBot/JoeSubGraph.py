@@ -139,6 +139,8 @@ def getMoneyMakerPostitions(
     """
     last_id, query_exchange = "", {}
     tokens0, tokens1 = [], []
+    symbols0, symbols1 = [], []
+    pairs = []
     pairs_reserve_usd, mm_balance_usd = [], []
     if money_maker_address is None:
         money_maker_address = Constants.MONEYMAKER_ADDRESS.lower()
@@ -152,7 +154,7 @@ def getMoneyMakerPostitions(
             + money_maker_address
             + '"}) '
             "{id, liquidityTokenBalance, "
-            "pair { token0{id}, token1{id}, reserveUSD, totalSupply}}}"
+            "pair { token0{id, symbol}, token1{id, symbol}, reserveUSD, totalSupply}}}"
         )
         for liquidity_position in query_exchange["data"]["liquidityPositions"]:
             pair = liquidity_position["pair"]
@@ -172,12 +174,23 @@ def getMoneyMakerPostitions(
             ):
                 tokens0.append(pair["token0"]["id"])
                 tokens1.append(pair["token1"]["id"])
+                pairs.append(liquidity_position["id"][:42])
+                symbols0.append(pair["token0"]["symbol"])
+                symbols1.append(pair["token1"]["symbol"])
                 pairs_reserve_usd.append(pair_reserve_usd)
                 mm_balance_usd.append(money_maker_balance_usd)
         last_id = query_exchange["data"]["liquidityPositions"][-1]["id"]
     if return_reserve_and_balance:
-        return tokens0, tokens1, pairs_reserve_usd, mm_balance_usd
-    return tokens0, tokens1
+        return (
+            pairs,
+            tokens0,
+            tokens1,
+            symbols0,
+            symbols1,
+            pairs_reserve_usd,
+            mm_balance_usd,
+        )
+    return pairs, tokens0, tokens1, symbols0, symbols1
 
 
 # Using API
@@ -375,6 +388,17 @@ def avg7d(timestamp):
         Constants.JOE_DEXCANDLES_SG_URL,
     )
     closes = query["data"]["candles"]
+    print(
+        "\n".join(
+            [
+                "{}: {}".format(
+                    round(1 / float(i["close"]), 2),
+                    datetime.datetime.fromtimestamp(int(i["time"])),
+                )
+                for i in closes
+            ]
+        )
+    )
     if len(closes) == 0:
         return -1
     return sum([1 / float(i["close"]) for i in closes]) / len(closes)
@@ -397,10 +421,10 @@ if __name__ == "__main__":
     # print(readable(getTraderJoeTVL()))
     # print(getLendingAbout())
     # print(getBuyBackLast7d())
-    print(getCurrentGasPrice() / 10**9)
-    # print(getMoneyMakerPostitions(5_000, return_reserve_and_balance=True)[3])
-    reloadAssets()
-    print(Constants.symbol_to_address)
+    # print(getCurrentGasPrice() / 10**9)
+    print(getMoneyMakerPostitions(5_000, return_reserve_and_balance=True))
+    # reloadAssets()
+    # print(Constants.symbol_to_address)
     # print(addBuyBackLast7d(150))
     # print(len(getMoneyMakerPostitions(10000)[0]))
     print("Done")

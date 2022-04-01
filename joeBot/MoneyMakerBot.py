@@ -85,13 +85,19 @@ class MoneyMaker:
         tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
         return tx_hash.hex()
 
-    def _callConvertLocally(self, tokens0, tokens1, slippage):
+    def _callConvertLocally(
+        self, pairs, tokens0, tokens1, symbols0, symbols1, slippage
+    ):
         """
         call convert locally to prevent reverts
         """
-        safe_tokens0, safe_tokens1, error_on_pairs = [], [], []
-        for token0, token1 in zip(
-            map(Web3.toChecksumAddress, tokens0), map(Web3.toChecksumAddress, tokens1)
+        safe_tokens0, safe_tokens1, error_on_pairs = [], [], {"local": {}}
+        for pair, token0, token1, symbol0, symbol1 in zip(
+            pairs,
+            map(Web3.toChecksumAddress, tokens0),
+            map(Web3.toChecksumAddress, tokens1),
+            symbols0,
+            symbols1,
         ):
             try:
                 self.moneyMaker.functions.convert(token0, token1, slippage).call(
@@ -100,14 +106,14 @@ class MoneyMaker:
                 safe_tokens0.append(token0)
                 safe_tokens1.append(token1)
             except Exception as e:
-                error_on_pairs.append(
-                    "[{}] Error at convert locally:\n{} - {}: {}".format(
-                        datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"),
-                        token0,
-                        token1,
-                        e,
+                if str(e) in error_on_pairs["local"]:
+                    error_on_pairs["local"][str(e)].append(
+                        [pair, token0, token1, symbol0, symbol1]
                     )
-                )
+                else:
+                    error_on_pairs["local"][str(e)] = [
+                        [pair, token0, token1, symbol0, symbol1]
+                    ]
         return safe_tokens0, safe_tokens1, error_on_pairs
 
     def _callConvertMultiple(
@@ -122,18 +128,17 @@ class MoneyMaker:
                 group_tokens0, group_tokens1, slippage
             )
             try:
-                pos = "Sends convertMultiple()"
+                pos = "Sends convertMultiple"
                 tx_hash = self.execContract(call_convert_multiple)
                 tx_hashs.append(tx_hash)
 
-                pos = "Waits for convertMultiple()"
+                pos = "Waits for convertMultiple"
                 w3.eth.wait_for_transaction_receipt(tx_hash, timeout=600)
             except Exception as e:
-                error_on_pairs.append(
-                    "[{}] Error at {}:\n{}".format(
-                        datetime.utcnow().strftime("%d/%m/%Y %H:%M:%S"), pos, e
-                    )
-                )
+                if pos in error_on_pairs:
+                    error_on_pairs[pos].append(str(e))
+                else:
+                    error_on_pairs[pos] = [str(e)]
         return tx_hashs, error_on_pairs
 
     def callConvertMultiple(self, min_usd_value, slippage):
@@ -141,13 +146,17 @@ class MoneyMaker:
         call convert on all LP position that are worth more than `min_usd_value` and with a max slippage of `slippage` (in BP, per 10_000, so 500 is 5%)
         """
         # Gets MoneyMaker position that are worth more than min_usd_value
-        tokens0, tokens1 = JoeSubGraph.getMoneyMakerPostitions(
-            min_usd_value, self.moneyMaker.address
-        )
+        (
+            pairs,
+            tokens0,
+            tokens1,
+            symbols0,
+            symbols1,
+        ) = JoeSubGraph.getMoneyMakerPostitions(min_usd_value, self.moneyMaker.address)
 
         # Gets the list of tokens that are safe to convert, those that doesn't revert locally
         safe_tokens0, safe_tokens1, error_on_pairs = self._callConvertLocally(
-            tokens0, tokens1, slippage
+            pairs, tokens0, tokens1, symbols0, symbols1, slippage
         )
 
         # Groups tokens by list of 20 to avoid reverting because there isn't enough gas
