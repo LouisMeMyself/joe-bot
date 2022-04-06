@@ -20,7 +20,7 @@ class AvaxTicker(commands.Cog, Ticker):
     def start(self):
         self.ticker.start()
 
-    @tasks.loop(seconds=60)
+    @tasks.loop(seconds=10)
     async def ticker(self):
         try:
             if self.carousel:
