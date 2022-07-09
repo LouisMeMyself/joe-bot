@@ -17,7 +17,7 @@ PREMIUM_PER_TRANSACTION = 0.1
 COMMAND_BEARD = "beard"
 PROFILE_PICTURE_COMMAND = "!joepic"
 SET_MIN_USD_COMMAND = "!setmin"
-SET_SLIPPAGE = "!slippage"
+SET_SLIPPAGE = "!setslippage"
 CONVERT_COMMAND = "!convert"
 
 # Roles
