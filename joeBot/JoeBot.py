@@ -32,7 +32,7 @@ class MoneyMakerTicker(commands.Cog, Ticker):
         self.channels = channels
         self.callConvert = callConvert
 
-    @tasks.loop(hours=24)
+    @tasks.loop(hours=72)
     async def ticker(self):
         await asyncio.sleep(self.time_to_wait)
         try:
@@ -56,12 +56,14 @@ class MoneyMakerTicker(commands.Cog, Ticker):
     @ticker.before_loop
     async def before_ticker(self):
         now = datetime.now()
-        nextRedistribution = now.replace(hour=20, minute=59, second=59)
+        nextRedistribution = now.replace(
+            days=(now // 86400) % 3, hour=20, minute=59, second=59
+        )
         timeBefore9PM = (nextRedistribution - now).total_seconds()
 
         if timeBefore9PM < 0:
-            timeBefore9PM += 86_400
-            nextRedistribution += timedelta(days=1)
+            timeBefore9PM += 3 * 86_400
+            nextRedistribution += timedelta(days=3)
 
         self.time_to_wait = random.randint(0, time_window)
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
@@ -96,26 +98,26 @@ class JoeTicker(commands.Cog, Ticker):
 
 class JoeBot:
     moneyMaker = MoneyMaker
-    joePic_ = JoePic.JoePic()
-    discord_bot = commands.Bot
+    joePic = JoePic.JoePic()
+    discordBot = commands.Bot
     channels = Constants.Channels
     taskManager = Utils.TaskManager
 
-    def __init__(self, discord_bot):
-        self.discord_bot = discord_bot
-        for server in self.discord_bot.guilds:
-            self.channels = Constants.Channels(server.id, discord_bot)
+    def __init__(self, discordBot):
+        self.discordBot = discordBot
+        for server in self.discordBot.guilds:
+            self.channels = Constants.Channels(server.id, discordBot)
         self.moneyMaker = MoneyMaker()
         self.taskManager = Utils.TaskManager(
             (
-                JoeTicker(self.discord_bot),
+                JoeTicker(self.discordBot),
                 MoneyMakerTicker(self.channels, self.callConvert),
             )
         )
 
     async def onReady(self):
-        """starts joebot"""
-        print("joeBot have logged in as {0.user}".format(self.discord_bot))
+        """starts joeBot"""
+        print("joeBot have logged in as {0.user}".format(self.discordBot))
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
             self.taskManager.start()
         )
@@ -128,30 +130,16 @@ class JoeBot:
     async def setMinUsdValueToConvert(self, ctx):
         global MIN_USD_VALUE
         value = ctx.message.content.replace(Constants.SET_MIN_USD_COMMAND, "").strip()
-        try:
+        if value.isDigit():
             MIN_USD_VALUE = int(value)
-            await ctx.send(
-                "Min usd value is now set to : ${}".format(readable(MIN_USD_VALUE, 2))
-            )
-        except:
-            await ctx.send(
-                "Min usd value is currently : ${}".format(readable(MIN_USD_VALUE, 2))
-            )
-        return
+        await ctx.send("Min usd: ${}".format(readable(MIN_USD_VALUE, 2)))
 
     async def setSlippageToConvert(self, ctx):
         global SLIPPAGE
         value = ctx.message.content.replace(Constants.SET_SLIPPAGE, "").strip()
-        try:
+        if value.isDigit():
             SLIPPAGE = int(value)
-            await ctx.send(
-                "Slippage is now set to : {}%".format(readable(SLIPPAGE / 100, 2))
-            )
-        except:
-            await ctx.send(
-                "Slippage is currently : {}%".format(readable(SLIPPAGE / 100, 2))
-            )
-        return
+        await ctx.send("Slippage: {}%".format(readable(SLIPPAGE / 100, 2)))
 
     async def callConvert(self):
         global MIN_USD_VALUE, SLIPPAGE
@@ -208,14 +196,17 @@ class JoeBot:
 
                 await self.sendMessage(err, self.channels.BOT_ERRORS)
         except Exception as e:
-            await self.sendMessage(e.args, self.channels.BOT_ERRORS)
+            message = "<@198828350473502720> convert failed with an error\n".format(
+                e.args
+            )
+            await self.sendMessage(message, self.channels.BOT_ERRORS)
 
     async def joePic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile
         picture"""
         if ctx.message.channel.id == self.channels.JOEPIC_CHANNEL_ID:
             try:
-                answer = self.joePic_.do_profile_picture(
+                answer = self.joePic.do_profile_picture(
                     ctx.message.content.replace(Constants.PROFILE_PICTURE_COMMAND, "")[
                         1:
                     ]

@@ -311,39 +311,39 @@ def reloadAssets():
 
 def getBuyBackLast7d(details=False):
     try:
-        try:
-            with open("content/last7daysbuyback.json", "r") as f:
-                last7d = json.load(f)
-        except FileNotFoundError:
-            with open("../content/last7daysbuyback.json", "r") as f:
-                last7d = json.load(f)
+        with open("./content/last7daysbuyback.json", "r") as f:
+            last7d = json.load(f)
+
+        now = datetime.datetime.now().timestamp() * 1_000_000
+
+        buybacks = [
+            float(val)
+            for ts, val in last7d["last7days"].items()
+            if int(ts) > now - 86_400_000_000 * 7.5
+        ]
         if details:
-            return [float(val) for val in last7d["last7days"]]
-        return sum([float(val) for val in last7d["last7days"]])
+            return buybacks
+        return sum(buybacks)
     except FileNotFoundError:
         return 0
 
 
 def addBuyBackLast7d(today_buyback, replace_last=False):
     try:
-        try:
-            with open("content/last7daysbuyback.json", "r") as f:
-                last7d = json.load(f)
-        except FileNotFoundError:
-            with open("../content/last7daysbuyback.json", "r") as f:
-                last7d = json.load(f)
-        if replace_last:
-            temp = [val for val in last7d["last7days"]][:-1]
-        else:
-            temp = [val for val in last7d["last7days"]][1:]
-        temp.append(str(today_buyback))
+        with open("./content/last7daysbuyback.json", "r") as f:
+            last7d = json.load(f)
 
-        try:
-            with open("content/last7daysbuyback.json", "w") as f:
-                json.dump({"last7days": temp}, f)
-        except FileNotFoundError:
-            with open("../content/last7daysbuyback.json", "w") as f:
-                json.dump({"last7days": temp}, f)
+        now = datetime.datetime.now().timestamp() * 1_000_000
+
+        buyback = {
+            ts: float(val)
+            for ts, val in last7d["last7days"].items()
+            if int(ts) > now - 86_400_000_000 * 7.5
+        }
+        buyback[now] = today_buyback
+
+        with open("./content/last7daysbuyback.json", "w") as f:
+            json.dump({"last7days": buyback}, f)
     except Exception as e:
         raise e
 

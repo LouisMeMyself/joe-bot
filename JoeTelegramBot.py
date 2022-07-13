@@ -25,23 +25,12 @@ bot = Bot(token=os.getenv("TELEGRAM_JOEBOT_KEY"))
 
 dp = Dispatcher(bot)
 
-# web3
-w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
-if not w3.isConnected():
-    print("Error web3 can't connect")
-joetoken_contract = w3.eth.contract(
-    address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI
-)
-
-
 # safeguard to not spam
-
-
 class Timer:
     def __init__(self):
         self.last_msg_time = {}
 
-    def canMessageOnChatId(self, chat_id, cd_in_s=1):
+    def canMessageOnChatId(self, chat_id, cd_in_s=5):
         if chat_id not in self.last_msg_time:
             self.last_msg_time[chat_id] = 0
         if self.last_msg_time[chat_id] + cd_in_s > time.time():
