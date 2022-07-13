@@ -56,9 +56,8 @@ class MoneyMakerTicker(commands.Cog, Ticker):
     @ticker.before_loop
     async def before_ticker(self):
         now = datetime.now()
-        nextRedistribution = now.replace(
-            days=(now // 86400) % 3, hour=20, minute=59, second=59
-        )
+        nextRedistribution = now.replace(hour=20, minute=59, second=59)
+        nextRedistribution += timedelta(days=(now.timestamp() // 86400) % 3)
         timeBefore9PM = (nextRedistribution - now).total_seconds()
 
         if timeBefore9PM < 0:
