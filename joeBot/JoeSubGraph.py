@@ -123,11 +123,11 @@ def getCurrentGasPrice(nb=50):
     return int(weighted_sum / (nb * (nb - 1) / 2))
 
 
-def getMoneyMakerPostitions(
+def getMoneyMakerPositions(
     min_usd_value, money_maker_address=None, return_reserve_and_balance=False
 ):
     """
-    getMoneyMakerPostitions return the position of MoneyMaker that are worth more than min_usd_value
+    getMoneyMakerPositions return the position of MoneyMaker that are worth more than min_usd_value
     and if he owns less than half the lp.
 
     :param min_usd_value: The min USD value to be actually returned.
@@ -333,7 +333,7 @@ def addBuyBackLast7d(today_buyback, replace_last=False):
         with open("./content/last7daysbuyback.json", "r") as f:
             last7d = json.load(f)
 
-        now = datetime.datetime.now().timestamp() * 1_000_000
+        now = int(datetime.datetime.now().timestamp() * 1_000_000)
 
         buyback = {
             ts: float(val)
@@ -422,9 +422,9 @@ if __name__ == "__main__":
     # print(getLendingAbout())
     # print(getBuyBackLast7d())
     # print(getCurrentGasPrice() / 10**9)
-    print(getMoneyMakerPostitions(5_000, return_reserve_and_balance=True))
+    print(getMoneyMakerPositions(5_000, return_reserve_and_balance=True))
     # reloadAssets()
     # print(Constants.symbol_to_address)
     # print(addBuyBackLast7d(150))
-    # print(len(getMoneyMakerPostitions(10000)[0]))
+    # print(len(getMoneyMakerPositions(10000)[0]))
     print("Done")

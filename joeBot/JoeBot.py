@@ -195,10 +195,8 @@ class JoeBot:
 
                 await self.sendMessage(err, self.channels.BOT_ERRORS)
         except Exception as e:
-            message = "<@198828350473502720> convert failed with an error\n".format(
-                e.args
-            )
-            await self.sendMessage(message, self.channels.BOT_ERRORS)
+            messages = ["<@198828350473502720> convert failed with an error", str(e)]
+            await self.sendMessage(messages, self.channels.BOT_ERRORS)
 
     async def joePic(self, ctx):
         """command for personalised profile picture, input a color (RGB or HEX) output a reply with the profile

@@ -152,7 +152,7 @@ class MoneyMaker:
             tokens1,
             symbols0,
             symbols1,
-        ) = JoeSubGraph.getMoneyMakerPostitions(min_usd_value, self.moneyMaker.address)
+        ) = JoeSubGraph.getMoneyMakerPositions(min_usd_value, self.moneyMaker.address)
 
         # Gets the list of tokens that are safe to convert, those that doesn't revert locally
         safe_tokens0, safe_tokens1, error_on_pairs = self._callConvertLocally(
@@ -312,8 +312,8 @@ if __name__ == "__main__":
     #         "0x9c97b375da42d916c0da6f190427492e9f772779576b223173975682a983e5f4"
     #     )
     # )
-    # print(JoeSubGraph.getMoneyMakerPostitions(0))
+    # print(JoeSubGraph.getMoneyMakerPositions(0))
     # moneyMaker.changeToVersion("v1")
     # print(moneyMaker.callConvertMultiple(0, 50))
     # print(w3.eth.get_transaction_receipt("0xa51a19ae77462e16f4a6aceb8d2d8b938e86ef52c1e0c392df938d36565ad89d"))
-    # print(sum(JoeSubGraph.getMoneyMakerPostitions(10000, moneyMaker.moneyMaker.address, True)[3]))
+    # print(sum(JoeSubGraph.getMoneyMakerPositions(10000, moneyMaker.moneyMaker.address, True)[3]))
