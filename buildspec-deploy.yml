@@ -5,13 +5,7 @@ phases:
     commands:
       - REPOSITORY_URI=194943407731.dkr.ecr.eu-west-1.amazonaws.com/joebot
       - IMAGE_TAG=${IMAGE_TAG:-$(echo $CODEBUILD_WEBHOOK_TRIGGER | awk -F/ {'print $2'})}
-      - docker login --username AWS --password $(aws ecr get-login-password --region eu-west-1) $REPOSITORY_URI
       - aws eks update-kubeconfig --name $ENVIRONMENT-trader-joe-eks
   build:
     commands:
-      - docker pull $REPOSITORY_URI:$IMAGE_TAG
-      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$ENVIRONMENT
-  post_build:
-    commands:
-      - docker push $REPOSITORY_URI:$ENVIRONMENT
       - kubectl set image -n $ENVIRONMENT deployment/joebot joebot=$REPOSITORY_URI:$IMAGE_TAG

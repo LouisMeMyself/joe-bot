@@ -16,5 +16,6 @@ phases:
     commands:
       - docker push $REPOSITORY_URI:$CODEBUILD_RESOLVED_SOURCE_VERSION
       - docker push $REPOSITORY_URI:$ENVIRONMENT-$CODEBUILD_BUILD_NUMBER
+      - docker push $REPOSITORY_URI:$ENVIRONMENT
       - git tag $ENVIRONMENT-$CODEBUILD_BUILD_NUMBER
       - git push --tags
