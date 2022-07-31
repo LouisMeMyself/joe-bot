@@ -373,5 +373,9 @@ async def reloadAssets(message: types.Message):
     await bot.send_message(message.chat.id, "Assets have been reloaded")
 
 
+def run():
+    executor.start_polling(dp)
+
+
 if __name__ == "__main__":
     executor.start_polling(dp)
