@@ -19,6 +19,7 @@ joePic_ = JoePic.JoePic()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Initialize bot and dispatcher
 bot = Bot(token=os.getenv("TELEGRAM_JOEBOT_KEY"))
@@ -108,7 +109,7 @@ async def joeTicker(chat_id, mess_id):
     mess = "JOE price is $X"
     while chat_id in Constants.JOE_TICKER and Constants.JOE_TICKER[chat_id] == mess_id:
         try:
-            print("joeTicker is up")
+            logger.info("joeTicker is up")
             while (
                 chat_id in Constants.JOE_TICKER
                 and Constants.JOE_TICKER[chat_id] == mess_id
@@ -130,11 +131,11 @@ async def joeTicker(chat_id, mess_id):
 
                 await asyncio.sleep(time_between_updates)
         except ConnectionError:
-            print("Connection error, retrying in 60 seconds...")
+            logger.error("Connection error, retrying in 60 seconds...")
         except AssertionError:
-            print("Assertion Error, retrying in 60 seconds...")
+            logger.error("Assertion Error, retrying in 60 seconds...")
         except KeyboardInterrupt:
-            print(KeyboardInterrupt)
+            logging.info(KeyboardInterrupt)
             break
         except:
             pass

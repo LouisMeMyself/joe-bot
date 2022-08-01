@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -11,10 +12,13 @@ from joeBot import Constants
 from joeBot.Constants import E18
 from joeBot.Utils import readable, smartRounding
 
+
+logger = logging.getLogger(__name__)
+
 # web3
 w3 = Web3(Web3.HTTPProvider(Constants.AVAX_RPC))
 if not w3.isConnected():
-    print("Error web3 can't connect")
+    raise Exception("Error web3 can't connect")
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 joetoken_contract = w3.eth.contract(
@@ -388,7 +392,7 @@ def avg7d(timestamp):
         Constants.JOE_DEXCANDLES_SG_URL,
     )
     closes = query["data"]["candles"]
-    print(
+    logger.info(
         "\n".join(
             [
                 "{}: {}".format(

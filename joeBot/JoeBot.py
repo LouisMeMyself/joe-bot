@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import random
 from datetime import datetime, timedelta
 from time import sleep
@@ -11,10 +12,13 @@ from joeBot import JoePic, JoeSubGraph, Constants, Utils
 from joeBot.MoneyMakerBot import MoneyMaker
 from joeBot.Utils import readable, Ticker
 
+
+logger = logging.getLogger(__name__)
+
 # web3
 w3 = Web3(Web3.HTTPProvider("https://api.avax.network/ext/bc/C/rpc"))
 if not w3.isConnected():
-    print("Error web3 can't connect")
+    raise Exception("Error web3 can't connect")
 joetoken_contract = w3.eth.contract(
     address=Constants.JOETOKEN_ADDRESS, abi=Constants.ERC20_ABI
 )
@@ -91,7 +95,7 @@ class JoeTicker(commands.Cog, Ticker):
                 )
             )
         except Exception as e:
-            print(e)
+            logger.error(e)
             pass
 
 
@@ -116,7 +120,7 @@ class JoeBot:
 
     async def onReady(self):
         """starts joeBot"""
-        print("joeBot have logged in as {0.user}".format(self.discordBot))
+        logger.info("joeBot have logged in as {0.user}".format(self.discordBot))
         await self.channels.get_channel(self.channels.BOT_ERRORS).send(
             self.taskManager.start()
         )
