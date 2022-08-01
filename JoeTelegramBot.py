@@ -373,7 +373,7 @@ async def reloadAssets(message: types.Message):
     await bot.send_message(message.chat.id, "Assets have been reloaded")
 
 
-def run():
+def start():
     executor.start_polling(dp)
 
 

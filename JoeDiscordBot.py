@@ -125,7 +125,7 @@ async def on_command_error(ctx, error):
     await joeBot.onCommandError(ctx, error)
 
 
-def run():
+def start():
     discord_bot.run(os.getenv("DISCORD_JOEBOT_KEY"))
 
 

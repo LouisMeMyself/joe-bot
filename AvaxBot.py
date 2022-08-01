@@ -53,7 +53,7 @@ async def on_command_error(ctx, error):
     return
 
 
-def run():
+def start():
     discord_bot.run(os.getenv("DISCORD_AVAXBOT_KEY"))
 
 

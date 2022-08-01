@@ -15,4 +15,4 @@ COPY JoeDiscordBot.py /app/
 COPY JoeTelegramBot.py /app/
 COPY run.py /app/
 
-CMD ["python", "./run.py", "avax-bot"]
+CMD ["python", "./run.py"]
