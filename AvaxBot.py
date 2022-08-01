@@ -53,6 +53,10 @@ async def on_command_error(ctx, error):
     return
 
 
+def start():
+    discord_bot.run(os.getenv("DISCORD_AVAXBOT_KEY"))
+
+
 if __name__ == "__main__":
     # Discord
     discord_bot.run(os.getenv("DISCORD_AVAXBOT_KEY"))
