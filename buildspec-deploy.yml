@@ -8,6 +8,6 @@ phases:
       - aws eks update-kubeconfig --name $ENVIRONMENT-trader-joe-eks
   build:
     commands:
-      - kubectl set image -n $ENVIRONMENT deployment/joebot-avax joebot-avax=$REPOSITORY_URI:$IMAGE_TAG
-      - kubectl set image -n $ENVIRONMENT deployment/joebot-telegram joebot-telegram=$REPOSITORY_URI:$IMAGE_TAG
-      - kubectl set image -n $ENVIRONMENT deployment/joebot-discord joebot-discord=$REPOSITORY_URI:$IMAGE_TAG
+      - kubectl set image -n $ENVIRONMENT deployment/joebot-discord-avax joebot-discord-avax=$REPOSITORY_URI:$IMAGE_TAG
+      - kubectl set image -n $ENVIRONMENT deployment/joebot-discord-joe joebot-discord-joe=$REPOSITORY_URI:$IMAGE_TAG
+      - kubectl set image -n $ENVIRONMENT deployment/joebot-telegram-joe joebot-telegram-joe=$REPOSITORY_URI:$IMAGE_TAG
