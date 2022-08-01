@@ -1,3 +1,4 @@
+import logging
 import os
 
 import discord
@@ -7,7 +8,10 @@ from dotenv import load_dotenv
 from joeBot import JoeSubGraph
 from joeBot.Utils import TaskManager, Ticker
 
+
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 # Discord
 discord_bot = commands.Bot(command_prefix="./.")
@@ -37,14 +41,14 @@ class AvaxTicker(commands.Cog, Ticker):
                 )
             )
         except Exception as e:
-            print(e)
+            logger.error(e)
             pass
 
 
 @discord_bot.event
 async def on_ready():
     """starts AVAX ticker"""
-    print("joeBot have logged in as {0.user}".format(discord_bot))
+    logger.info("joeBot have logged in as {0.user}".format(discord_bot))
     TaskManager((AvaxTicker(),)).start()
 
 
