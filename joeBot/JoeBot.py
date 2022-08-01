@@ -133,14 +133,14 @@ class JoeBot:
     async def setMinUsdValueToConvert(self, ctx):
         global MIN_USD_VALUE
         value = ctx.message.content.replace(Constants.SET_MIN_USD_COMMAND, "").strip()
-        if value.isDigit():
+        if value.isdigit():
             MIN_USD_VALUE = int(value)
         await ctx.send("Min usd: ${}".format(readable(MIN_USD_VALUE, 2)))
 
     async def setSlippageToConvert(self, ctx):
         global SLIPPAGE
         value = ctx.message.content.replace(Constants.SET_SLIPPAGE, "").strip()
-        if value.isDigit():
+        if value.isdigit():
             SLIPPAGE = int(value)
         await ctx.send("Slippage: {}%".format(readable(SLIPPAGE / 100, 2)))
 

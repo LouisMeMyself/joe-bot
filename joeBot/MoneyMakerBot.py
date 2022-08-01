@@ -234,9 +234,12 @@ class MoneyMaker:
             )
         )
 
-        if token_sent_last_7_days[-1] == 0:
-            JoeSubGraph.addBuyBackLast7d(today_info, replace_last=True)
-        elif token_sent_last_7_days[-1] != today_info:
+        if token_sent_last_7_days:
+            if token_sent_last_7_days[-1] == 0:
+                JoeSubGraph.addBuyBackLast7d(today_info, replace_last=True)
+            elif token_sent_last_7_days[-1] != today_info:
+                JoeSubGraph.addBuyBackLast7d(today_info)
+        else:
             JoeSubGraph.addBuyBackLast7d(today_info)
 
         return message
