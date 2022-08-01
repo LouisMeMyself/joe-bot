@@ -329,6 +329,8 @@ def getBuyBackLast7d(details=False):
             return buybacks
         return sum(buybacks)
     except FileNotFoundError:
+        if details:
+            return [0]
         return 0
 
 
@@ -348,6 +350,9 @@ def addBuyBackLast7d(today_buyback, replace_last=False):
 
         with open("./content/last7daysbuyback.json", "w") as f:
             json.dump({"last7days": buyback}, f)
+    except FileNotFoundError:
+        with open("./content/last7daysbuyback.json", "w") as f:
+            json.dump({"last7days": {"0":0}}, f)
     except Exception as e:
         raise e
 
