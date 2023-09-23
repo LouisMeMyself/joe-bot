@@ -114,7 +114,7 @@ class JoeBot:
         self.taskManager = Utils.TaskManager(
             (
                 JoeTicker(self.discordBot),
-                MoneyMakerTicker(self.channels, self.callConvert),
+                # MoneyMakerTicker(self.channels, self.callConvert),
             )
         )
 
